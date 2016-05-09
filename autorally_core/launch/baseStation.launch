@@ -1,0 +1,11 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <param name="diagnosticsFrequency" value="1.0" />
+  <param name="safeSpeedDuration" value="0.1" />
+
+  <include file="$(find autorally_core)/launch/gpsBase.launch" />
+  <include file="$(find autorally_core)/launch/xbeeCoordinator.launch" />
+  <include file="$(find autorally_core)/launch/runStop.launch" />
+
+</launch>

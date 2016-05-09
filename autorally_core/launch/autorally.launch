@@ -1,0 +1,21 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <param name="diagnosticsFrequency" value="1.0" />
+  <param name="safeSpeedDuration" value="0.1" />
+
+  <include file="$(find autorally_core)/launch/ocs.launch" />
+  <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
+
+  <group unless="$(optenv PLAYBACK false)">
+    <include file="$(find autorally_core)/launch/xbeeNode.launch"/>
+    <include file="$(find autorally_core)/launch/autorally_imu_3dm_gx4.launch" />
+    <include file="$(find autorally_core)/launch/arduinoOnboard.launch" />
+    <include file="$(find autorally_core)/launch/servoInterface.launch" />
+    <include file="$(find autorally_core)/launch/gpsRover.launch" />
+    <include file="$(find autorally_core)/launch/systemStatus.launch" />
+    <include file="$(find autorally_core)/launch/chronyStatus.launch" />
+  </group>
+
+
+</launch>

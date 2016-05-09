@@ -1,0 +1,29 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node pkg="nodelet" type="nodelet" name="ArduinoOnboard" args="load autorally_core/ArduinoOnboard autorally_core_manager" output="screen" machine="muri-laptop" >
+    <rosparam param="servos" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
+
+    <param name="numMovingAverageValues" value="5" />
+    <param name="wheelDiameter" value="0.190" />
+    <param name="lfRotationEnabled" value="true" />
+    <param name="rfRotationEnabled" value="true" />
+    <param name="lbRotationEnabled" value="true" />
+    <param name="rbRotationEnabled" value="true" />
+    <param name="port" value="/dev/arArduino" />
+    <param name="triggerFPS" value="20" />
+
+    <!--configure settings for 115200 baud, 8N1 -->
+    <param name="serialBaud" value="115200" />
+    <param name="serialDataBits" value="8" />
+    <param name="serialParity" value="none" />
+    <param name="serialStopBits" value="1" />
+    <param name="serialHardwareFlow" value="false" />
+    <param name="serialSoftwareFlow" value="false" />
+    <param name="srvBatteryCrit" value="0" />
+    <param name="srvBatteryLow" value="0" />
+    <param name="camBatteryCrit" value="0" />
+    <param name="camBatteryLow" value="0" />
+    <remap from="/RC" to="/RC/servoCommand" />
+  </node>
+</launch>

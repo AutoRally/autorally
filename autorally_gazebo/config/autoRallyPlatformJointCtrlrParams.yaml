@@ -1,0 +1,87 @@
+# autoRallyPlatformJointCtrlrParams.yaml
+#
+# This file defines joint controller parameter values used for simulating an
+# AutoRally autonomous platform.
+#
+# Copyright (c) 2013-2014 Wunderkammer Laboratory
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Publish the joint states to joint_states.
+joint_state_ctrlr:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+left_steering_ctrlr:
+  joint: left_steering_joint
+  type: effort_controllers/JointPositionController
+  pid: {p: 5.0, i: 0.0, d: 0.3}
+right_steering_ctrlr:
+  joint: right_steering_joint
+  type: effort_controllers/JointPositionController
+  pid: {p: 5.0, i: 0.0, d: 0.3}
+
+left_front_axle_ctrlr:
+  joint: left_front_axle
+  type: effort_controllers/JointEffortController
+  pid: {p: 1.5, i: 0.2, d: 0.0, i_clamp: 10.0}
+right_front_axle_ctrlr:
+  joint: right_front_axle
+  type: effort_controllers/JointEffortController
+  pid: {p: 1.5, i: 0.2, d: 0.0, i_clamp: 10.0}
+left_rear_axle_ctrlr:
+  joint: left_rear_axle
+  type: effort_controllers/JointEffortController
+  pid: {p: 1.5, i: 0.5, d: 0.0, i_clamp: 10.0}
+right_rear_axle_ctrlr:
+  joint: right_rear_axle
+  type: effort_controllers/JointEffortController
+  pid: {p: 1.5, i: 0.5, d: 0.0, i_clamp: 10.0}
+
+# The proportional gain of each shock absorber controller is:
+# front shock constant is 15 lb/in = 2626.902525 N/m
+# rear shock constant is 19 lb/in = 3327.409865 N/m
+# front: 2 * (0.06 * 2626.902525 / 0.1) = 3152.28303
+# rear:  2 * (0.07 * 3327.409865 / 0.11) = 4234.88528273
+#
+# 2 * (shock_stroke * shock_spring_constant / wheel_travel). shock_stroke is
+# 0.07 m. shock_spring_constant, an approximation of the AutoRally platform Shock
+# shock absorber spring's constant
+#
+# looks like for 17 lb/in
+# 2 * (0.07 * 2977.156195 / 0.1) = 4168.018673
+# sqrt(3 * 2977.156195)) = 94.5064473197
+#
+# The derivative gain of each shock absorber controller is 2 * shock_damping.
+# shock_damping, an approximation of the viscous damping coefficient of an
+# Ultra Shock shock absorber, is 36.2416 Ns/m
+# (i.e. sqrt(3 * shock_spring_constant)).
+# sqrt(3 * needs to be computed)) = 
+# sqrt(3 * needs to eb computed)) = 
+
+left_front_shock_ctrlr:
+  joint: left_front_shock
+  type: effort_controllers/JointPositionController
+  pid: {p: 3152.28303, i: 0.0, d: 20}
+right_front_shock_ctrlr:
+  joint: right_front_shock
+  type: effort_controllers/JointPositionController
+  pid: {p: 3152.28303, i: 0.0, d: 20}
+left_rear_shock_ctrlr:
+  joint: left_rear_shock
+  type: effort_controllers/JointPositionController
+  pid: {p: 4234.88528273, i: 0.0, d: 25}
+right_rear_shock_ctrlr:
+  joint: right_rear_shock
+  type: effort_controllers/JointPositionController
+  pid: {p: 4234.88528273, i: 0.0, d: 25}

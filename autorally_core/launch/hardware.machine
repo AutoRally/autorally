@@ -1,0 +1,15 @@
+<launch>
+
+  <group if="$(env ROSLAUNCH_SSH_UNKNOWN)">
+
+    <machine name="muri-laptop" address="$(env MASTER_HOSTNAME)" user="muri" default="true"
+      env-loader="/home/muri/catkin_ws/devel/env.sh"/>
+
+  </group>
+
+  <group unless="$(env ROSLAUNCH_SSH_UNKNOWN)">
+    <machine name="muri-laptop" address="$(env MASTER_HOSTNAME)" default="true"/>
+  </group>
+
+  <machine name="muri-ocs" address="$(env HOSTNAME)" />
+</launch>

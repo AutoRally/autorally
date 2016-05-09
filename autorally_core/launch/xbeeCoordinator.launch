@@ -1,0 +1,21 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node name="xbeeCoordinator" pkg="autorally_core" type="xbeeCoordinator"
+        machine="muri-ocs" output="screen">
+    <remap from="safeSpeed" to="runstopSafeSeed"/>
+    <remap from="gpsBaseRTCM3" to="gpsBaseRTCM3Xbee" />
+
+    <param name="frameID" type="string" value="41"/>
+    <param name="diagnosticInfo" value="DB %V ER GD TR TP AP AO ID NI SH SL CE" />
+
+    <param name="port" value="/dev/arXbeeCoordinator" />
+    <!--configure settings for 230400 baud, 8N1 -->
+    <param name="serialBaud" value="230400" />
+    <param name="serialDataBits" value="8" />
+    <param name="serialParity" value="none" />
+    <param name="serialStopBits" value="1" />
+    <param name="serialHardwareFlow" value="false" />
+    <param name="serialSoftwareFlow" value="false" />
+  </node>
+</launch>

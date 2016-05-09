@@ -1,0 +1,19 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node pkg="nodelet" type="nodelet" name="ConstantSpeedControllerB" args="load control/ConstantSpeedController autorally_core_manager" output="screen">
+
+    <rosparam param="throttleCalibration" command="load" file="$(env AR_CONFIG_PATH)/throttlePositionCalibration.yaml" />
+    <param name="speedCommander" value="OCS" />
+
+    <param name="controlEnabled" value="true" />
+    <param name="KP" value="0.15" />
+    <param name="KD" value="0.0" />
+    <param name="accelerationRate" value="0.0" />
+    <param name="KI" value="0.001" />
+    <param name="IMax" value="0.2" />
+    <remap from="/safeSpeed" to="/targetSpeed" />
+
+  </node>
+
+</launch>

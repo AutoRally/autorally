@@ -1,0 +1,37 @@
+<launch>
+
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+  <node name="gpsBase" pkg="autorally_core" type="gpsHemisphereInterface" output="screen" machine="muri-ocs">
+
+    <!-- mode can be either "base" or "rover" -->
+    <param name="mode" value="base" />
+    <param name="accuracyRTK" value="0.02" />
+    <param name="accuracyWAAS" value="0.6" />
+    <param name="accuracyAutonomous" value="2.5" />
+    <param name="utcSource" value="" />
+    <param name="statusPositionSource" value="GPGNS" /> <!-- GPGNS | GPGGA -->
+    <param name="showGsv" value="false" />
+    
+    <remap from="gpsBaseRTCM3" to="gpsBaseRTCM3Xbee" />    
+    
+
+    <param name="primaryPort/portPath" value="/dev/arGPSbasePortA" />
+    <param name="primaryPort/serialBaud" value="115200" />
+    <param name="primaryPort/serialDataBits" value="8" />
+    <param name="primaryPort/serialParity" value="none" />
+    <param name="primaryPort/serialStopBits" value="1" />
+    <param name="primaryPort/serialHardwareFlow" value="false" />
+    <param name="primaryPort/serialSoftwareFlow" value="false" />
+
+
+    <param name="correctionPort/portPath" value="/dev/arGPSbasePortB" />
+    <param name="correctionPort/serialBaud" value="115200" />
+    <param name="correctionPort/serialDataBits" value="8" />
+    <param name="correctionPort/serialParity" value="none" />
+    <param name="correctionPort/serialStopBits" value="1" />
+    <param name="correctionPort/serialHardwareFlow" value="false" />
+    <param name="correctionPort/serialSoftwareFlow" value="false" />
+
+  </node>
+
+</launch>

@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (c) 2016 Georgia Institute of Technology
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<package>
+  <name>autorally_control</name>
+  <version>0.1.0</version>
+  <description>All control software created for the autorally project resides here</description>
+
+  <maintainer email="bgoldfain3@gatech.edu">Brian Goldfain</maintainer>
+
+  <author email="bgoldfain3@gatech.edu">Brian Goldfain</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://autorally.github.io</url>
+
+  <author>Brian Goldfain</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>autorally_msgs</build_depend>
+  <build_depend>autorally_core</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>nodelet</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>autorally_msgs</run_depend>
+  <run_depend>autorally_core</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+  </export>
+</package>

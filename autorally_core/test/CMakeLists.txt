@@ -1,0 +1,9 @@
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+rosbuild_add_gtest(test/diagnosticsTest diagnosticsTest.cpp)
+target_link_libraries(test/diagnosticsTest Diagnostics)
+
+rosbuild_add_gtest(test/serialSensorInterfaceTest serialSensorInterfaceTest.cpp)
+target_link_libraries(test/serialSensorInterfaceTest SerialSensorInterface Diagnostics)
+
+rosbuild_add_gtest(test/pololuMicroMaestroTest pololuMicroMaestroTest.cpp)
+target_link_libraries(test/pololuMicroMaestroTest PololuMicroMaestro SerialSensorInterface Diagnostics)

@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+
+<!-- autoRallyJumpGazeboSim.launch
+
+Use Gazebo to simulate a vehicle with Ackermann steering.
+
+Arguments:
+    namespace (string, default: autorally_platform)
+        Vehicle namespace.
+    world_name (string, default: worlds/empty.world)
+        Gazebo world name.
+    cmd_timeout (float, default: 0.5)
+        Command timeout passed to the autorally_controller.py node.
+    x (float, default: 0.0)
+    y (float, default: 0.0)
+    z (float, default: 0.1)
+    roll (float, default: 0.0)
+    pitch (float, default: 0.0)
+    yaw (float, default: 0.0)
+        Vehicle pose. x, y, and z are measured in meters. roll, pitch, and yaw
+        are measured in radians.
+
+Copyright (c) 2013 Wunderkammer Laboratory
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+to delete the platform model:
+rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPlatform}'
+-->
+
+<launch>
+  <arg name="namespace" default="autorally_platform"/>
+  <arg name="world_name" default="worlds/empty_sky.world"/>
+  <arg name="cmd_timeout" default="0.5"/>
+
+  <!-- Vehicle pose -->
+  <arg name="x" default="-10"/>
+  <arg name="y" default="-4"/>
+  <arg name="z" default="0.3"/>
+  <arg name="roll" default="0.0"/>
+  <arg name="pitch" default="0.0"/>
+  <arg name="yaw" default="0"/>
+
+  <include file="$(find autorally_description)/launch/autoRallyPlatform.launch">
+    <arg name="namespace" value="$(arg namespace)"/>
+  </include>
+  
+  <!-- Remap to same topics as the actual robot -->
+  <remap from="/$(arg namespace)/imu" to="/imu/imu" />
+  <remap from="/$(arg namespace)/gpsRoverStatus" to="/gpsRoverStatus" />
+  <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
+  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
+  
+  <!-- Remap for servo command entries, need an entry for every commander -->
+  <remap from="/$(arg namespace)/mppi_controller/servoCommand" to="/mppi_controller/servoCommand" />
+  <remap from="/$(arg namespace)/joystick/servoCommand" to="/joystick/servoCommand" />
+  <remap from="/$(arg namespace)/RC/servoCommand" to="/RC/servoCommand" />
+  <remap from="/$(arg namespace)/OCS/servoCommand" to="/OCS/servoCommand" />
+  <remap from="/$(arg namespace)/constantSpeedController/servoCommand" to="/constantSpeedController/servoCommand" />
+  <remap from="/$(arg namespace)/jumpControllerOptimal/servoCommand" to="/jumpControllerOptimal/servoCommand" />
+  <remap from="/$(arg namespace)/WPController/servoCommand" to="/WPController/servoCommand" />
+
+  <group ns="$(arg namespace)">
+    <!-- Create the world. -->
+    <include file="$(find autorally_gazebo)/launch/autoRallyJumpWorld.launch">
+      <arg name="world_name" value="$(arg world_name)"/>
+      <arg name="namespace" value="$(arg namespace)" />
+    </include>
+        
+    <!-- Spawn the vehicle. -->
+    <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param robot_description -model autoRallyPlatform
+                -gazebo_namespace /$(arg namespace)/gazebo
+                -x $(arg x) -y $(arg y) -z $(arg z)
+                -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+
+    <!-- Load the joint controllers. One of these publishes the joint states
+         to joint_states. -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner"
+          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/> 
+
+    <!-- Control the steering, axle, and shock absorber joints. -->
+    <node name="autorally_controller" pkg="autorally_gazebo"
+          type="autorally_controller.py" output="screen">
+      <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
+      <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
+      <rosparam param="servoCommandProirities" command="load" file="$(env AR_CONFIG_PATH)//servoCommandPriorities.yaml" />
+    </node>
+
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find autorally_gazebo)/custom_rosconsole.conf" />
+    
+    <node name="wheelSpeeds" pkg="autorally_gazebo" type="wheelSpeedsGazebo.py" output="screen" />
+  </group>
+
+  <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
+  <include file="$(find autorally_control)/launch/joystickController.launch" />
+
+</launch>

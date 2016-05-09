@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Point
+from visualization_msgs.msg import Marker
+
+class WaypointGen():
+    
+    def GpsCallback(self, data):
+        position = data.pose.pose.position
+        
+        #print position
+        
+        if len(self.points) < 1:
+            print 'grabbed first position'
+            self.points.append(position)
+            self.xOff = position.x
+            self.yOff = position.y
+            
+        if dist2D(self.points[-1],position) > self.wptDist:
+            #self.points.append(position)
+
+            self.points.append(Point(position.x,position.y,position.z))
+
+            rospy.loginfo('Added ' + str(position.x) + ' ' + str(position.y))
+            
+            # Write it to a file
+            f = open(self.filename, 'w')
+            for wpt in self.points:
+                f.write(str(wpt.x) + ',' + str(wpt.y) + '\n')
+            f.close()
+
+            wptMarker = Marker()
+            wptMarker.header.frame_id = "base_footprint"
+            wptMarker.header.stamp = rospy.Time()
+            wptMarker.type = Marker.SPHERE
+            wptMarker.id = 1
+            for wpt in self.points:
+                #wptMarker.pose.position = wpt
+                wptMarker.pose.position.x = wpt.x - self.xOff
+                wptMarker.pose.position.y = wpt.y - self.yOff
+                #print str(wpt.x - self.xOff) + ' ' + str(wpt.y - self.yOff)
+                wptMarker.pose.position.z = 0
+                wptMarker.scale.x = self.wptDist
+                wptMarker.scale.y = self.wptDist
+                wptMarker.scale.z = self.wptDist
+                wptMarker.color.a = 1.0
+                wptMarker.color.r = 0.0
+                wptMarker.color.g = 1.0
+                wptMarker.color.b = 0.0
+                self.markerPub.publish(wptMarker)
+                wptMarker.id += 1
+                
+        
+    def __init__(self):
+        self.wptDist = rospy.get_param('~WaypointDistance', 1.5)
+        self.filename = rospy.get_param('~WaypointFile','waypoints.txt')
+        
+        rospy.Subscriber("~gps", Odometry, self.GpsCallback)
+        self.wptPub = rospy.Publisher("~waypoints", PoseArray, latch=True, queue_size=1)
+        self.markerPub = rospy.Publisher("~markers", Marker, queue_size=20)
+        self.points = []
+
+        while not rospy.is_shutdown():
+            rospy.sleep(1.0)
+            
+def dist2D(pt1, pt2):
+    #print pt1
+    #print pt2
+    return ((pt2.x - pt1.x)**2.0 + (pt2.y - pt1.y)**2.0)**(0.5)
+            
+if __name__ == '__main__':
+    rospy.init_node('wpgenerator')
+    theNode = WaypointGen()

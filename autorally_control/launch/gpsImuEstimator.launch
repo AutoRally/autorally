@@ -1,0 +1,46 @@
+<launch>
+
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+
+  <node name="gps_imu" pkg="control" type="imuGpsEstimator" output="screen">
+      <remap from="/gps_imu/gps" to="/gpsRoverStatus"/>
+      <remap from="/gps_imu/imu" to="/imu/imu"/>
+      <remap from="/gps_imu/pose" to="/pose_estimate"/>
+      <remap from="/gps_imu/filter" to="/imu/filter"/>
+      
+      <param name="InitialRotationNoise" value="0.25"/>
+      <param name="InitialTranslationNoise" value="0.1"/>
+      <param name="InitialBiasNoiseAcc" value="2e-1"/>
+      <param name="InitialBiasNoiseGyro" value="2e-2"/>
+      <param name="AccelerometerSigma" value="1.0e-3"/>
+      <param name="GyroSigma" value="8.73e-5"/>
+      <param name="AccelBiasSigma" value="3.9e-4"/>
+      <param name="GyroBiasSigma" value="4.8e-05"/>
+      <param name="GPSSigma" value="0.5"/>
+      <!--<param name="SensorTransformX" value="0.076"/>
+      <param name="SensorTransformY" value="-0.0246"/>
+      <param name="SensorTransformZ" value="-0.020"/>-->
+      <param name="SensorXAngle" value="0"/>
+      <param name="SensorYAngle" value="3.14159265359"/>
+      <param name="SensorZAngle" value="1.57079632679"/>
+      <param name="CarXAngle" value="3.14159265359"/>
+      <param name="CarYAngle" value="0"/>
+      <param name="CarZAngle" value="0"/>
+      <param name="GpsSkip" value="1"/>
+      <param name="Gravity" value="-9.81"/>
+      
+      <!--<param name="Gravity" value="-9.79509"/>-->
+      
+      <!-- in sumulation use "rosparam set /gps_imu/FixedInitialPose true" -->
+      <!-- <param name="FixedInitialPose" value="false"/> -->
+      <param name="initialRoll" value="0"/>
+      <param name="intialPitch" value="0"/>
+      <param name="initialYaw" value="0"/>
+      <param name="InvertX" value="false"/>
+      <param name="InvertY" value="false"/>
+      <param name="InvertZ" value="false"/>
+      
+      
+  </node>
+</launch>

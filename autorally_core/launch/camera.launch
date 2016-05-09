@@ -1,0 +1,58 @@
+<launch>
+  <arg name="nodelet_manager_launched" default="0" />
+  <arg name="guid" default="0" />
+  <arg name="side" default="left" />
+  
+  <!-- nodelet manager process -->
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="muri-laptop" output="screen" args="manager" unless="$(arg nodelet_manager_launched)" />
+  
+  <!-- camera driver nodelet -->
+  <param name="/camera/image_raw/compressed/jpeg_quality" type="int" value="10"/>
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_camera1394_nodelet" machine="muri-laptop" output="screen" args="
+    load camera1394/driver camera_nodelet_manager
+    _guid:=$(arg guid)
+    _video_mode:=format7_mode0
+    _iso_speed:=200
+    _roi_width:=1280
+    _roi_height:=1024
+    _y_offset:=0
+    _x_offset:=0
+    _camera_info_url:=file://$(env AR_CONFIG_PATH)/camera_calibration_$(arg guid).yaml
+    _format7_color_coding:=raw8
+    _frame_rate:=60
+    _use_ros_time:=True
+    _format7_color_coding:=yuv422
+    _format7_packet_size:=20008
+    _auto_gamma:=0
+    _auto_hue:=0
+    _auto_saturation:=0
+    _auto_sharpness:=0
+    _auto_brightness:=3
+    _brightness:=0
+    _auto_white_balance:=0
+    _auto_shutter:=3">
+    <param name="external_trigger" value="False" />
+    <remap from="camera" to="$(arg side)_camera"/>
+  </node>
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_image_proc_debayer" args="load image_proc/debayer camera_nodelet_manager">
+    <remap from="image_raw" to="$(arg side)_camera/image_raw" />
+    <remap from="image_mono" to="$(arg side)_camera/image_mono" />
+    <remap from="image_color" to="$(arg side)_camera/image_color" />
+    <param name="debayer" value="0"/>
+  </node>
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_image_proc_rect_mono" args="load image_proc/rectify camera_nodelet_manager">
+    <remap from="image_mono" to="$(arg side)_camera/image_mono" />
+    <remap from="image_rect" to="$(arg side)_camera/image_mono_rect" />
+  </node>
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_image_proc_rect_color" args="load image_proc/rectify camera_nodelet_manager">
+    <remap from="image_mono" to="$(arg side)_camera/image_color" />
+    <remap from="image_rect" to="$(arg side)_camera/image_color_rect" />
+  </node>
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_ImageRepublisher" args="load autorally_core/ImageRepublisher camera_nodelet_manager" output="screen" machine="muri-laptop" >
+    <param name="fps" value="24" />
+    <param name="resizeHeight" value="480" />
+    <remap from="camera/image_raw" to="$(arg side)_camera/image_color" />
+    <remap from="image_display" to="$(arg side)_camera/image_display" />
+  </node>
+  
+</launch>

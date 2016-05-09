@@ -1,0 +1,41 @@
+# GPS Base
+# Replace "PORT_*_SERIAL" with the serial number for the USB-to-serial adapter for each port
+SUBSYSTEM=="tty", ATTRS{serial}=="PORT_A_SERIAL", MODE="0666", SYMLINK+="arGPSBasePortA"
+SUBSYSTEM=="tty", ATTRS{serial}=="PORT_B_SERIAL", MODE="0666", SYMLINK+="arGPSBasePortB"
+
+# GPS Rovers
+# Replace "PORT_*_SERIAL" with the serial number for the USB-to-serial adapter for each port
+SUBSYSTEM=="tty", ATTRS{serial}=="PORT_A_SERIAL", MODE="0666", SYMLINK+="arGPSRoverPortA"
+SUBSYSTEM=="tty", ATTRS{serial}=="PORT_B_SERIAL", MODE="0666", SYMLINK+="arGPSRoverPortB"
+SUBSYSTEM=="tty", ATTRS{serial}=="PORT_D_SERIAL", MODE="0666", SYMLINK+="arGPSRoverPortD"
+
+# Xbee Nodes
+# Replace "XBEE_ADAPTER_SERIAL" with the serial number of the USB-to-serial adapter for the compute box XBee
+SUBSYSTEM=="tty", ATTRS{serial}=="XBEE_ADAPTER_SERIAL", MODE="0666", SYMLINK+="arXbeeNode"
+
+# Coordinator
+# Replace "XBEE_ADAPTER_SERIAL" with the serial number of the USB-to-serial adapter for the base station XBee
+SUBSYSTEM=="tty", ATTRS{serial}=="XBEE_ADAPTER_SERIAL", MODE="0666", SYMLINK+="arXbeeCoordinator"
+
+# Cameras
+# For each camera, replace "CAMERAGUID" with the camera's GUID shown in FlyCap
+# For each camera, replace "CAMERA_SERIAL" with the camera's serial number shown in FlyCap
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1e10", ATTRS{serial}=="CAMERA_SERIAL", MODE="0666", SYMLINK+="arCamera_CAMERAGUID", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1e10", ATTRS{serial}=="CAMERA_SERIAL", MODE="0666", SYMLINK+="arCamera_CAMERAGUID", GROUP="plugdev"
+
+#
+# The following rules do not need to be customized
+#
+
+# Arduino UNO
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.cc)", ATTRS{idProduct}=="0043", SYMLINK+="arRunStop"
+SUBSYSTEMS=="usb", ATTRS{manufacturer}=="Arduino (www.arduino.cc)", ATTRS{product}=="Arduino Uno", MODE="0666", SYMLINK+="arRunStop"
+
+# Arduino Micro
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino Srl", ATTRS{idProduct}=="8037", ATTRS{product}=="Arduino Micro", SYMLINK+="arComputeBoxArduino"
+
+# Arduino Due
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.org)", ATTRS{idProduct}=="003d", ATTRS{product}=="Arduino Due Prog. Port", MODE="0666", SYMLINK+="arChassis"
+
+# IMU
+DRIVERS=="usb", ATTRS{manufacturer}=="Lord Microstrain", ATTRS{product}=="Lord Inertial Sensor", MODE="0666", SYMLINK+="arLordIMU"

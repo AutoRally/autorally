@@ -1,0 +1,31 @@
+<library path="lib/libJumpControl">
+  <class name="autorally_control/JumpControl" type="autorally_control::JumpControl" base_class_type="nodelet::Nodelet">
+    <description>
+    Controller nodelet for when the vehicle is airborne
+    </description>
+  </class>
+</library>
+
+<library path="lib/libJumpControlOptimal">
+  <class name="autorally_control/JumpControlOptimal" type="autorally_control::JumpControlOptimal" base_class_type="nodelet::Nodelet">
+    <description>
+    Controller nodelet for when the vehicle is airborne
+    </description>
+  </class>
+</library>
+
+<library path="lib/libConstantSpeedController">
+  <class name="autorally_control/ConstantSpeedController" type="autorally_control::ConstantSpeedController" base_class_type="nodelet::Nodelet">
+    <description>
+    Drive robot at a constant speed using wheel speed data
+    </description>
+  </class>
+</library>
+
+<library path="lib/libConstantSpeedControllerB">
+  <class name="autorally_control/ConstantSpeedControllerB" type="autorally_control::ConstantSpeedControllerB" base_class_type="nodelet::Nodelet">
+    <description>
+    Drive robot at a constant speed using wheel speed data
+    </description>
+  </class>
+</library>

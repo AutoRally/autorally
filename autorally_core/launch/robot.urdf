@@ -1,0 +1,116 @@
+<robot name="autoRally">
+
+  <link name="base_link" />
+  <link name="rearAxle" />
+  <link name="steeringLinkage" />
+  <link name="lfHub" />
+  <link name="rfHub" />
+  <link name="lfWheel" />
+  <link name="rfWheel" />
+
+  <link name="lbHub" />
+  <link name="rbHub" />
+  <link name="lbWheel" />
+  <link name="rbWheel" />
+
+  <link name="gps" />
+  <link name="camera" />
+  <link name="imu_mount" />
+
+ <joint name="base_footprint" type="fixed">
+    <parent link="base_link"/>
+    <child link="rearAxle"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <joint name="lbHub" type="fixed">
+    <parent link="rearAxle"/>
+    <child link="lbHub"/>
+    <origin xyz="0 -0.1 0" rpy="0 0 0" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <joint name="rbHub" type="fixed">
+    <parent link="rearAxle"/>
+    <child link="rbHub"/>
+    <origin xyz="0 0.1 0" rpy="0 0 0" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+ <joint name="lbWheel" type="fixed">
+    <parent link="lbHub"/>
+    <child link="lbWheel"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+  </joint>
+
+ <joint name="rbWheel" type="fixed">
+    <parent link="rbHub"/>
+    <child link="rbWheel"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+  </joint>
+
+
+  <joint name="steeringLinkage" type="fixed">
+    <parent link="rearAxle"/>
+    <child link="steeringLinkage"/>
+    <origin xyz="0.8 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <joint name="lfHub" type="fixed">
+    <parent link="steeringLinkage"/>
+    <child link="lfHub"/>
+    <origin xyz="0 -0.1 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit effort="0.0" lower="0.0" upper="0.0" velocity="0.0"/>
+  </joint>
+
+  <joint name="rfHub" type="fixed">
+    <parent link="steeringLinkage"/>
+    <child link="rfHub"/>
+    <origin xyz="0 0.1 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit effort="0.0" lower="0.0" upper="0.0" velocity="0.0"/>
+  </joint>
+
+  <joint name="lfWheel" type="fixed">
+    <parent link="lfHub"/>
+    <child link="lfWheel"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+  </joint>
+
+  <joint name="rfWheel" type="fixed">
+    <parent link="rfHub"/>
+    <child link="rfWheel"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+  </joint>
+
+
+  <joint name="imu" type="fixed">
+    <parent link="rearAxle"/>
+    <child link="imu_mount"/>
+    <origin xyz="0.15 0 0.2" rpy="3.14 0 3.14" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <joint name="gps" type="fixed">
+    <parent link="rearAxle"/>
+    <child link="gps"/>
+    <origin xyz="0.2 0 0.24" rpy="0 0 0" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <joint name="camera" type="fixed">
+    <parent link="rearAxle"/>
+    <child link="camera"/>
+    <origin xyz="0.4 0 0.24" rpy="0 0 0" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+
+</robot>

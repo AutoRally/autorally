@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<robot name="jump22deg">
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  <link name="jump22deg_link">
+    <origin pose="0 0 0 0 0 0"/>
+    <collision name="jump22deg_collision">
+      <geometry>
+        <mesh filename="package://autorally_description/urdf/jump22deg.stl" scale="0.01 0.01 0.01" />
+      </geometry>
+    </collision>
+    
+    <visual name="jump22deg_visual" cast_shadows="false">
+      <geometry>
+        <mesh filename="package://autorally_description/urdf/jump22deg.stl" scale="0.01 0.01 0.01" />
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" />
+      <mass value="1000000000.0" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+  </link>
+  <gazebo reference="jump22deg_link">
+    <material>Gazebo/Grey</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+  
+</robot>

@@ -1,0 +1,4 @@
+'0': {name: 'steering', center: 1562, min: 1020, max: 2020, reverse: false}
+'1': {name: 'throttle', center: 1541, min: 1088, max: 2000, reverse: false}
+'2': {name: 'backBrake', center: 1535, min: 1535, max: 1952, reverse: false}
+'3': {name: 'frontBrake', center: 1535, min: 1535, max: 1952, reverse: false}

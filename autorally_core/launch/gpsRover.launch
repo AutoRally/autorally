@@ -1,0 +1,35 @@
+<launch>
+
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+  <node name="gpsRover" pkg="autorally_core" type="gpsHemisphereInterface" output="screen" machine="muri-laptop">
+
+    <!-- mode can be either "base" or "rover" -->
+    <param name="mode" value="rover" />
+    <param name="accuracyRTK" value="0.02" />
+    <param name="accuracyWAAS" value="0.6" />
+    <param name="accuracyAutonomous" value="2.5" />
+    <param name="utcSource" value="GPZDA" />
+    <param name="statusPositionSource" value="GPGNS" /> <!-- GPGNS | GPGGA -->
+    <param name="showGsv" value="true" />
+    
+    <!--configure settings for primary port -->
+    <param name="primaryPort/portPath" value="/dev/arGPSroverPortA" />
+    <param name="primaryPort/serialBaud" value="115200" />
+    <param name="primaryPort/serialDataBits" value="8" />
+    <param name="primaryPort/serialParity" value="none" />
+    <param name="primaryPort/serialStopBits" value="1" />
+    <param name="primaryPort/serialHardwareFlow" value="false" />
+    <param name="primaryPort/serialSoftwareFlow" value="false" />
+
+    <!--configure settings for correction port (optional)-->
+    <param name="correctionPort/portPath" value="/dev/arGPSroverPortD" />
+    <param name="correctionPort/serialBaud" value="9600" />
+    <param name="correctionPort/serialDataBits" value="8" />
+    <param name="correctionPort/serialParity" value="none" />
+    <param name="correctionPort/serialStopBits" value="1" />
+    <param name="correctionPort/serialHardwareFlow" value="false" />
+    <param name="correctionPort/serialSoftwareFlow" value="false" />
+
+  </node>
+
+</launch>

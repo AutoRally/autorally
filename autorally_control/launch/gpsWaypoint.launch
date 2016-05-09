@@ -1,0 +1,22 @@
+<launch>
+  <!--  <node name="gps_conv" pkg="gps_common" type="utm_odometry_node">
+    <remap from="odom" to="vo"/>
+    <remap from="fix" to="/gpsRoverStatus" />
+    <param name="rot_covariance" value="99999" />
+    <param name="frame_id" value="base_footprint" />
+  </node>-->
+
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+
+  <node name="gps_follow" pkg="autorally_control" type="gpsWaypoint" output="screen">
+    <param name="WaypointFile" value="$(find autorally_core)/waypoints"/>
+    <param name="WaypointRadius" value="1.0"/>
+    <param name="HeadingP" value="2.5"/>
+    <remap from="/gps_follow/Speeds" to="/wheelSpeeds"/>
+    <remap from="/gps_follow/Odom" to="/pose_estimate"/>
+    <remap from="/gps_follow/Pose" to="/imu_data"/>
+    <remap from="/gps_follow/imageMask" to="/imageMask"/>
+    <remap from="/gps_follow/servoCommand" to="/servoCommand"/>
+  </node>
+</launch>

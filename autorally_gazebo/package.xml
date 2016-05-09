@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (c) 2016 Georgia Institute of Technology
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<package>
+  <name>autorally_gazebo</name>
+  <version>0.1.0</version>
+  <description>
+    autorally_gazebo is used with Gazebo to simulate the AutoRally
+    platform. This package was adapted from ackermann_vehicle_gazebo.
+  </description>
+
+  <maintainer email="bgoldfain3@gatech.edu">Brian Goldfain</maintainer>
+  <license>BSD</license>
+
+  <author email="bgoldfain3@gatech.edu">Brian Goldfain</author>
+
+  <url type="website">http://autorally.github.io</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>controller_manager</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>gazebo_ros_control</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>hector_gazebo_plugins</run_depend>
+  <run_depend>hector_gazebo_worlds</run_depend>
+  <run_depend>joy</run_depend>
+  <run_depend>effort_controllers</run_depend>
+  <run_depend>joint_state_controller</run_depend>
+
+</package>
