@@ -41,24 +41,30 @@ fi
 # Setup cameras
 
 # Right Camera
+export AR_RIGHTCAM_CONNECTED=true
 if [[ $devList == *"arCamera_GUID"* ]]
     then
         export AR_RIGHTCAM="GUID"
 #elif [[ $devList == *"arCamera_GUID"* ]]
 #    then
 #        export AR_RIGHTCAM="GUID"
+else
+    export AR_RIGHTCAM_CONNECTED=false
 fi
 if [[ $DEBUG == true ]]; then
     echo "AR_RIGHTCAM set to ${AR_RIGHTCAM}"
 fi
 
 # Left Camera
+export AR_LEFTCAM_CONNECTED=true
 if [[ $devList == *"arCamera_GUID"* ]]
     then
         export AR_LEFTCAM="GUID"
 #elif [[ $devList == *"arCamera_GUID"* ]]
 #    then
 #        export AR_LEFTCAM="GUID"
+else
+    export AR_LEFTCAM_CONNECTED=false
 fi
 if [[ $DEBUG == true ]]; then
     echo "AR_LEFTCAM set to ${AR_LEFTCAM}"
