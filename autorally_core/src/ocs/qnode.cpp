@@ -271,8 +271,7 @@ void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
     }
     pthread_mutex_unlock(&m_imageMutex);
   }
-  if(newData != 0)
-    delete newData;
+  delete newData;
 }
 
 void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
@@ -301,8 +300,7 @@ void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
     }
     pthread_mutex_unlock(&m_imageMutex);
   }
-  if(newData != 0)
-    delete newData;
+  delete newData;
 }
 
 unsigned char* QNode::convertBGRtoRGB(const unsigned char* data, int size) {
