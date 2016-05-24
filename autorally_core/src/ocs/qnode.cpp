@@ -51,7 +51,24 @@ QNode::QNode(int argc, char** argv ) :
 	                ("autorally_msgs::servoMSGConstPtr");
   qRegisterMetaType<diagnostic_msgs::DiagnosticStatus>
 	                ("diagnostic_msgs::DiagnosticStatus");
-  pthread_mutex_init(&m_imageMutex, NULL);
+  int init_err = pthread_mutex_init(&m_imageMutex, nullptr);
+  if(init_err != 0) {
+    switch(init_err) {
+      case EAGAIN:
+        std::cerr << "ERROR: Unable to initialize image mutex due to lack of resource other than memory." << std::endl;
+        break;
+      case ENOMEM:
+        std::cerr << "ERROR: Unable to initialize image mutex due to lack of memory." << std::endl;
+        break;
+      case EPERM:
+        std::cerr << "ERROR: Unable to initialize image mutex due to insufficient priveleges." << std::endl;
+        break;
+      default:
+        std::cerr << "ERROR: Unable to initialize image mutex for unknown reason." << std::endl;
+        break;
+    }
+    exit(init_err);
+  }
 }
 
 QNode::~QNode() {
