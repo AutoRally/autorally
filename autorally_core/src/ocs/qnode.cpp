@@ -247,21 +247,7 @@ void QNode::imageMaskCallback(const autorally_msgs::imageMask& msg)
 
 void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
 {
-  QImage::Format format = QImage::Format_Indexed8;
-  unsigned char *newData = 0;
-  if(msg->encoding == "bgr8") {
-    format = QImage::Format_RGB888;
-    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
-  }
-  if(msg->encoding == "rgb8")
-    format = QImage::Format_RGB888;
-  if(msg->encoding == "mono16")
-    ROS_WARN("The OCS does not currently support 16bpp images. This image topic will not render correctly.");
-  QImage img(msg->encoding == "bgr8" ? newData : &msg->data[0],
-             msg->width,
-             msg->height,
-             msg->step,
-             format);
+  QImage img = formatImageForDisplay(msg);
 
   if(!pthread_mutex_trylock(&m_imageMutex))
   {
@@ -271,26 +257,11 @@ void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
     }
     pthread_mutex_unlock(&m_imageMutex);
   }
-  delete newData;
 }
 
 void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
 {
-  QImage::Format format = QImage::Format_Indexed8;
-  unsigned char *newData = 0;
-  if(msg->encoding == "bgr8") {
-    format = QImage::Format_RGB888;
-    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
-  }
-  if(msg->encoding == "rgb8")
-    format = QImage::Format_RGB888;
-  if(msg->encoding == "mono16")
-    ROS_WARN("The OCS does not currently support 16bpp images. This image topic will not render correctly.");
-  QImage img(msg->encoding == "bgr8" ? newData : &msg->data[0],
-             msg->width,
-             msg->height,
-             msg->step,
-             format);
+  QImage img = formatImageForDisplay(msg);
 
   if(!pthread_mutex_trylock(&m_imageMutex))
   {
@@ -300,7 +271,6 @@ void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
     }
     pthread_mutex_unlock(&m_imageMutex);
   }
-  delete newData;
 }
 
 unsigned char* QNode::convertBGRtoRGB(const unsigned char* data, int size) {
@@ -400,4 +370,30 @@ void QNode::switchImageTopic(int subscriber, std::string name)
             }
         }
     }
+}
+
+QImage QNode::formatImageForDisplay(const sensor_msgs::ImageConstPtr &msg)
+{
+  QImage::Format format = QImage::Format_Indexed8;
+
+  std::string encoding = msg->encoding;
+
+  unsigned char *newData = nullptr;
+
+  if(encoding == "bgr8") {
+    format = QImage::Format_RGB888;
+    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
+  }
+  else if(encoding == "rgb8") {
+    format = QImage::Format_RGB888;
+  }
+  else {
+    ROS_WARN_STREAM("The OCS does not currently support " << encoding << " images. This image topic will not render correctly.");
+  }
+
+  QImage img = QImage(encoding == "bgr8" ? newData : &msg->data[0], msg->width, msg->height, msg->step, format).copy();
+
+  delete newData;
+
+  return img;
 }

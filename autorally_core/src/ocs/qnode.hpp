@@ -267,6 +267,9 @@ private:
   */
   unsigned char* convertBGRtoRGB(const unsigned char* data, int size);
 
+
+  QImage formatImageForDisplay(const sensor_msgs::ImageConstPtr& msg);
+
 };
 
 #endif /* QNODE_HPP_ */
