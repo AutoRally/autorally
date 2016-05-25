@@ -6,7 +6,11 @@ Software for the AutoRally research platform.
 
 AutoRally Platform Website: http://autorally.github.io
 
-AutoRally Research Website: http://rehg.org/autorally
+Research Pages AutoRally is associated with:
+  * http://rehg.org/autorally
+  * http://dcsl.gatech.edu/research-muri-nascar.html
+  * http://acds-lab.gatech.edu/Research.html
+
 
 ## Setup Instructions
 
