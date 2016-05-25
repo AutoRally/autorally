@@ -3,15 +3,15 @@
 
   <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="muri-laptop" output="screen" args="manager" />
 
-  <include file="$(find autorally_core)/launch/camera.launch">
+  <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_LEFTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
-    <arg name="guid" value="$(env AR_LEFTCAM)" />
+    <arg name="guid" value="$(optenv AR_LEFTCAM 'none')" />
     <arg name="side" value="left" />
   </include>
   
-  <include file="$(find autorally_core)/launch/camera.launch">
+  <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_RIGHTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
-    <arg name="guid" value="$(env AR_RIGHTCAM)" />
+    <arg name="guid" value="$(optenv AR_RIGHTCAM 'none')" />
     <arg name="side" value="right" />
   </include>
 

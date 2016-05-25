@@ -51,7 +51,24 @@ QNode::QNode(int argc, char** argv ) :
 	                ("autorally_msgs::servoMSGConstPtr");
   qRegisterMetaType<diagnostic_msgs::DiagnosticStatus>
 	                ("diagnostic_msgs::DiagnosticStatus");
-  pthread_mutex_init(&m_imageMutex, NULL);
+  int init_err = pthread_mutex_init(&m_imageMutex, nullptr);
+  if(init_err != 0) {
+    switch(init_err) {
+      case EAGAIN:
+        std::cerr << "ERROR: Unable to initialize image mutex due to lack of resource other than memory." << std::endl;
+        break;
+      case ENOMEM:
+        std::cerr << "ERROR: Unable to initialize image mutex due to lack of memory." << std::endl;
+        break;
+      case EPERM:
+        std::cerr << "ERROR: Unable to initialize image mutex due to insufficient priveleges." << std::endl;
+        break;
+      default:
+        std::cerr << "ERROR: Unable to initialize image mutex for unknown reason." << std::endl;
+        break;
+    }
+    exit(init_err);
+  }
 }
 
 QNode::~QNode() {
@@ -247,21 +264,7 @@ void QNode::imageMaskCallback(const autorally_msgs::imageMask& msg)
 
 void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
 {
-  QImage::Format format = QImage::Format_Indexed8;
-  unsigned char *newData = 0;
-  if(msg->encoding == "bgr8") {
-    format = QImage::Format_RGB888;
-    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
-  }
-  if(msg->encoding == "rgb8")
-    format = QImage::Format_RGB888;
-  if(msg->encoding == "mono16")
-    ROS_WARN("The OCS does not currently support 16bpp images. This image topic will not render correctly.");
-  QImage img(msg->encoding == "bgr8" ? newData : &msg->data[0],
-             msg->width,
-             msg->height,
-             msg->step,
-             format);
+  QImage img = formatImageForDisplay(msg);
 
   if(!pthread_mutex_trylock(&m_imageMutex))
   {
@@ -271,27 +274,11 @@ void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
     }
     pthread_mutex_unlock(&m_imageMutex);
   }
-  if(newData != 0)
-    delete newData;
 }
 
 void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
 {
-  QImage::Format format = QImage::Format_Indexed8;
-  unsigned char *newData = 0;
-  if(msg->encoding == "bgr8") {
-    format = QImage::Format_RGB888;
-    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
-  }
-  if(msg->encoding == "rgb8")
-    format = QImage::Format_RGB888;
-  if(msg->encoding == "mono16")
-    ROS_WARN("The OCS does not currently support 16bpp images. This image topic will not render correctly.");
-  QImage img(msg->encoding == "bgr8" ? newData : &msg->data[0],
-             msg->width,
-             msg->height,
-             msg->step,
-             format);
+  QImage img = formatImageForDisplay(msg);
 
   if(!pthread_mutex_trylock(&m_imageMutex))
   {
@@ -301,8 +288,6 @@ void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
     }
     pthread_mutex_unlock(&m_imageMutex);
   }
-  if(newData != 0)
-    delete newData;
 }
 
 unsigned char* QNode::convertBGRtoRGB(const unsigned char* data, int size) {
@@ -402,4 +387,30 @@ void QNode::switchImageTopic(int subscriber, std::string name)
             }
         }
     }
+}
+
+QImage QNode::formatImageForDisplay(const sensor_msgs::ImageConstPtr &msg)
+{
+  QImage::Format format = QImage::Format_Indexed8;
+
+  std::string encoding = msg->encoding;
+
+  unsigned char *newData = nullptr;
+
+  if(encoding == "bgr8") {
+    format = QImage::Format_RGB888;
+    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
+  }
+  else if(encoding == "rgb8") {
+    format = QImage::Format_RGB888;
+  }
+  else {
+    ROS_WARN_STREAM("The OCS does not currently support " << encoding << " images. This image topic will not render correctly.");
+  }
+
+  QImage img = QImage(encoding == "bgr8" ? newData : &msg->data[0], msg->width, msg->height, msg->step, format).copy();
+
+  delete newData;
+
+  return img;
 }

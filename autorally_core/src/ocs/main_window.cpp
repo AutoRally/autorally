@@ -438,7 +438,23 @@ void MainWindow::currentTabChanged(const int /*index*/)
 
 void MainWindow::updateImage1()
 {
-  pthread_mutex_lock(&qnode.m_imageMutex);
+  int lock_ret = pthread_mutex_lock(&qnode.m_imageMutex);
+  if(lock_ret != 0) {
+    switch(lock_ret) {
+      case EDEADLK:
+        ROS_WARN("A deadlock was detected on the image mutex. Skipping this frame.");
+        break;
+      case EAGAIN:
+        ROS_WARN("The image mutex received too many recursive locks. Skipping this frame.");
+        break;
+      case ENOTRECOVERABLE:
+        ROS_WARN("The state of the image mutex is not recoverable. Skipping this frame.");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+    }
+    return;
+  }
   QPainter painter(&qnode.m_firewireImage1);
 
   std::map<std::string, autorally_msgs::imageMask>::const_iterator mapIt;
@@ -505,7 +521,23 @@ void MainWindow::updateImage1()
 
 void MainWindow::updateImage2()
 {
-  pthread_mutex_lock(&qnode.m_imageMutex);
+  int lock_ret = pthread_mutex_lock(&qnode.m_imageMutex);
+  if(lock_ret != 0) {
+    switch(lock_ret) {
+      case EDEADLK:
+        ROS_WARN("A deadlock was detected on the image mutex. Skipping this frame.");
+        break;
+      case EAGAIN:
+        ROS_WARN("The image mutex received too many recursive locks. Skipping this frame.");
+        break;
+      case ENOTRECOVERABLE:
+        ROS_WARN("The state of the image mutex is not recoverable. Skipping this frame.");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+    }
+    return;
+  }
   QPainter painter(&qnode.m_firewireImage2);
 
   std::map<std::string, autorally_msgs::imageMask>::const_iterator mapIt;
