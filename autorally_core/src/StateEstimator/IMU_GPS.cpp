@@ -443,6 +443,7 @@ namespace autorally_core
 
     bool newMeasurements = false;
     int numImuDiscarded = 0;
+    Vector3 acc, gyro;
     while (!m_imuMeasurements.empty() && (m_imuMeasurements.front()->header.stamp.toSec() < optimizedTime))
     {
       m_imuMeasurements.pop_front();
@@ -459,7 +460,6 @@ namespace autorally_core
       {
         double dt = m_imuQPrevTime - (*it)->header.stamp.toSec();
         m_imuQPrevTime = (*it)->header.stamp.toSec();
-        Vector3 acc, gyro;
         GetAccGyro(*it, acc, gyro);
         m_imuPredictor->integrateMeasurement(acc, gyro, m_imuDt);
         numMeasurements++;
@@ -469,7 +469,6 @@ namespace autorally_core
     else
     {
       //Just need to add the newest measurement, no new optimized pose
-      Vector3 acc, gyro;
       GetAccGyro(imu, acc, gyro);
       m_imuPredictor->integrateMeasurement(acc, gyro, dt);//m_bodyPSensor);
     }
@@ -490,6 +489,10 @@ namespace autorally_core
     poseNew.twist.twist.linear.x = currentPose.velocity().x();
     poseNew.twist.twist.linear.y = currentPose.velocity().y();
     poseNew.twist.twist.linear.z = currentPose.velocity().z();
+    
+    poseNew.twist.twist.angular.x = gyro.x();
+    poseNew.twist.twist.angular.y = gyro.y();
+    poseNew.twist.twist.angular.z = gyro.z();
 
     poseNew.child_frame_id = "base_link";
     poseNew.header.frame_id = "odom";
