@@ -490,9 +490,9 @@ namespace autorally_core
     poseNew.twist.twist.linear.y = currentPose.velocity().y();
     poseNew.twist.twist.linear.z = currentPose.velocity().z();
     
-    poseNew.twist.twist.angular.x = gyro.x();
-    poseNew.twist.twist.angular.y = gyro.y();
-    poseNew.twist.twist.angular.z = gyro.z();
+    poseNew.twist.twist.angular.x = gyro.x() + optimizedBias.gyroscope().x();
+    poseNew.twist.twist.angular.y = gyro.y() + optimizedBias.gyroscope().y();
+    poseNew.twist.twist.angular.z = gyro.z() + optimizedBias.gyroscope().z();
 
     poseNew.child_frame_id = "base_link";
     poseNew.header.frame_id = "odom";
