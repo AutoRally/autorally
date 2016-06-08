@@ -17,6 +17,6 @@
     <remap from="/gps_follow/Odom" to="/pose_estimate"/>
     <remap from="/gps_follow/Pose" to="/imu_data"/>
     <remap from="/gps_follow/imageMask" to="/imageMask"/>
-    <remap from="/gps_follow/servoCommand" to="/constantSpeedController/servoCommand"/>
+    <remap from="/gps_follow/servoCommand" to="/waypointFollower/servoCommand"/>
   </node>
 </launch>
