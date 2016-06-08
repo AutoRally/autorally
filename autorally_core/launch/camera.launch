@@ -17,7 +17,7 @@
     <param name="format7_roi_height" value="1024"/>
     <param name="format7_x_offset" value="0"/>
     <param name="format7_y_offset" value="0"/>
-    <param name="camera_info_url" value="file://$(env AR_CONFIG_PATH)/camera_calibration_$(arg serial)_new.yaml" />
+    <param name="camera_info_url" value="file://$(env AR_CONFIG_PATH)/camera_calibration_$(arg serial).yaml" />
     <param name="format7_color_coding" value="raw8"/>
     <param name="frame_rate" value="60" />
     <param name="auto_exposure" value="true"/>
