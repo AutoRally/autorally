@@ -338,6 +338,7 @@ void XbeeNode::processXbeeOdom(const std::string& message, const std::string& se
   }
   odom->header.stamp = ros::Time::now();
   odom->child_frame_id = sender;
+  odom->header.frame_id = "odom";
   m_xbee.m_port.tick("/pose_estimate_"+sender);
   m_recOdomPublishers[sender].publish(odom);
 }
