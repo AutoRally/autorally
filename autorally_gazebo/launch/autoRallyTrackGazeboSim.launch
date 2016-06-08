@@ -40,6 +40,9 @@ limitations under the License.
   <arg name="world_name" default="worlds/empty_sky.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
+  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
+  <!--<param name="autorally_simulation" value"true"/> -->
+
   <!-- Vehicle pose -->
   <arg name="x" default="0"/>
   <arg name="y" default="-8.5"/>
