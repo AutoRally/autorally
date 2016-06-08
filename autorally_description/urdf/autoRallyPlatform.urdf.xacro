@@ -217,7 +217,7 @@ limitations under the License.
       <axis xyz="0 0 -1"/>
       <limit effort="${axle_eff_limit}" velocity="${axle_vel_limit}"/>
       <!-- <dynamics damping="0.015" friction="0.0"/> -->
-      <dynamics damping="0.003" friction="0.5"/>
+      <dynamics damping="0.001" friction="0.5"/>
 
     </joint>
     
@@ -242,21 +242,21 @@ limitations under the License.
       <visual>
         <origin xyz="0 0 0"/>
         <geometry>
-          <mesh filename="${wheel_model}" scale="0.01 0.01 0.01" />
+          <mesh filename="${wheel_model}" />
         </geometry>
       </visual>
 
       <collision name="collision">
         <origin xyz="0 0 0"/>
         <geometry>
-          <mesh filename="${wheel_model}" scale="0.01 0.01 0.01" />
+          <mesh filename="${wheel_model}" />
         </geometry>         
       </collision>
 
       <collision name="material">
         <origin xyz="0 0 0"/>
         <geometry>
-          <mesh filename="${wheel_model}" scale="0.01 0.01 0.01" />
+          <mesh filename="${wheel_model}" />
         </geometry>         
       </collision>
 
