@@ -35,7 +35,7 @@
       <!--<param name="Gravity" value="-9.79509"/>-->
       
       <!-- in sumulation use "rosparam set /gps_imu/FixedInitialPose true" -->
-      <!-- <param name="FixedInitialPose" value="false"/> -->
+      <param name="FixedInitialPose" value="true"/>
       <param name="initialRoll" value="0"/>
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>

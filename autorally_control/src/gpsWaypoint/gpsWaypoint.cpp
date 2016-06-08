@@ -45,7 +45,7 @@ namespace autorally_control
   GpsWaypoint::GpsWaypoint() :
     m_nh("~"), m_speed(0.0), m_useThetaGPS(true), m_prevTime(0.0)
   {
-    m_nh.param("WaypointFile", m_filename, std::string("Waypoints"));
+    m_nh.param("WaypointFile", m_filename, std::string("waypoints.txt"));
     m_nh.param("WaypointRadius", m_wpRadius, 1.5);
     m_nh.param("HeadingP", m_headingP, 2.0);
     
