@@ -69,18 +69,18 @@ namespace autorally_core
 {
 
   Imu_Gps::Imu_Gps() :
+    Diagnostics("ImuGpsEstimator", "", ""),
     m_nh("~"),
-    m_gotFirstFix(false),
     m_biasKey(0),
     m_poseVelKey(0),
-    m_lastImuTgps(0.0),
     m_lastImuT(0.0),
+    m_lastImuTgps(0.0),
     m_imuQPrevTime(0),
+    m_gpsCounter(0),
+    m_maxQSize(0),
     m_gpsOptQ(40),
     m_ImuOptQ(400),
-    m_maxQSize(0),
-    m_gpsCounter(0),
-    Diagnostics("ImuGpsEstimator", "", "")
+    m_gotFirstFix(false)
   {
     double accSigma, gyroSigma;
     m_nh.param<double>("InitialYaw", m_initialYaw, 5);
@@ -338,7 +338,7 @@ namespace autorally_core
         Values newVariables;
         double E, N, U;
         m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-        double D = -U;  // We want to work in NED
+        //double D = -U;  // We want to work in ENU, don't need down
 
         PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
 
@@ -389,7 +389,7 @@ namespace autorally_core
 
         nav_msgs::Odometry poseNew;
         poseNew.header.stamp = fix->header.stamp;
-        Vector3 rpy = m_prevPose.rotation().rpy();
+//        Vector3 rpy = m_prevPose.rotation().rpy();
 //        ROS_INFO("time: %f\tr: %f p: %f y: %f", (ros::WallTime::now() - tstart).toSec(), rpy[0], rpy[1], rpy[2]);
 
         geometry_msgs::Point ptAcc;
@@ -458,10 +458,10 @@ namespace autorally_core
       int numMeasurements = 0;
       for (auto it=m_imuMeasurements.begin(); it!=m_imuMeasurements.end(); ++it)
       {
-        double dt = m_imuQPrevTime - (*it)->header.stamp.toSec();
+        double dt_temp = m_imuQPrevTime - (*it)->header.stamp.toSec();
         m_imuQPrevTime = (*it)->header.stamp.toSec();
         GetAccGyro(*it, acc, gyro);
-        m_imuPredictor->integrateMeasurement(acc, gyro, m_imuDt);
+        m_imuPredictor->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
       }
 //      ROS_INFO("Resetting Integration, %d measurements integrated, %d discarded", numMeasurements, numImuDiscarded);
@@ -490,9 +490,9 @@ namespace autorally_core
     poseNew.twist.twist.linear.y = currentPose.velocity().y();
     poseNew.twist.twist.linear.z = currentPose.velocity().z();
     
-    poseNew.twist.twist.angular.x = gyro.x();
-    poseNew.twist.twist.angular.y = gyro.y();
-    poseNew.twist.twist.angular.z = gyro.z();
+    poseNew.twist.twist.angular.x = gyro.x() + optimizedBias.gyroscope().x();
+    poseNew.twist.twist.angular.y = gyro.y() + optimizedBias.gyroscope().y();
+    poseNew.twist.twist.angular.z = gyro.z() + optimizedBias.gyroscope().z();
 
     poseNew.child_frame_id = "base_link";
     poseNew.header.frame_id = "odom";

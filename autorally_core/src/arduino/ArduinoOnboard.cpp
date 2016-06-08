@@ -344,7 +344,7 @@ void ArduinoOnboard::loadServoParams()
   {
     NODELET_ERROR("ServoInterface: Couldn't retreive servo settings");
   }
-  NODELET_INFO("ServoInterface: Loaded %u servos", m_servoSettings.size());
+  NODELET_INFO("ServoInterface: Loaded %u servos", (unsigned int)m_servoSettings.size());
 
 }
 

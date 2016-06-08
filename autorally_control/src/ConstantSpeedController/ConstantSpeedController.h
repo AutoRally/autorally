@@ -48,7 +48,7 @@
 #include <autorally_core/RingBuffer.h>
 //#include <autorally_core/TimeTaggedRingBuffer.h>
 
-namespace control
+namespace autorally_control
 {
 
 class ConstantSpeedController : public nodelet::Nodelet
@@ -111,4 +111,4 @@ class ConstantSpeedController : public nodelet::Nodelet
 };
 
 }
-#endif //JUMP_CONTROL_H_
+#endif 
