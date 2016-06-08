@@ -25,7 +25,7 @@ Research Pages AutoRally is associated with:
 1. __Install [Ubuntu 14.04 64-bit](http://www.ubuntu.com)__
 2. __Install required packages__
 
-   ```sudo apt-get install git doxygen openssh-server libusb-dev```
+   ```sudo apt-get install git doxygen openssh-server libusb-dev texinfo```
    
    _Recommended Tools_
    
@@ -33,7 +33,6 @@ Research Pages AutoRally is associated with:
    * feh
    * cutecom
    * cmake-curses-gui
-   * texinfo
    * coriander
    * synaptic
    * arduino
