@@ -285,7 +285,7 @@ class AutoRallyCtrlr(object):
         self.servoCmdSub = dict()             
         for cmd, priority in self.commandPriorities:
             self.servoCmdSub[cmd] = \
-                rospy.Subscriber(cmd+"/servoCommand", servoMSG,
+                rospy.Subscriber("/"+cmd+"/servoCommand", servoMSG,
                                  self.servoCmdCb, queue_size=1)
 
         self.safeSpeedSub = rospy.Subscriber("/safeSpeed", safeSpeed,

@@ -22,10 +22,3 @@
   </class>
 </library>
 
-<library path="lib/libConstantSpeedControllerB">
-  <class name="autorally_control/ConstantSpeedControllerB" type="autorally_control::ConstantSpeedControllerB" base_class_type="nodelet::Nodelet">
-    <description>
-    Drive robot at a constant speed using wheel speed data
-    </description>
-  </class>
-</library>

@@ -41,9 +41,9 @@
 #define PI 3.14159265
 #define DEGTORAD (PI/180)
 
-PLUGINLIB_DECLARE_CLASS(control, ConstantSpeedController, control::ConstantSpeedController, nodelet::Nodelet)
+PLUGINLIB_DECLARE_CLASS(autorally_control, ConstantSpeedController, autorally_control::ConstantSpeedController, nodelet::Nodelet)
 
-namespace control
+namespace autorally_control
 {
 
 ConstantSpeedController::ConstantSpeedController():
@@ -89,6 +89,7 @@ void ConstantSpeedController::onInit()
   }
 
   m_servoMSG->header.frame_id = "constantSpeedController";
+  m_servoMSG->header.stamp = ros::Time::now();
   m_servoMSG->steering = -5.0;
   m_servoMSG->frontBrake = 0.0;
   m_servoMSG->backBrake = 0.0;
@@ -147,7 +148,7 @@ void ConstantSpeedController::wheelSpeedsCallback(const autorally_msgs::wheelSpe
       m_servoMSG->throttle += m_constantSpeedKI * m_integralError;
       m_servoMSG->throttle = std::max(0.0, std::min(1.0, m_servoMSG->throttle));
 
-      NODELET_INFO("interp %f, command %f",p, m_servoMSG->throttle);
+      // NODELET_INFO("interp %f, command %f",p, m_servoMSG->throttle);
       m_servoMSGPub.publish(m_servoMSG);
       m_constantSpeedPrevThrot = p;
     }

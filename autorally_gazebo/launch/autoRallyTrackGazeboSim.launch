@@ -40,6 +40,9 @@ limitations under the License.
   <arg name="world_name" default="worlds/empty_sky.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
+  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
+  <!--<param name="autorally_simulation" value"true"/> -->
+
   <!-- Vehicle pose -->
   <arg name="x" default="0"/>
   <arg name="y" default="-8.5"/>
@@ -58,15 +61,6 @@ limitations under the License.
   <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
   
-  <!-- Remap for servo command entries, need an entry for every commander -->
-  <remap from="/$(arg namespace)/mppi_controller/servoCommand" to="/mppi_controller/servoCommand" />
-  <remap from="/$(arg namespace)/joystick/servoCommand" to="/joystick/servoCommand" />
-  <remap from="/$(arg namespace)/RC/servoCommand" to="/RC/servoCommand" />
-  <remap from="/$(arg namespace)/OCS/servoCommand" to="/OCS/servoCommand" />
-  <remap from="/$(arg namespace)/constantSpeedController/servoCommand" to="/constantSpeedController/servoCommand" />
-  <remap from="/$(arg namespace)/jumpControllerOptimal/servoCommand" to="/jumpControllerOptimal/servoCommand" />
-  <remap from="/$(arg namespace)/WPController/servoCommand" to="/WPController/servoCommand" />
-
   <group ns="$(arg namespace)">
     <!-- Create the world. -->
     <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
