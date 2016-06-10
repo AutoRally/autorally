@@ -16,23 +16,32 @@ ImageRepublisher::ImageRepublisher()
 void ImageRepublisher::onInit()
 {
   nh = getNodeHandle();
+  pnh = getPrivateNodeHandle();
   it = image_transport::ImageTransport(nh);
 
-  if(!nh.getParam(getName()+"/fps", fps) ||
-     !nh.getParam(getName()+"/resizeHeight", resizeHeight))
-    ROS_ERROR("Could not get all ImageRepublisher parameters.");
+  double fps;
+  pnh.param("fps", fps, 24.0);
+  secondsPerFrame = 1.0 / fps;
+  pnh.param("resizeHeight", resizeHeight, 480);
 
-  pub = it.advertise("image_display", 100);
+  pub = it.advertise("camera/image_display", 10);
 
-  sub = nh.subscribe("camera/image_raw", 100, &ImageRepublisher::imageCallback, this);
+  sub = it.subscribe("camera/image_raw", 1, &ImageRepublisher::imageCallback, this);
 }
 
 void ImageRepublisher::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
-  nh.getParam(getName() + "/fps", fps);
-
-  if( (ros::Time::now() - lastFrameTime).toSec() < (1.0 / fps) )
+  // Don't bother computing if no nodes are subscribed.
+  if(sub.getNumPublishers() == 0)
+  {
     return;
+  }
+
+  // Limit frame rate
+  if( (ros::Time::now() - lastFrameTime).toSec() < secondsPerFrame )
+  {
+    return;
+  }
   lastFrameTime = ros::Time::now();
 
   std::string encoding = msg->encoding;
@@ -90,8 +99,6 @@ void ImageRepublisher::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
   }
 
   float aspect_ratio = (float)dst.cols / (float)dst.rows;
-
-  nh.getParam(getName()+"/resizeHeight", resizeHeight);
 
   cv::resize(dst, dst, cv::Size(aspect_ratio*resizeHeight,resizeHeight));
 
