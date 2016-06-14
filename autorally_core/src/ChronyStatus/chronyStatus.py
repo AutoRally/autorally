@@ -49,9 +49,9 @@ import subprocess
 Contacts the chrony server in the system and parses out a list of all clients
 currently using it as their clock synchronization source.
 """
-def getClients(host):
+def getClients(host, password):
   try:
-    clientsText = check_output("chronyc -h " + host + " -m 'password muri123' clients", shell=True);
+    clientsText = check_output("chronyc -h " + host + " -m 'password " + password + "' clients", shell=True);
     
     #print clients.rfind('=')
     clientsText = clientsText[clientsText.rfind('=')+1:]
@@ -110,10 +110,12 @@ if __name__ == '__main__':
 
   array.status = [status]
 
+  chrony_password = rospy.get_param("~password")
+
   rate = rospy.Rate(0.2)
   while not rospy.is_shutdown():
 
-    clients = getClients(host)
+    clients = getClients(host, chrony_password)
     #print clients
     if len(clients) > 0 and 'subprocess error' not in clients:
       getOffsets(clients, host, status)
