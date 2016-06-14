@@ -2,6 +2,7 @@
   <arg name="nodelet_manager_launched" default="0" />
   <arg name="serial" default="0" />
   <arg name="side" default="left" />
+  <arg name="enable_trigger" default="true"/>
   
   <!-- nodelet manager process -->
   <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="muri-laptop" output="screen" args="manager" unless="$(arg nodelet_manager_launched)" />
@@ -26,7 +27,7 @@
     <param name="brightness" value="0"/>
     <param name="auto_white_balance" value="false"/>
     <param name="auto_shutter" value="false"/>
-    <param name="enable_trigger" value="true"/>
+    <param name="enable_trigger" value="$(arg enable_trigger)"/>
 
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />
     <remap from="set_camera_info" to="$(arg side)_camera/set_camera_info"/>
