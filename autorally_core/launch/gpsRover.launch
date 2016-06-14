@@ -1,7 +1,7 @@
 <launch>
 
   <include file="$(find autorally_core)/launch/hardware.machine" />
-  <node name="gpsRover" pkg="autorally_core" type="gpsHemisphereInterface" output="screen" machine="muri-laptop">
+  <node name="gpsRover" pkg="autorally_core" type="gpsHemisphereInterface" output="screen" machine="autorally-master">
 
     <!-- mode can be either "base" or "rover" -->
     <param name="mode" value="rover" />

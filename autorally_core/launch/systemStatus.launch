@@ -1,6 +1,6 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
-  <node pkg="autorally_core" type="systemStatus.py" name="systemStatus" machine="muri-laptop" output="screen">
+  <node pkg="autorally_core" type="systemStatus.py" name="systemStatus" machine="autorally-master" output="screen">
     <param name="cpuTempHigh" value="77" />
     <param name="cpuTempCrit" value="90" />
     <param name="batteryLow" value="50" />

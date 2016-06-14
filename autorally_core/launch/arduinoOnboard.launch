@@ -1,7 +1,7 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <node pkg="nodelet" type="nodelet" name="ArduinoOnboard" args="load autorally_core/ArduinoOnboard autorally_core_manager" output="screen" machine="muri-laptop" >
+  <node pkg="nodelet" type="nodelet" name="ArduinoOnboard" args="load autorally_core/ArduinoOnboard autorally_core_manager" output="screen" machine="autorally-master" >
     <rosparam param="servos" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
 
     <param name="numMovingAverageValues" value="5" />

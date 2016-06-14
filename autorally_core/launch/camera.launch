@@ -5,12 +5,12 @@
   <arg name="enable_trigger" default="true"/>
   
   <!-- nodelet manager process -->
-  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="muri-laptop" output="screen" args="manager" unless="$(arg nodelet_manager_launched)" />
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" unless="$(arg nodelet_manager_launched)" />
   
   <!-- camera driver nodelet -->
   <param name="/camera/image_raw/compressed/jpeg_quality" type="int" value="10"/>
 
-  <node pkg="nodelet" type="nodelet" name="$(arg side)_camera_nodelet" machine="muri-laptop" output="screen" args="
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_camera_nodelet" machine="autorally-master" output="screen" args="
     load pointgrey_camera_driver/PointGreyCameraNodelet camera_nodelet_manager" >
     <param name="serial" value="$(arg serial)" />
     <param name="video_mode" value="format7_mode0"/>
@@ -46,7 +46,7 @@
     <remap from="image_mono" to="$(arg side)_camera/image_color" />
     <remap from="image_rect" to="$(arg side)_camera/image_color_rect" />
   </node>
-  <node pkg="nodelet" type="nodelet" name="$(arg side)_ImageRepublisher" args="load autorally_core/ImageRepublisher camera_nodelet_manager" output="screen" machine="muri-laptop" >
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_ImageRepublisher" args="load autorally_core/ImageRepublisher camera_nodelet_manager" output="screen" machine="autorally-master" >
     <param name="fps" value="24" />
     <param name="resizeHeight" value="480" />
     <remap from="camera/image_raw" to="$(arg side)_camera/image_color" />
