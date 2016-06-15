@@ -31,7 +31,7 @@ limitations under the License.
 <robot name="autorally_platform" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Degree-to-radian conversions -->
   <xacro:property name="degrees_45" value="0.785398163"/>
-  <xacro:property name="degrees_25" value="0.436332313"/>
+  <xacro:property name="degrees_21" value="0.3665191429"/>
   <xacro:property name="degrees_90" value="1.57079633"/>
 
   <!-- chassis_length is measured along the x axis, chassis_width
@@ -217,7 +217,7 @@ limitations under the License.
       <axis xyz="0 0 -1"/>
       <limit effort="${axle_eff_limit}" velocity="${axle_vel_limit}"/>
       <!-- <dynamics damping="0.015" friction="0.0"/> -->
-      <dynamics damping="0.003" friction="0.5"/>
+      <dynamics damping="0.001" friction="0.5"/>
 
     </joint>
     
@@ -242,21 +242,21 @@ limitations under the License.
       <visual>
         <origin xyz="0 0 0"/>
         <geometry>
-          <mesh filename="${wheel_model}" scale="0.01 0.01 0.01" />
+          <mesh filename="${wheel_model}" />
         </geometry>
       </visual>
 
       <collision name="collision">
         <origin xyz="0 0 0"/>
         <geometry>
-          <mesh filename="${wheel_model}" scale="0.01 0.01 0.01" />
+          <mesh filename="${wheel_model}" />
         </geometry>         
       </collision>
 
       <collision name="material">
         <origin xyz="0 0 0"/>
         <geometry>
-          <mesh filename="${wheel_model}" scale="0.01 0.01 0.01" />
+          <mesh filename="${wheel_model}" />
         </geometry>         
       </collision>
 
@@ -303,7 +303,7 @@ limitations under the License.
       <child link="${lr_prefix}_${fr_prefix}_axle_carrier"/>
       <!-- cant the front wheels to improve traction -->
       <axis xyz="0 ${-lr_reflect*0.09950372}  0.99503719"/>
-      <limit lower="${-degrees_25}" upper="${degrees_25}"
+      <limit lower="${-degrees_21}" upper="${degrees_21}"
              effort="${servo_stall_torque}" velocity="${servo_no_load_speed}"/>
     </joint>
 

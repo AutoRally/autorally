@@ -56,7 +56,6 @@
 
 #include <ros/ros.h>
 #include <ros/time.h>
-#include <tf/transform_listener.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -64,7 +63,6 @@
 #include "autorally_core/Diagnostics.h"
 #include "BlockingQueue.h"
 
-#include <autorally_msgs/servoMSG.h>
 #include <autorally_msgs/wheelSpeeds.h>
 #include <autorally_msgs/imageMask.h>
 #include <imu_3dm_gx4/FilterOutput.h>

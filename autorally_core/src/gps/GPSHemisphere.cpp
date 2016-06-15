@@ -1007,7 +1007,7 @@ double GPSHemisphere::GetUTC(const std::string& utc)
   }
 }
 
-void GPSHemisphere::rtkStatusCallback(const ros::TimerEvent&)
+void GPSHemisphere::rtkStatusCallback(const ros::TimerEvent& /*time*/)
 {
   //query the current RTK transmission status
   unsigned char cmd[10] = "$JRTK,6\r\n";
@@ -1029,7 +1029,7 @@ void GPSHemisphere::rtkStatusCallback(const ros::TimerEvent&)
 //  }
 }
 
-void GPSHemisphere::updateReferenceLocationCallback(const ros::TimerEvent&)
+void GPSHemisphere::updateReferenceLocationCallback(const ros::TimerEvent& /*time*/)
 {
   //if the unit has augmented position data, update the current reference
   //location

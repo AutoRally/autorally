@@ -1,0 +1,14 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node name="waypointFollower" pkg="autorally_control" type="gpsWaypoint" output="screen" machine="autorally-master">
+    <param name="WaypointFile" value="$(find autorally_control)/launch/waypoints"/>
+    <param name="WaypointRadius" value="1.0"/>
+    <param name="HeadingP" value="2.5"/>
+    <remap from="/waypointFollower/Speeds" to="/wheelSpeeds"/>
+    <remap from="/waypointFollower/Odom" to="/pose_estimate"/>
+    <remap from="/waypointFollower/Pose" to="/imu_data"/>
+    <remap from="/waypointFollower/imageMask" to="/imageMask"/>
+    <remap from="/waypointFollower/servoCommand" to="/waypointFollower/servoCommand"/>
+  </node>
+</launch>

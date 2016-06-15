@@ -23,27 +23,28 @@ catkin_package(
     DEPENDS libqt4-dev lm-sensors Boost
     CATKIN-DEPENDS roscpp rospy std_msgs geometry_msgs sensor_msgs nav_msgs image_transport qt-ros diagnostic_updater qt_build autorally_msgs
     INCLUDE_DIRS include
-    LIBRARIES SerialSensorInterface SafeSpeed Diagnostics RingBuffer
+    LIBRARIES SerialSensorInterface Diagnostics RingBuffer
 )
 
 set(BUILD_FLAGS "-std=c++11 -Wuninitialized -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BUILD_FLAGS}")
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(include)
 
 add_subdirectory(src/arduino)
-add_subdirectory(src/ChronyStatus)
 add_subdirectory(src/Diagnostics)
 add_subdirectory(src/gps)
 add_subdirectory(src/ocs)
 add_subdirectory(src/RingBuffer)
 add_subdirectory(src/RunStop)
-add_subdirectory(src/SafeSpeed)
+#add_subdirectory(src/SafeSpeed)
 add_subdirectory(src/SerialSensorInterface)
 add_subdirectory(src/servoInterface)
 add_subdirectory(src/xbee)
 add_subdirectory(src/ImageRepublisher)
 add_subdirectory(src/StateEstimator)
+add_subdirectory(src/autorally_chassis)
 
 install(TARGETS
  
@@ -54,7 +55,7 @@ install(TARGETS
 
 install(PROGRAMS
   src/systemStatus/systemStatus.py
-  src/ChronyStatus/chronyStatus.py
+  src/chronyStatus/chronyStatus.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch/

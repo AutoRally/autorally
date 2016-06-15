@@ -52,12 +52,11 @@
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <image_transport/image_transport.h>
-#include <std_msgs/Float64.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
-#include <autorally_msgs/servoMSG.h>
+#include <autorally_msgs/chassisState.h>
+ #include <autorally_msgs/chassisCommand.h>
 #include <autorally_msgs/wheelSpeeds.h>
-//#include <autorally_msgs/arduinoData.h>
-#include <autorally_msgs/safeSpeed.h>
+#include <autorally_msgs/runstop.h>
 #include "ImageMaskEntry.hpp"
 #include "DiagnosticsEntry.hpp"
 
@@ -114,10 +113,10 @@ public:
   QStandardItemModel* diagnosticModel() { return m_diagModel.model(); }
 
 	/**
-  * @brief Accessor for the QStandardItemModel holding safeSpeed messages
+  * @brief Accessor for the QStandardItemModel holding runstop messages
   * @return QStandardItemModel* Pointer to the model
   */
-  QStandardItemModel* safeSpeedModel() { return &m_safeSpeedModel; }
+  QStandardItemModel* runstopModel() { return &m_runstopModel; }
 
   /**
   * @brief Accessor for the QStandardItemModel holding image masks
@@ -132,10 +131,10 @@ public:
   void wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg);
 
   /**
-  * @brief Callback for new safeSpeed messages
+  * @brief Callback for new runstop messages
   * @param msg The new vehicle speed
   */
-  void safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg);
+  void runstopCallback(const autorally_msgs::runstopConstPtr& msg);
 
   /**
   * @brief Callback for new wheelSpeeds messages
@@ -144,10 +143,10 @@ public:
   //void wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg);
 
   /**
-  * @brief Callback for new servoInterfaceStatus messages
-  * @param msg The new servoInterfaceStatus message
+  * @brief Callback for new chassisState messages
+  * @param msg The new chassisState message
   */
-  void newServoMSG(const autorally_msgs::servoMSGConstPtr& msg);
+  void chassisStateCb(const autorally_msgs::chassisStateConstPtr& msg);
 
   /**
   * @brief Callback for new diagnostics messages
@@ -162,16 +161,16 @@ public:
   void imageMaskCallback(const autorally_msgs::imageMask& msg);
 
   /**
-  * @brief Slot indicating the OCS safeSpeed has been updated
+  * @brief Slot indicating the OCS runstop has been updated
   * @param speed new value
   */
-  void setSafeSpeed(const double& speed);
+  void setRunstop(const double& speed);
 
   /**
-  * @brief Slot the desired servoInterfaceControl message data to send
+  * @brief Slot the desired chassisCommand message data to send
   * @param msg the control values from the OCS
   */
-  void servoControl(autorally_msgs::servoMSG& msg);
+  void actuatorControl(autorally_msgs::chassisCommand& msg);
   
   void getImageTopics(std::vector<std::string>& topics);
   
@@ -197,10 +196,10 @@ signals:
   //void newWheelSpeeds(const autorally_msgs::wheelSpeedsConstPtr& msg);
 
   /**
-  * @brief Signal for the OCS to update servo information
+  * @brief Signal for the OCS to update chassis information
   * @param msg The new data
   */
-  void newServoData(const autorally_msgs::servoMSGConstPtr& msg);
+  void newChassisState(const autorally_msgs::chassisStateConstPtr& msg);
 
   void newImage1();
   void newImage2();
@@ -213,10 +212,10 @@ public slots:
   void updateTimes();
 
   /**
-  * @brief Callback for a user click on a safeSPeed entry
+  * @brief Callback for a user click on a runstop entry
   * @param index the index for the item clicked
   */
-  void safeSpeedModelDoubleClicked(const QModelIndex& index);
+  void runstopModelDoubleClicked(const QModelIndex& index);
 
 private:
 	int init_argc; ///< Command line parameter count
@@ -224,33 +223,33 @@ private:
 	
 	ros::NodeHandle *m_nh;
 
-	ros::Timer m_safeSpeedTimer; ///< Timer for sending safeSpeed messages
-	ros::Publisher safeSpeed_publisher; ///< Publisher for safeSpeed
-	ros::Publisher servoCommandPub; ///< Publishe for servoInterfaceCommand
+	ros::Timer m_runstopTimer; ///< Timer for sending runstop messages
+	ros::Publisher runstop_publisher; ///< Publisher for runstop
+	ros::Publisher m_chassisCommandPub; ///< Publisher for chassisCommand
 
 	ros::Subscriber wheelSpeeds_subscriber; ///< Subscriber for wheelSpeeds
-	ros::Subscriber safeSpeed_subscriber; ///< Subscriber for safeSpeed
+	ros::Subscriber runstop_subscriber; ///< Subscriber for runstop
 	//ros::Subscriber wheelSpeeds_subscriber; ///< Subscriber for wheelSpeeds
 	ros::Subscriber diagStatus_subscriber; ///< Subscriber for diagnostics
-	ros::Subscriber servoStatus_subscriber; ///< Subscriber for servoInterfaceStatus
+	ros::Subscriber chassisState_subscriber; ///< Subscriber for chassisState
 	ros::Subscriber imageMask_subscriber; ///< Subscriber for imageMask
 	image_transport::Subscriber images_subscriber; ///< Subscriber for images
 	image_transport::Subscriber images_subscriber_2; ///< Subscriber for images
 
-	autorally_msgs::safeSpeed m_safeSpeed; ///< SafeSpeed message OCS can send
+	autorally_msgs::runstop m_runstop; ///< runstop message OCS can send
 
-  QStandardItemModel m_safeSpeedModel; ///< Model holding safeSpeed messages
+  QStandardItemModel m_runstopModel; ///< Model holding runstop messages
 
-  double m_safeSpeedTimeout;
+  double m_runstopTimeout;
 
-  void ssTimerCallback(const ros::TimerEvent&); ///< Callback to publish safeSpeed
+  void ssTimerCallback(const ros::TimerEvent&); ///< Callback to publish runstop
   void updateTimeBoxesCallback(const ros::TimerEvent&); ///< Callbak to update time displays
 
   /**
   * @brief Generates new entry for a safe speed message
   */
-  QList<QStandardItem*> generateNewSafeSpeed(
-                    const autorally_msgs::safeSpeedConstPtr& msg);
+  QList<QStandardItem*> generateNewrunstop(
+                    const autorally_msgs::runstopConstPtr& msg);
 
     /**
   * @brief Callback for new image messages
@@ -266,6 +265,9 @@ private:
   * @return A pointer to the new data. Don't forget to delete it when you're done.
   */
   unsigned char* convertBGRtoRGB(const unsigned char* data, int size);
+
+
+  QImage formatImageForDisplay(const sensor_msgs::ImageConstPtr& msg);
 
 };
 

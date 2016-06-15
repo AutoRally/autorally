@@ -69,18 +69,18 @@ namespace autorally_core
 {
 
   Imu_Gps::Imu_Gps() :
+    Diagnostics("ImuGpsEstimator", "", ""),
     m_nh("~"),
-    m_gotFirstFix(false),
     m_biasKey(0),
     m_poseVelKey(0),
-    m_lastImuTgps(0.0),
     m_lastImuT(0.0),
+    m_lastImuTgps(0.0),
     m_imuQPrevTime(0),
+    m_gpsCounter(0),
+    m_maxQSize(0),
     m_gpsOptQ(40),
     m_ImuOptQ(400),
-    m_maxQSize(0),
-    m_gpsCounter(0),
-    Diagnostics("ImuGpsEstimator", "", "")
+    m_gotFirstFix(false)
   {
     double accSigma, gyroSigma;
     m_nh.param<double>("InitialYaw", m_initialYaw, 5);
@@ -338,7 +338,7 @@ namespace autorally_core
         Values newVariables;
         double E, N, U;
         m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-        double D = -U;  // We want to work in NED
+        //double D = -U;  // We want to work in ENU, don't need down
 
         PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
 
@@ -350,6 +350,7 @@ namespace autorally_core
           m_lastImuTgps = m_lastIMU->header.stamp.toSec();
           pre_int_data.integrateMeasurement(acc, gyro, imuDT);
           m_lastIMU = m_ImuOptQ.popBlocking();
+//          ROS_WARN("Last IMU dt was %f, put time %f", imuDT, m_lastIMU->header.stamp.toSec());
         }
 
         ImuFactor imuFactor(X(m_poseVelKey), V(m_poseVelKey), X(m_poseVelKey+1), V(m_poseVelKey+1), B(m_biasKey),
@@ -389,7 +390,7 @@ namespace autorally_core
 
         nav_msgs::Odometry poseNew;
         poseNew.header.stamp = fix->header.stamp;
-        Vector3 rpy = m_prevPose.rotation().rpy();
+//        Vector3 rpy = m_prevPose.rotation().rpy();
 //        ROS_INFO("time: %f\tr: %f p: %f y: %f", (ros::WallTime::now() - tstart).toSec(), rpy[0], rpy[1], rpy[2]);
 
         geometry_msgs::Point ptAcc;
@@ -413,7 +414,9 @@ namespace autorally_core
 
   void Imu_Gps::ImuCb(sensor_msgs::ImuConstPtr imu)
   {
-    double dt = imu->header.stamp.toSec() - m_lastImuT;
+    double dt;
+    if (m_lastImuT == 0) dt = 0.005;
+    else dt = imu->header.stamp.toSec() - m_lastImuT;
     m_lastImuT = imu->header.stamp.toSec();
     ros::Time before = ros::Time::now();
     // Push the IMU measurement to the optimization thread
@@ -421,7 +424,9 @@ namespace autorally_core
     if (qSize > m_maxQSize)
     {
       m_maxQSize = qSize;
-//      ROS_WARN("Queue size %d", m_maxQSize);
+      if (m_maxQSize > 20) {
+        ROS_WARN("Queue size %d", m_maxQSize);
+      }
     }
     if (!m_ImuOptQ.pushNonBlocking(imu))
     {
@@ -443,8 +448,10 @@ namespace autorally_core
 
     bool newMeasurements = false;
     int numImuDiscarded = 0;
+    Vector3 acc, gyro;
     while (!m_imuMeasurements.empty() && (m_imuMeasurements.front()->header.stamp.toSec() < optimizedTime))
     {
+      m_imuQPrevTime = m_imuMeasurements.front()->header.stamp.toSec();
       m_imuMeasurements.pop_front();
       newMeasurements = true;
       numImuDiscarded ++;
@@ -457,21 +464,22 @@ namespace autorally_core
       int numMeasurements = 0;
       for (auto it=m_imuMeasurements.begin(); it!=m_imuMeasurements.end(); ++it)
       {
-        double dt = m_imuQPrevTime - (*it)->header.stamp.toSec();
+        double dt_temp =  (*it)->header.stamp.toSec() - m_imuQPrevTime;
         m_imuQPrevTime = (*it)->header.stamp.toSec();
-        Vector3 acc, gyro;
         GetAccGyro(*it, acc, gyro);
-        m_imuPredictor->integrateMeasurement(acc, gyro, m_imuDt);
+        m_imuPredictor->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
+//        ROS_INFO("IMU time %f, dt %f", (*it)->header.stamp.toSec(), dt_temp);
       }
 //      ROS_INFO("Resetting Integration, %d measurements integrated, %d discarded", numMeasurements, numImuDiscarded);
     }
     else
     {
       //Just need to add the newest measurement, no new optimized pose
-      Vector3 acc, gyro;
       GetAccGyro(imu, acc, gyro);
       m_imuPredictor->integrateMeasurement(acc, gyro, dt);//m_bodyPSensor);
+//      ROS_INFO("Integrating %f, dt %f", m_lastImuT, dt);
+
     }
     NavState currentPose = m_imuPredictor->predict(optimizedState, optimizedBias);
     nav_msgs::Odometry poseNew;
@@ -490,6 +498,10 @@ namespace autorally_core
     poseNew.twist.twist.linear.x = currentPose.velocity().x();
     poseNew.twist.twist.linear.y = currentPose.velocity().y();
     poseNew.twist.twist.linear.z = currentPose.velocity().z();
+    
+    poseNew.twist.twist.angular.x = gyro.x() + optimizedBias.gyroscope().x();
+    poseNew.twist.twist.angular.y = gyro.y() + optimizedBias.gyroscope().y();
+    poseNew.twist.twist.angular.z = gyro.z() + optimizedBias.gyroscope().z();
 
     poseNew.child_frame_id = "base_link";
     poseNew.header.frame_id = "odom";

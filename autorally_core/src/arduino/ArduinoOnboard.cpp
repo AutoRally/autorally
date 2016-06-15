@@ -85,7 +85,7 @@ void ArduinoOnboard::onInit()
   m_wheelSpeedPub = nh.advertise<autorally_msgs::wheelSpeeds>
                                     ("wheelSpeeds", 1);
 
-  m_servoPub = nh.advertise<autorally_msgs::servoMSG> ("RC", 1);
+  m_servoPub = nh.advertise<autorally_msgs::chassisCommand> ("RC", 1);
 
 	m_port.init(m_nhPvt, getName(), "", "ArduinoOnboard", port, true);
 	m_port.registerDataCallback(
@@ -115,9 +115,8 @@ void ArduinoOnboard::arduinoDataCallback()
     tokenizer::iterator it=tok.begin();
 
     //allocate new servo message for RC servoCommand
-    autorally_msgs::servoMSGPtr servos(new autorally_msgs::servoMSG);
-    servos->header.frame_id = "RC";
-    servos->backBrake = -5.0;
+    autorally_msgs::chassisCommandPtr servos(new autorally_msgs::chassisCommand);
+    servos->sender = "RC";
     servos->frontBrake = -5.0;
 
     double lf, rf, lb, rb;
@@ -344,7 +343,7 @@ void ArduinoOnboard::loadServoParams()
   {
     NODELET_ERROR("ServoInterface: Couldn't retreive servo settings");
   }
-  NODELET_INFO("ServoInterface: Loaded %u servos", m_servoSettings.size());
+  NODELET_INFO("ServoInterface: Loaded %u servos", (unsigned int)m_servoSettings.size());
 
 }
 

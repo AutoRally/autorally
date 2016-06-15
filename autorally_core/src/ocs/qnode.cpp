@@ -43,15 +43,38 @@ QNode::QNode(int argc, char** argv ) :
   init_argv(argv)
 {
   //register my data types so I can pass them around in signals and slots
-	qRegisterMetaType<autorally_msgs::safeSpeedConstPtr>
-	                ("autorally_msgs::safeSpeedConstPtr");
+	qRegisterMetaType<autorally_msgs::runstopConstPtr>
+	                ("autorally_msgs::runstopConstPtr");
 	qRegisterMetaType<autorally_msgs::wheelSpeedsConstPtr>
 	                ("autorally_msgs::wheelSpeedsConstPtr");
-  qRegisterMetaType<autorally_msgs::servoMSGConstPtr>
-	                ("autorally_msgs::servoMSGConstPtr");
+  //qRegisterMetaType<autorally_msgs::servoMSGConstPtr>
+	//                ("autorally_msgs::servoMSGConstPtr");
+  qRegisterMetaType<autorally_msgs::chassisStateConstPtr>
+                  ("autorally_msgs::chassisStateConstPtr");
+  qRegisterMetaType<autorally_msgs::chassisCommandConstPtr>
+                  ("autorally_msgs::chassisCommandConstPtr");
   qRegisterMetaType<diagnostic_msgs::DiagnosticStatus>
 	                ("diagnostic_msgs::DiagnosticStatus");
-  pthread_mutex_init(&m_imageMutex, NULL);
+  
+
+  int init_err = pthread_mutex_init(&m_imageMutex, nullptr);
+  if(init_err != 0) {
+    switch(init_err) {
+      case EAGAIN:
+        std::cerr << "ERROR: Unable to initialize image mutex due to lack of resource other than memory." << std::endl;
+        break;
+      case ENOMEM:
+        std::cerr << "ERROR: Unable to initialize image mutex due to lack of memory." << std::endl;
+        break;
+      case EPERM:
+        std::cerr << "ERROR: Unable to initialize image mutex due to insufficient priveleges." << std::endl;
+        break;
+      default:
+        std::cerr << "ERROR: Unable to initialize image mutex for unknown reason." << std::endl;
+        break;
+    }
+    exit(init_err);
+  }
 }
 
 QNode::~QNode() {
@@ -72,16 +95,13 @@ bool QNode::init() {
 	m_nh = new ros::NodeHandle;
 
 	// Add your ros communications here.
-	safeSpeed_publisher = m_nh->advertise<autorally_msgs::safeSpeed>
-	                      ("safeSpeed", 1);
-	servoCommandPub = m_nh->advertise<autorally_msgs::servoMSG>
-                        ("OCS/servoCommand", 1);
+	runstop_publisher = m_nh->advertise<autorally_msgs::runstop>
+	                      ("runstop", 1);
+	m_chassisCommandPub = m_nh->advertise<autorally_msgs::chassisCommand>
+                        ("OCS/chassisCommand", 1);
 
-	//vehicleSpeed_subscriber = n.subscribe("vehicleSpeed", 5,
-  //                                    &QNode::vehicleSpeedCallback,
-  //                                    this);
-  safeSpeed_subscriber = m_nh->subscribe("safeSpeed", 5,
-                                      &QNode::safeSpeedCallback,
+  runstop_subscriber = m_nh->subscribe("runstop", 5,
+                                      &QNode::runstopCallback,
                                       this);
   wheelSpeeds_subscriber = m_nh->subscribe("wheelSpeeds", 1,
                                       &QNode::wheelSpeedsCallback,
@@ -89,28 +109,27 @@ bool QNode::init() {
 	diagStatus_subscriber = m_nh->subscribe("diagnostics", 10,
                                       &QNode::diagStatusCallback,
                                       this);
-	servoStatus_subscriber = m_nh->subscribe("servoStatus", 1,
-                                      &QNode::newServoMSG,
+	chassisState_subscriber = m_nh->subscribe("chassisState", 1,
+                                      &QNode::chassisStateCb,
                                       this);
   imageMask_subscriber = m_nh->subscribe("imageMask", 10,
                                       &QNode::imageMaskCallback,
                                       this);
 
-	m_safeSpeedTimer = m_nh->createTimer(ros::Duration(0.1), &QNode::ssTimerCallback, this);
+	m_runstopTimer = m_nh->createTimer(ros::Duration(0.1), &QNode::ssTimerCallback, this);
 //	m_servoCommandTimer = n.createTimer(ros::Duration(0.1), &QNode::ssTimerCallback, this);
 //	m_servoCommandTimer.stop();
 
-	m_safeSpeed.header.seq = 0;
-	m_safeSpeed.sender = "OCS";
+	m_runstop.sender = "OCS";
 
   QStringList header;
-  header << "Sender" << "Value (m/s)" << "Time since last message";
-	m_safeSpeedModel.setColumnCount(3);
-  m_safeSpeedModel.setHorizontalHeaderLabels(header);
+  header << "Sender" << "Motion Enabled" << "Time since last message";
+	m_runstopModel.setColumnCount(3);
+  m_runstopModel.setHorizontalHeaderLabels(header);
 
   double diagFreq;
   ros::param::param<double>("diagnosticsFrequency", diagFreq, 1.0);
-  ros::param::param<double>("safeSpeed/Timeout", m_safeSpeedTimeout, 5.0);
+  ros::param::param<double>("runstop/Timeout", m_runstopTimeout, 5.0);
 
   m_diagModel.setDiagnosticFrequency(diagFreq);
 
@@ -120,8 +139,8 @@ bool QNode::init() {
 
 void QNode::ssTimerCallback(const ros::TimerEvent&)
 {
-  m_safeSpeed.header.stamp = ros::Time::now();
-  safeSpeed_publisher.publish(m_safeSpeed);
+  m_runstop.header.stamp = ros::Time::now();
+  runstop_publisher.publish(m_runstop);
 }
 
 void QNode::run() {
@@ -131,38 +150,33 @@ void QNode::run() {
 	emit rosShutdown(); //used to signal the gui to shutdown (useful to roslaunch)
 }
 
-//void QNode::vehicleSpeedCallback(const autorally_msgs::vehicleSpeedConstPtr& msg)
-//{
-//  emit newVehicleSpeed(msg);
-//}
-
-void QNode::safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg)
+void QNode::runstopCallback(const autorally_msgs::runstopConstPtr& msg)
 {
-  QList<QStandardItem *> items = m_safeSpeedModel.findItems(
+  QList<QStandardItem *> items = m_runstopModel.findItems(
                                           QString::fromStdString(msg->sender) );
   if(items.isEmpty())
   {
     //add new item for the sender
-    m_safeSpeedModel.appendRow(generateNewSafeSpeed(msg));
-    items = m_safeSpeedModel.findItems( QString::fromStdString(msg->sender) );
+    m_runstopModel.appendRow(generateNewrunstop(msg));
+    items = m_runstopModel.findItems( QString::fromStdString(msg->sender) );
   }
 
   if(items.size() == 1)
   {
-    //update the safeSpeed
-    m_safeSpeedModel.item(items.front()->index().row(),1)->
-        setText(QString::number(msg->speed, 'g', 4));
-    m_safeSpeedModel.item(items.front()->index().row(),2)->
+    //update the runstop
+    m_runstopModel.item(items.front()->index().row(),1)->
+        setText(QString::number(msg->motionEnabled, 'g', 4));
+    m_runstopModel.item(items.front()->index().row(),2)->
        setData(QVariant(msg->header.stamp.toSec()));
   } else //found more than one sender with the same name
   {
-    ROS_ERROR("Something is wrong with the OCS safeSpeedModel!!!!!");
+    ROS_ERROR("Something is wrong with the OCS runstopModel!!!!!");
   }
 }
 
-void QNode::safeSpeedModelDoubleClicked(const QModelIndex& index)
+void QNode::runstopModelDoubleClicked(const QModelIndex& index)
 {
-  m_safeSpeedModel.removeRows(index.row(), 1);
+  m_runstopModel.removeRows(index.row(), 1);
 }
 
 void QNode::wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg)
@@ -170,14 +184,20 @@ void QNode::wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg)
   emit newWheelSpeeds(msg);
 }
 
-void QNode::newServoMSG(const autorally_msgs::servoMSGConstPtr& msg)
+void QNode::chassisStateCb(const autorally_msgs::chassisStateConstPtr& msg)
 {
-  emit newServoData(msg);
+  emit newChassisState(msg);
 }
 
-void QNode::setSafeSpeed(const double& speed)
+void QNode::setRunstop(const double& speed)
 {
-  m_safeSpeed.speed = speed;
+  if(speed > 0)
+  {
+    m_runstop.motionEnabled = true;
+  } else
+  {
+    m_runstop.motionEnabled = false;
+  }
 }
 
 void QNode::diagStatusCallback(const diagnostic_msgs::DiagnosticArray& msg)
@@ -186,29 +206,29 @@ void QNode::diagStatusCallback(const diagnostic_msgs::DiagnosticArray& msg)
 }
 
 
-void QNode::servoControl(autorally_msgs::servoMSG& msg)
+void QNode::actuatorControl(autorally_msgs::chassisCommand& msg)
 {
 //  if(m_sendServoCommand)
   {
     msg.header.stamp = ros::Time::now();
-    servoCommandPub.publish(msg);
+    m_chassisCommandPub.publish(msg);
   }
 }
 
-QList<QStandardItem*> QNode::generateNewSafeSpeed(
-                     const autorally_msgs::safeSpeedConstPtr& msg)
+QList<QStandardItem*> QNode::generateNewrunstop(
+                     const autorally_msgs::runstopConstPtr& msg)
 {
-    QList<QStandardItem*> newSafeSpeed;
-    newSafeSpeed << new QStandardItem(msg->sender.c_str());
-    newSafeSpeed << new QStandardItem(QString::number(msg->speed, 'g', 4));
-    newSafeSpeed << new QStandardItem("0.000");
+    QList<QStandardItem*> newrunstop;
+    newrunstop << new QStandardItem(msg->sender.c_str());
+    newrunstop << new QStandardItem(QString::number(msg->motionEnabled, 'g', 4));
+    newrunstop << new QStandardItem("0.000");
 
-    newSafeSpeed[0]->setEditable(false);
-    newSafeSpeed[1]->setEditable(false);
-    newSafeSpeed[2]->setEditable(false);
-    newSafeSpeed[2]->setData(QVariant(msg->header.stamp.toSec()));
+    newrunstop[0]->setEditable(false);
+    newrunstop[1]->setEditable(false);
+    newrunstop[2]->setEditable(false);
+    newrunstop[2]->setData(QVariant(msg->header.stamp.toSec()));
 
-    return newSafeSpeed;
+    return newrunstop;
 }
 
 void QNode::updateTimes()
@@ -218,22 +238,22 @@ void QNode::updateTimes()
 
   if(m_currentTabText == "System Info")
   {
-    for(int i = 0; i < m_safeSpeedModel.rowCount(); i++)
+    for(int i = 0; i < m_runstopModel.rowCount(); i++)
     {
-      if( (node = m_safeSpeedModel.item(i,2)) == 0 || !node->data().isValid())
+      if( (node = m_runstopModel.item(i,2)) == 0 || !node->data().isValid())
       {
-        ROS_ERROR("Invalid safespeed child");
+        ROS_ERROR("Invalid runstop child");
       } else
       {
         time = ros::Time::now().toSec()-node->data().toDouble();
         node->setText(QString::number(time, 'g', 4));
         //set colors for stale
-        if(time > m_safeSpeedTimeout)
+        if(time > m_runstopTimeout)
         {
           node->setBackground(Qt::magenta);
         } else
         {
-          node->setBackground(m_safeSpeedModel.item(i,1)->background());
+          node->setBackground(m_runstopModel.item(i,1)->background());
         }
       }
     }
@@ -247,62 +267,66 @@ void QNode::imageMaskCallback(const autorally_msgs::imageMask& msg)
 
 void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
 {
-  QImage::Format format = QImage::Format_Indexed8;
-  unsigned char *newData = 0;
-  if(msg->encoding == "bgr8") {
-    format = QImage::Format_RGB888;
-    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
-  }
-  if(msg->encoding == "rgb8")
-    format = QImage::Format_RGB888;
-  if(msg->encoding == "mono16")
-    ROS_WARN("The OCS does not currently support 16bpp images. This image topic will not render correctly.");
-  QImage img(msg->encoding == "bgr8" ? newData : &msg->data[0],
-             msg->width,
-             msg->height,
-             msg->step,
-             format);
+  QImage img = formatImageForDisplay(msg);
 
-  if(!pthread_mutex_trylock(&m_imageMutex))
+  int lock_ret = pthread_mutex_trylock(&m_imageMutex);
+  if(lock_ret != 0)
   {
     if(m_firewireImage1.convertFromImage(img))
     {
       emit newImage1();
     }
-    pthread_mutex_unlock(&m_imageMutex);
+    int ret_val = pthread_mutex_unlock(&m_imageMutex);
+    if(ret_val != 0)
+    {
+      switch(ret_val) {
+        case EINVAL:
+          ROS_WARN("Mutex unlock error: The value specified for the argument is not correct");
+          break;
+        case EPERM:
+          ROS_WARN("Mutex unlock error: The mutex is not currently held by the caller");
+          break;
+        default:
+          ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+      }
+      return;
+    }
+  } else
+  {
+    ROS_WARN_STREAM("image mutex lock error:" << lock_ret);
   }
-  if(newData != 0)
-    delete newData;
 }
 
 void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
 {
-  QImage::Format format = QImage::Format_Indexed8;
-  unsigned char *newData = 0;
-  if(msg->encoding == "bgr8") {
-    format = QImage::Format_RGB888;
-    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
-  }
-  if(msg->encoding == "rgb8")
-    format = QImage::Format_RGB888;
-  if(msg->encoding == "mono16")
-    ROS_WARN("The OCS does not currently support 16bpp images. This image topic will not render correctly.");
-  QImage img(msg->encoding == "bgr8" ? newData : &msg->data[0],
-             msg->width,
-             msg->height,
-             msg->step,
-             format);
+  QImage img = formatImageForDisplay(msg);
 
-  if(!pthread_mutex_trylock(&m_imageMutex))
+  int lock_ret = pthread_mutex_trylock(&m_imageMutex);
+  if(lock_ret != 0)
   {
     if(m_firewireImage2.convertFromImage(img))
     {
       emit newImage2();
     }
-    pthread_mutex_unlock(&m_imageMutex);
+    int ret_val = pthread_mutex_unlock(&m_imageMutex);
+    if(ret_val != 0)
+    {
+      switch(ret_val) {
+        case EINVAL:
+          ROS_WARN("Mutex unlock error: The value specified for the argument is not correct");
+          break;
+        case EPERM:
+          ROS_WARN("Mutex unlock error: The mutex is not currently held by the caller");
+          break;
+        default:
+          ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+      }
+      return;
+    }
+  } else
+  {
+    ROS_WARN_STREAM("image mutex lock error:" << lock_ret);
   }
-  if(newData != 0)
-    delete newData;
 }
 
 unsigned char* QNode::convertBGRtoRGB(const unsigned char* data, int size) {
@@ -402,4 +426,30 @@ void QNode::switchImageTopic(int subscriber, std::string name)
             }
         }
     }
+}
+
+QImage QNode::formatImageForDisplay(const sensor_msgs::ImageConstPtr &msg)
+{
+  QImage::Format format = QImage::Format_Indexed8;
+
+  std::string encoding = msg->encoding;
+
+  unsigned char *newData = nullptr;
+
+  if(encoding == "bgr8") {
+    format = QImage::Format_RGB888;
+    newData = convertBGRtoRGB(&msg->data[0], msg->step * msg->height);
+  }
+  else if(encoding == "rgb8") {
+    format = QImage::Format_RGB888;
+  }
+  else {
+    ROS_WARN_STREAM("The OCS does not currently support " << encoding << " images. This image topic will not render correctly.");
+  }
+
+  QImage img = QImage(encoding == "bgr8" ? newData : &msg->data[0], msg->width, msg->height, msg->step, format).copy();
+
+  delete newData;
+
+  return img;
 }
