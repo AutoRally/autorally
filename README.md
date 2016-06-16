@@ -5,6 +5,7 @@
 Software for the AutoRally research platform.
 
 [AutoRally Platform Website](http://autorally.github.io)
+
 [AutoRally Youtube Channel](https://www.youtube.com/channel/UCSt0P1uqi4zU5RX2DZC_Qvg)
 
 Research Pages AutoRally is associated with:
@@ -12,6 +13,11 @@ Research Pages AutoRally is associated with:
   * http://dcsl.gatech.edu/research-muri-nascar.html
   * http://acds-lab.gatech.edu/Research.html
 
+## Contributing
+
+We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!
+
+Please submit pull requests to the devel branch that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
 
 ## Setup Instructions
 
@@ -21,8 +27,6 @@ Research Pages AutoRally is associated with:
 3. [Compilation/Running](#3-compilationrunning)
 4. [Generate Documentation](#4-generate-documentation)
 5. [Test Setup in Simulation](#5-test-setup-in-simulation)
-5. [What's Next](#6-what's-next)
-5. [Contributing](#7-Contributing)
 
 ### 1. Install Prerequisites
 1. __Install [Ubuntu 14.04 64-bit](http://www.ubuntu.com)__
@@ -94,17 +98,9 @@ To test that your setup process was successful, run the AutoRally simulator with
 
 ```roslaunch autorally_gazebo autoRallyTrackGazeboSim.launch```
 
-### 6. What's Next
+## What's Next
 
 Check out [our wiki](https://github.com/AutoRally/autorally/wiki) that includes:
 * Instructions to configure a physical AutoRally platform
 * Tutorials about controllers we release
 * Tutorial to learn how to use your own controller with the AutoRally platform
-
-### 7. Contributing
-
-We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!
-
-Please submit pull requests to the devel branch that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide).
-
-We use Gitflow, so master branch is reserved for releases.
