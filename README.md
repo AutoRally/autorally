@@ -102,5 +102,5 @@ To test that your setup process was successful, run the AutoRally simulator with
 
 Check out [our wiki](https://github.com/AutoRally/autorally/wiki) that includes:
 * Instructions to configure a physical AutoRally platform
-* Tutorials about controllers we release
-* Tutorial to learn how to use your own controller with the AutoRally platform
+* Tutorials for released controllers (waypoint follower, constant speed controller)
+* Tutorial to use your own controller with the AutoRally platform
