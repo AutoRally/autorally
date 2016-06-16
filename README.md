@@ -17,7 +17,7 @@ Research Pages AutoRally is associated with:
 
 We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!
 
-Please submit pull requests to the devel branch that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
+Please submit pull requests to the [devel branch](https://github.com/AutoRally/autorally/pull/new/devel) that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
 
 ## Setup Instructions
 
@@ -68,9 +68,9 @@ Please submit pull requests to the devel branch that conform to the [ROS C++ Sty
 
 Clone the autorally and imu_3dm_gx4 repositories into a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work.
 
-```git clone https://github.com/AutoRally/imu_3dm_gx4.git```
-
 ```git clone https://github.com/AutoRally/autorally.git```
+
+```git clone https://github.com/AutoRally/imu_3dm_gx4.git```
 
 ### 3. Install AutoRally ROS Dependencies
 
@@ -82,7 +82,11 @@ Within the catkin workspace folder, run this command to install the packages thi
 
 To compile and install run `catkin_make` from the catkin workspace folder.
 
-Due to the additional requirement of ROS's distributed launch system, you must run `source autorally/autorally_util/setupEnvLocal.sh` before using any autorally components. For more information about how to set this system up for distributed launches on your vehicle platform, see the wiki.
+Due to the additional requirement of ROS's distributed launch system, you must run
+
+`source autorally/autorally_util/setupEnvLocal.sh`
+
+before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki)for more information about how to set this system up for distributed launches on your vehicle platform.
 
 _Note:_ If you are unfamiliar with catkin, please know that you must run `source <catkin_ws>/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
 
