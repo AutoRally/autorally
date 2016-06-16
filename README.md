@@ -86,7 +86,7 @@ Due to the additional requirement of ROS's distributed launch system, you must r
 
 `source autorally/autorally_util/setupEnvLocal.sh`
 
-before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki)for more information about how to set this system up for distributed launches on your vehicle platform.
+before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki) for more information about how to set this system up for distributed launches on your vehicle platform.
 
 _Note:_ If you are unfamiliar with catkin, please know that you must run `source <catkin_ws>/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
 
