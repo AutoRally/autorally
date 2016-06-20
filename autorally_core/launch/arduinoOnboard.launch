@@ -11,6 +11,8 @@
     <param name="lbRotationEnabled" value="true" />
     <param name="rbRotationEnabled" value="true" />
     <param name="port" value="/dev/arArduino" />
+    
+    <!-- Note: Maximum trigger framerate for the cameras is dependent on shutter time. As such, lighting conditions that necessetate a longer exposure will prevent the camera from reaching the desired triggered framerate. -->
     <param name="triggerFPS" value="20" />
 
     <!--configure settings for 115200 baud, 8N1 -->
