@@ -258,11 +258,23 @@ namespace autorally_core
   void Imu_Gps::GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro)
   {
     double accx, accy, accz;
-    if (m_invertx) accx = -imu->linear_acceleration.x;
+    if (m_invertx)
+    {
+//      ROS_WARN("Inverting X");
+      accx = -imu->linear_acceleration.x;
+    }
     else accx = imu->linear_acceleration.x;
-    if (m_inverty) accy = -imu->linear_acceleration.y;
+    if (m_inverty)
+    {
+//      ROS_WARN("Inverting Y");
+      accy = -imu->linear_acceleration.y;
+    }
     else accy = imu->linear_acceleration.y;
-    if (m_invertz) accz = -imu->linear_acceleration.z;
+    if (m_invertz)
+    {
+//      ROS_WARN("Inverting Z");
+      accz = -imu->linear_acceleration.z;
+    }
     else accz = imu->linear_acceleration.z;
     acc = Vector3(accx, accy, accz);
 
@@ -294,7 +306,7 @@ namespace autorally_core
         Values newVariables;
         m_gotFirstFix = true;
         m_enu.Reset(fix->latitude, fix->longitude, fix->altitude);
-        // ROS_WARN("Reset local origin to %f %f %f", fix->latitude, fix->longitude, fix->altitude);
+        ROS_WARN("Reset local origin to %f %f %f", fix->latitude, fix->longitude, fix->altitude);
         // Add prior factors on pose, vel and bias
         Rot3 initialOrientation = Rot3::Quaternion(m_initialPose.orientation.w,
             m_initialPose.orientation.x,
@@ -350,9 +362,10 @@ namespace autorally_core
           m_lastImuTgps = m_lastIMU->header.stamp.toSec();
           pre_int_data.integrateMeasurement(acc, gyro, imuDT);
           m_lastIMU = m_ImuOptQ.popBlocking();
+          ROS_WARN("Last IMU dt was %f, put time %f", imuDT, m_lastIMU->header.stamp.toSec());
         }
 
-        ImuFactor imuFactor(X(m_poseVelKey), V(m_poseVelKey), X(m_poseVelKey+1), V(m_poseVelKey+1), B(m_biasKey),
+        ImuFactor imuFactor(X(m_poseVelKey), V(m_poseVelKey), X(m_poseVelKey+1), V(m_poseVelKey+1), B(m_biasKey+1),
                   pre_int_data);
 
         newFactors.add(imuFactor);
@@ -456,13 +469,15 @@ namespace autorally_core
       //We need to reset integration and iterate through all our IMU measurements
       m_imuPredictor->resetIntegration();
       int numMeasurements = 0;
+//      ROS_INFO("New integration");
       for (auto it=m_imuMeasurements.begin(); it!=m_imuMeasurements.end(); ++it)
       {
-        double dt_temp = m_imuQPrevTime - (*it)->header.stamp.toSec();
+        double dt_temp =  (*it)->header.stamp.toSec() - m_imuQPrevTime;
         m_imuQPrevTime = (*it)->header.stamp.toSec();
         GetAccGyro(*it, acc, gyro);
         m_imuPredictor->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
+        ROS_INFO("IMU time %f, dt %f", (*it)->header.stamp.toSec(), dt_temp);
       }
 //      ROS_INFO("Resetting Integration, %d measurements integrated, %d discarded", numMeasurements, numImuDiscarded);
     }
@@ -470,6 +485,7 @@ namespace autorally_core
     {
       //Just need to add the newest measurement, no new optimized pose
       GetAccGyro(imu, acc, gyro);
+      ROS_INFO("Integrating %f, dt %f", m_lastImuT, dt);
       m_imuPredictor->integrateMeasurement(acc, gyro, dt);//m_bodyPSensor);
     }
     NavState currentPose = m_imuPredictor->predict(optimizedState, optimizedBias);
