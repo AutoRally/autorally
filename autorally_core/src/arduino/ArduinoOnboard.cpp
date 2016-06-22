@@ -178,10 +178,10 @@ void ArduinoOnboard::arduinoDataCallback()
       m_port.diag_warn("ArduinoOnboard: Incomplete packet");
     }
 
-    if(isnan(lf)) lf = 0.0;
-    if(isnan(lb)) lb = 0.0;
-    if(isnan(rf)) rf = 0.0;
-    if(isnan(rb)) rb = 0.0;
+    if(std::isnan(lf)) lf = 0.0;
+    if(std::isnan(lb)) lb = 0.0;
+    if(std::isnan(rf)) rf = 0.0;
+    if(std::isnan(rb)) rb = 0.0;
 
     wheelSpeeds->lfSpeed = (lf)*m_wheelDiameter*PI;
     wheelSpeeds->lbSpeed = (lb)*m_wheelDiameter*PI;

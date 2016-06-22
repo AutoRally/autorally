@@ -9,7 +9,7 @@ include_directories(include
       ${catkin_INCLUDE_DIRS}
       "/usr/local/include")
 add_executable(imuGpsEstimator IMU_GPS.cpp)
-target_link_libraries(imuGpsEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/lib/libtbb.so /usr/lib/libtbbmalloc.so /usr/local/lib/libGeographic.so Diagnostics)
+target_link_libraries(imuGpsEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/local/lib/libGeographic.so Diagnostics)
 install(TARGETS imuGpsEstimator
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
