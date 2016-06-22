@@ -1,5 +1,6 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <node name="chronyStatus" pkg="autorally_core" type="chronyStatus.py" machine="muri-ocs" output="screen" />
+  <node name="chronyStatusMaster" pkg="autorally_core" type="chronyStatus.py" machine="muri-laptop" output="screen" />
+
 </launch>

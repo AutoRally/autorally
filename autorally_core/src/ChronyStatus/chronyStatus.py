@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Software License Agreement (BSD License)
-# Copyright (c) 2013, Georgia Institute of Technology
+# Copyright (c) 2016, Georgia Institute of Technology
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,95 +34,94 @@ on the main computer).
 
 import os
 import socket
-import sys
-import roslib
 import rospy
 import commands
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from subprocess import call
 from subprocess import check_output
 import subprocess
 
 """
-@param host the hostname for the chrony server
-@return clients a list of all clients using host for clock syncronization
-Contacts the chrony server in the system and parses out a list of all clients
-currently using it as their clock synchronization source.
+@return chrony version number, if available
+
+Get current chrony version number by using chronyc interface
 """
-def getClients(host):
+def checkChronyVersion():
   try:
-    clientsText = check_output("chronyc -h " + host + " -m 'password muri123' clients", shell=True);
-    
-    #print clients.rfind('=')
-    clientsText = clientsText[clientsText.rfind('=')+1:]
-    lines = clientsText.split('\n')
+    versionText = check_output("chronyc -v", shell=True);
+    lines = versionText.split(' ')
+    if lines[2] == 'version':
+      return float(lines[3])
 
-    clients = []
-    for l in lines:
-      if len(l) and l.find('localhost'):
-        #print l.split()[0].rstrip('.local')
-        clients.append(l.split()[0].rstrip('.local'))
-    return clients
   except subprocess.CalledProcessError as e:
-    return 'subprocess error:' + e.output
-  
+    rospy.logerr('chronyStatus: subprocess error:' + e.output)
+  except ValueError:
+    rospy.logerr('chrony version check failed, version unkown')
 
 """
-@param clients list of all clients currently in the system
-@param status the diagnostic message to pupulate with offset information
+@param status the diganostic array to add information to
 
-Gets the offset of each client in the system and created the diagnostic message
+Queries the current tracking status of chronyd using chronyc
 """
-def getOffsets(clients, host, status):
-  status.values = []
-  for c in clients:
-    clientName = c
-    if c == socket.gethostname():
-      c = 'localhost'
-    try:
-      #print 'pinging', c
-      clientsOffset = check_output("chronyc -h " + c + " sourcestats", shell=True);
-      
-      #print clientsOffset
-      clientsOffset = clientsOffset[clientsOffset.rfind('=')+1:].strip()
-      data = clientsOffset.split('\n')
-      
-      for s in data:
-        splitLine = s.split()
-        #print 'looking for', host, 'in', splitLine
-        if splitLine[0] == host:
-          status.values.append(KeyValue(key=clientName, value=splitLine[6]))    
-    except:
-      print sys.exc_info()[0]
+def getTracking(status):
+  try:
+    trackingText = check_output("chronyc tracking", shell=True);
+
+    for line in trackingText.split('\n'):
+      if len(line):
+        info = line.split(':')
+        status.values.append(KeyValue(key=info[0], value=info[1]))
+
     
+  except subprocess.CalledProcessError as e:
+    rospy.logerr(e.output)
+    status.values.append(KeyValue(key=e.output, value=chr(2)))
+
+"""
+@param status the diganostic array to add information to
+
+Queries the current sources information from chronyd using chronyc
+"""
+def getSources(status):
+  try:
+    sourcesText = check_output("chronyc sources", shell=True);
+    lines = sourcesText.split('\n')
+    for line in lines[3:]:
+      if len(line):
+        tok = line.split()
+        text = 'ModeState:' + tok[0] + ' Stratum:' + tok[2] + ' Poll:' + tok[3] + ' Reach:' + tok[4] +\
+               ' LastRx:' + tok[5] + ' Last Sample:' + ''.join(tok[6:])
+        status.values.append(KeyValue(key='source '+tok[1], value=text))    
+    
+  except subprocess.CalledProcessError as e:
+    rospy.logerr(e.output)
+    status.values.append(KeyValue(key=e.output, value=chr(2)))
+
 
 if __name__ == '__main__':
-  rospy.init_node('chronyStatus')
-  pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=2)
+  hostname = socket.gethostname()
+  rospy.init_node('chronyStatus_'+hostname)
+  pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1, latch=True)
   array = DiagnosticArray()
   status = DiagnosticStatus(name='ChronyStatus',\
                             level=0,\
-                            message='Master:'+os.environ.get('MASTER_HOSTNAME'))
-
-  host = os.environ.get('MASTER_HOSTNAME')
-  if socket.gethostname() == host:
-    host = 'localhost'
+                            hardware_id=hostname)
 
   array.status = [status]
-
   rate = rospy.Rate(0.2)
-  while not rospy.is_shutdown():
+  chronyVersion = checkChronyVersion()
 
-    clients = getClients(host)
-    #print clients
-    if len(clients) > 0 and 'subprocess error' not in clients:
-      getOffsets(clients, host, status)
-    elif 'subprocess error' in clients:
-      status.values = []
-      status.values.append(KeyValue(key=clients, value=chr(1)) )
-    else:
-      status.values = []
-      status.values.append(KeyValue(key='No Clients', value=chr(1)) )
+  chronyMinVersion = 2.1
+  if chronyVersion < chronyMinVersion:
+    rospy.logerr('ChronyStatus requires chrony version ' + str(chronyMinVersion) + \
+                 ' or greater, version ' + str(chronyVersion) + ' detected, exiting')
 
-    pub.publish(array)
-    rate.sleep()
+  else:
+    while not rospy.is_shutdown():
+      status.values = []
+      status.values.append(KeyValue(key='chrony version', value=str(chronyVersion)) )
+
+      getTracking(status)
+      getSources(status)
+
+      pub.publish(array)
+      rate.sleep()
