@@ -26,10 +26,9 @@
 """
 @package chronyStatus
 
-Gets the current state of all chrony clients. The reported value is the
-predicted offset between each client and the chrony server. This program can
-be run on any computer connected into the system (offloaded to OCS to save CPU
-on the main computer).
+Acquires and publishes to /diagnostics the current state of chrony time sychronization
+and information about available timesyn sources. On startup the node verifies that the
+installed version of chrony is at least chronyMinVersion.
 """
 
 import os
@@ -60,7 +59,7 @@ def checkChronyVersion():
 """
 @param status the diganostic array to add information to
 
-Queries the current tracking status of chronyd using chronyc
+Queries and adds to diganostics the current tracking status of chronyd using chronyc
 """
 def getTracking(status):
   try:
@@ -68,7 +67,8 @@ def getTracking(status):
 
     for line in trackingText.split('\n'):
       if len(line):
-        info = line.split(':')
+        #split on first : to separate data field name from value because some values can have : in them
+        info = line.split(':', 1)
         status.values.append(KeyValue(key=info[0], value=info[1]))
     
   except subprocess.CalledProcessError as e:
@@ -78,7 +78,7 @@ def getTracking(status):
 """
 @param status the diganostic array to add information to
 
-Queries the current sources information from chronyd using chronyc
+Queries and adds to diagnostics the current sources information from chronyd using chronyc
 """
 def getSources(status):
   try:
@@ -106,11 +106,12 @@ if __name__ == '__main__':
                             hardware_id=hostname)
 
   array.status = [status]
-
-  rate = rospy.Rate(0.2)
+  rate = rospy.Rate(0.2) # query and publish chrony information once every 5 seconds
+  
   chronyVersion = checkChronyVersion()
-
-  chronyMinVersion = 2.1
+  chronyMinVersion = 1.29
+  
+  #publish error and exit if chronyMinVersion is not satisfied
   if chronyVersion < chronyMinVersion:
     rospy.logerr('ChronyStatus requires chrony version ' + str(chronyMinVersion) + \
                  ' or greater, version ' + str(chronyVersion) + ' detected, exiting')

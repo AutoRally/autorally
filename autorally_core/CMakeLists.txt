@@ -54,7 +54,7 @@ install(TARGETS
 
 install(PROGRAMS
   src/systemStatus/systemStatus.py
-  src/ChronyStatus/chronyStatus.py
+  src/chronyStatus/chronyStatus.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch/
