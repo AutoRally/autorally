@@ -70,7 +70,6 @@ def getTracking(status):
       if len(line):
         info = line.split(':')
         status.values.append(KeyValue(key=info[0], value=info[1]))
-
     
   except subprocess.CalledProcessError as e:
     rospy.logerr(e.output)
@@ -107,6 +106,7 @@ if __name__ == '__main__':
                             hardware_id=hostname)
 
   array.status = [status]
+
   rate = rospy.Rate(0.2)
   chronyVersion = checkChronyVersion()
 
@@ -117,6 +117,7 @@ if __name__ == '__main__':
 
   else:
     while not rospy.is_shutdown():
+
       status.values = []
       status.values.append(KeyValue(key='chrony version', value=str(chronyVersion)) )
 

@@ -5,7 +5,7 @@
   <param name="safeSpeedCaution" value="1.5" />
 
   <node name="runStop" pkg="autorally_core" type="runStop"
-        machine="muri-ocs" output="screen">
+        machine="autorally-ocs" output="screen">
     <remap from="safeSpeed" to="runstopSafeSeed"/>
 
     <param name="port" value="/dev/arRunStop" />

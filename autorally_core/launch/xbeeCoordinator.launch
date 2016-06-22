@@ -2,7 +2,7 @@
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
   <node name="xbeeCoordinator" pkg="autorally_core" type="xbeeCoordinator"
-        machine="muri-ocs" output="screen">
+        machine="autorally-ocs" output="screen">
     <remap from="safeSpeed" to="runstopSafeSeed"/>
     <remap from="gpsBaseRTCM3" to="gpsBaseRTCM3Xbee" />
 

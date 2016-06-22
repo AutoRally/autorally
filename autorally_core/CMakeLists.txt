@@ -29,10 +29,10 @@ catkin_package(
 set(BUILD_FLAGS "-std=c++11 -Wuninitialized -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BUILD_FLAGS}")
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(include)
 
 add_subdirectory(src/arduino)
-add_subdirectory(src/ChronyStatus)
 add_subdirectory(src/Diagnostics)
 add_subdirectory(src/gps)
 add_subdirectory(src/ocs)
