@@ -158,16 +158,16 @@ namespace autorally_core
     m_prevTime = ros::TIME_MIN;
     m_optimizedTime = 0;
 
-    imu_3dm_gx4::FilterOutputConstPtr ip;
-    if (!fixedInitialPose) {
-      while (!ip)
-      {
-        ROS_WARN("Waiting for valid initial pose");
-        ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("filter", m_nh, ros::Duration(15));
-      }
-      m_initialPose = *ip;
-    }
-    else {
+//    imu_3dm_gx4::FilterOutputConstPtr ip;
+//    if (!fixedInitialPose) {
+//      while (!ip)
+//      {
+//        ROS_WARN("Waiting for valid initial pose");
+//        ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("filter", m_nh, ros::Duration(15));
+//      }
+//      m_initialPose = *ip;
+//    }
+//    else {
       ROS_WARN("Using fixed initial pose");
       Rot3 initialRotation = Rot3::Ypr(initialYaw, intialPitch, initialRoll);
       m_initialPose.orientation.w = initialRotation.quaternion()[0];
@@ -178,7 +178,15 @@ namespace autorally_core
       m_initialPose.bias.y = 0;
       m_initialPose.bias.z = 0;
 
+//    }
+
+    nav_msgs::OdometryConstPtr ocp;
+    while (!ocp)
+    {
+      ROS_WARN("Waiting for valid initial odom");
+      ocp = ros::topic::waitForMessage<nav_msgs::Odometry>("filter", m_nh, ros::Duration(5));
     }
+    m_initOdom = *ocp;
 
     Rot3 initRot(Quaternion(m_initialPose.orientation.w, m_initialPose.orientation.x, m_initialPose.orientation.y, m_initialPose.orientation.z));
 //    std::cout << "Rotation yaw: " << initRot.yaw() << " pitch: " << initRot.pitch() << " roll: " << initRot.roll() << std::endl;
@@ -305,7 +313,8 @@ namespace autorally_core
         NonlinearFactorGraph newFactors;
         Values newVariables;
         m_gotFirstFix = true;
-        m_enu.Reset(fix->latitude, fix->longitude, fix->altitude);
+//        m_enu.Reset(fix->latitude, fix->longitude, fix->altitude);
+        m_enu.Reset(33.774565431000000, -84.404983322300000, 277.7840);
         ROS_WARN("Reset local origin to %f %f %f", fix->latitude, fix->longitude, fix->altitude);
         // Add prior factors on pose, vel and bias
         Rot3 initialOrientation = Rot3::Quaternion(m_initialPose.orientation.w,
@@ -315,12 +324,21 @@ namespace autorally_core
         //m_bodyPSensor.rotation() *
         std::cout << "Initial orientation" << std::endl;
         std::cout << m_bodyPSensor.rotation() * initialOrientation * m_carENUPcarNED.rotation() << std::endl;
-        Pose3 x0(m_bodyPSensor.rotation() * initialOrientation * m_carENUPcarNED.rotation(),
-            Point3(0, 0, 0)); /// We always start at the origin of m_enu
+
+        Rot3 irot = Rot3::Quaternion(m_initOdom.pose.pose.orientation.w,
+                                     m_initOdom.pose.pose.orientation.x,
+                                     m_initOdom.pose.pose.orientation.y,
+                                     m_initOdom.pose.pose.orientation.z);
+        Pose3 x0(irot,
+            Point3(m_initOdom.pose.pose.position.x,
+                m_initOdom.pose.pose.position.y,
+                m_initOdom.pose.pose.position.z)); /// We always start at the origin of m_enu
         m_prevPose = x0;
         PriorFactor<Pose3> priorPose(X(0), x0, priorNoisePose);
         newFactors.add(priorPose);
-        PriorFactor<Vector3> priorVel(V(0), Vector3(0, 0, 0), priorNoiseVel);
+        PriorFactor<Vector3> priorVel(V(0), Vector3(m_initOdom.twist.twist.linear.x,
+                                                    m_initOdom.twist.twist.linear.y,
+                                                    m_initOdom.twist.twist.linear.z), priorNoiseVel);
         newFactors.add(priorVel);
         Vector biases((Vector(6) << 0, 0, 0, m_initialPose.bias.x,
             -m_initialPose.bias.y, -m_initialPose.bias.z).finished());
@@ -362,7 +380,7 @@ namespace autorally_core
           m_lastImuTgps = m_lastIMU->header.stamp.toSec();
           pre_int_data.integrateMeasurement(acc, gyro, imuDT);
           m_lastIMU = m_ImuOptQ.popBlocking();
-          ROS_WARN("Last IMU dt was %f, put time %f", imuDT, m_lastIMU->header.stamp.toSec());
+//          ROS_WARN("Last IMU dt was %f, put time %f", imuDT, m_lastIMU->header.stamp.toSec());
         }
 
         ImuFactor imuFactor(X(m_poseVelKey), V(m_poseVelKey), X(m_poseVelKey+1), V(m_poseVelKey+1), B(m_biasKey+1),
@@ -426,7 +444,10 @@ namespace autorally_core
 
   void Imu_Gps::ImuCb(sensor_msgs::ImuConstPtr imu)
   {
-    double dt = imu->header.stamp.toSec() - m_lastImuT;
+    double dt;
+    if (m_lastImuT == 0) dt = 0.005;
+    else dt = imu->header.stamp.toSec() - m_lastImuT;
+
     m_lastImuT = imu->header.stamp.toSec();
     ros::Time before = ros::Time::now();
     // Push the IMU measurement to the optimization thread
@@ -459,6 +480,7 @@ namespace autorally_core
     Vector3 acc, gyro;
     while (!m_imuMeasurements.empty() && (m_imuMeasurements.front()->header.stamp.toSec() < optimizedTime))
     {
+      m_imuQPrevTime = m_imuMeasurements.front()->header.stamp.toSec();
       m_imuMeasurements.pop_front();
       newMeasurements = true;
       numImuDiscarded ++;
@@ -477,7 +499,7 @@ namespace autorally_core
         GetAccGyro(*it, acc, gyro);
         m_imuPredictor->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
-        ROS_INFO("IMU time %f, dt %f", (*it)->header.stamp.toSec(), dt_temp);
+//        ROS_INFO("IMU time %f, dt %f", (*it)->header.stamp.toSec(), dt_temp);
       }
 //      ROS_INFO("Resetting Integration, %d measurements integrated, %d discarded", numMeasurements, numImuDiscarded);
     }
@@ -485,7 +507,7 @@ namespace autorally_core
     {
       //Just need to add the newest measurement, no new optimized pose
       GetAccGyro(imu, acc, gyro);
-      ROS_INFO("Integrating %f, dt %f", m_lastImuT, dt);
+//      ROS_INFO("Integrating %f, dt %f", m_lastImuT, dt);
       m_imuPredictor->integrateMeasurement(acc, gyro, dt);//m_bodyPSensor);
     }
     NavState currentPose = m_imuPredictor->predict(optimizedState, optimizedBias);
@@ -498,8 +520,8 @@ namespace autorally_core
     poseNew.pose.pose.orientation.z = q[2];
     poseNew.pose.pose.orientation.w = q[3];
 
-    poseNew.pose.pose.position.x = currentPose.position().x();
-    poseNew.pose.pose.position.y = currentPose.position().y();
+    poseNew.pose.pose.position.x = currentPose.position().x() + 0.6121;
+    poseNew.pose.pose.position.y = currentPose.position().y() - 0.1056;
     poseNew.pose.pose.position.z = currentPose.position().z();
 
     poseNew.twist.twist.linear.x = currentPose.velocity().x();

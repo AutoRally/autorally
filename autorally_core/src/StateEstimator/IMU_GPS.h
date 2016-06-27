@@ -122,6 +122,8 @@ namespace autorally_core
 
     std::list<sensor_msgs::ImuConstPtr> m_imuMeasurements, m_imuGrav;
     imu_3dm_gx4::FilterOutput m_initialPose;
+    nav_msgs::Odometry m_initOdom;
+
 
     Vector3 m_gravity;
     Vector3 m_omegaCoriolis;

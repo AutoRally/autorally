@@ -7,12 +7,12 @@
       <remap from="/gps_imu/gps" to="/gpsRoverStatus"/>
       <remap from="/gps_imu/imu" to="/imu/imu"/>
       <remap from="/gps_imu/pose" to="/pose_estimate_new"/>
-      <remap from="/gps_imu/filter" to="/imu/filter"/>
+      <remap from="/gps_imu/filter" to="/pose_estimate"/>
       <remap from="/gps_imu/bias_acc" to="/bias_acc_new"/>
       <remap from="/gps_imu/bias_gyro" to="/bias_gyro_new"/>
       
       <param name="InitialRotationNoise" value="0.25"/>
-      <param name="InitialTranslationNoise" value="0.1"/>
+      <param name="InitialVelocityNoise" value="0.8"/>
       <param name="InitialBiasNoiseAcc" value="2e-1"/>
       <param name="InitialBiasNoiseGyro" value="2e-2"/>
       <param name="AccelerometerSigma" value="1.0e-3"/>
@@ -35,7 +35,7 @@
       <!--<param name="Gravity" value="-9.79509"/>-->
       
       <!-- in sumulation use "rosparam set /gps_imu/FixedInitialPose true" -->
-      <param name="FixedInitialPose" value="true"/>
+      <param name="FixedInitialPose" value="false"/>
       <param name="initialRoll" value="0"/>
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>
