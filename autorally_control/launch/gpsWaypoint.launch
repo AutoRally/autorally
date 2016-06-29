@@ -10,7 +10,7 @@
 
 
   <node name="gps_follow" pkg="autorally_control" type="gpsWaypoint" output="screen">
-    <param name="WaypointFile" value="$(find autorally_core)/waypoints"/>
+    <param name="WaypointFile" value="$(find autorally_control/launch)/waypoints"/>
     <param name="WaypointRadius" value="1.0"/>
     <param name="HeadingP" value="2.5"/>
     <remap from="/gps_follow/Speeds" to="/wheelSpeeds"/>
