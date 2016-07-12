@@ -21,12 +21,12 @@
     <param name="camera_info_url" value="file://$(env AR_CONFIG_PATH)/camera_calibration_$(arg serial).yaml" />
     <param name="format7_color_coding" value="raw8"/>
     <param name="frame_rate" value="60" />
-    <param name="auto_exposure" value="false"/>
+    <param name="auto_exposure" value="true"/>
     <param name="exposure" value="1.25"/>
-    <param name="auto_brightness" value="false"/>
+    <param name="auto_brightness" value="true"/>
     <param name="brightness" value="0"/>
-    <param name="auto_white_balance" value="false"/>
-    <param name="auto_shutter" value="false"/>
+    <param name="auto_white_balance" value="true"/>
+    <param name="auto_shutter" value="true"/>
     <param name="enable_trigger" value="$(arg enable_trigger)"/>
 
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />
