@@ -49,7 +49,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    
    When installing software on an AutoRally compute box, include these dependencies as well:
    
-   ```sudo apt-get install lm-sensors acpi gpsd-clients```
+   ```sudo apt-get install lm-sensors acpi chrony gpsd-clients```
    
 3. __[Install](http://www.ros.org/install/) ros-indigo-desktop-full__
 4. __Install gtsam__

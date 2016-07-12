@@ -3,7 +3,7 @@
 
   <node pkg="autorally_control" type="GenerateWaypoints" name="WaypointGen" output="screen">
     <param name="WaypointDistance" value="0.5" />
-    <param name="WaypointFile" value="$(find autorally_core)/waypoints" />
+    <param name="WaypointFile" value="$(find autorally_control/launch)/waypoints" />
     <remap from="/WaypointGen/gps" to="/pose_estimate"/>
   </node>
 
