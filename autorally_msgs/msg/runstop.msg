@@ -1,6 +1,6 @@
 Header header
 string sender
-bool ENABLED=true
-bool DISABLED=false
+bool ENABLED=1
+bool DISABLED=0
 
 bool runstop

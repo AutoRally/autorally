@@ -20,6 +20,9 @@ add_message_files(
   servoMSG.msg
   line2D.msg
   point2D.msg
+  runstop.msg
+  chassisCommand.msg
+  chassisState.msg
 )
 
 generate_messages(DEPENDENCIES
