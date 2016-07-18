@@ -26,9 +26,9 @@
 /**********************************************
  * @file autorally_chassis.h
  * @author Brian Goldfain <bgoldfai@gmail.com>
- * @date July 10, 2013
- * @copyright 2013 Georgia Institute of Technology
- * @brief Interface for servo controller
+ * @date July 10, 2016
+ * @copyright 2016 Georgia Institute of Technology
+ * @brief Interface for and AutoRally chassis
  *
  * @details This file contains the autorally_chassis class
  ***********************************************/
@@ -50,10 +50,12 @@
 #include <autorally_msgs/chassisState.h>
 
 //#include <autorally_msgs/servoControllerMSG.h>
-#include <autorally_msgs/servoMSG.h>
-#include <autorally_core/PololuMaestro.h>
-#include <autorally_core/SafeSpeed.h>
+//#include <autorally_msgs/servoMSG.h>
+//#include <autorally_core/PololuMaestro.h>
+//#include <autorally_core/SafeSpeed.h>
 //#include <autorally_core/RingBuffer.h>
+
+#include <autorally_core/SerialInterfaceThreaded.h>
 
 namespace autorally_core
 {
@@ -61,12 +63,6 @@ namespace autorally_core
 class autorally_chassis : public nodelet::Nodelet
 {
  public:
-  struct BrakeSetup {
-    bool coupledWithThrottle;
-    bool independentFront;
-    bool independentBack;
-  };
-
   struct ServoSettings
   {
     unsigned short center; ///< calibrated zero of servo in us
@@ -79,8 +75,8 @@ class autorally_chassis : public nodelet::Nodelet
     // center should be (min+max)/2
     ServoSettings():
       center(1500),
-      min(1050),
-      max(1950),
+      min(1000),
+      max(2000),
       range(max-min),
       port(0),
       reverse(false)
@@ -92,25 +88,19 @@ class autorally_chassis : public nodelet::Nodelet
   virtual void onInit();
 
  private:
+  SerialInterfaceThreaded m_serialPort;
+
   std::map<std::string, ros::Subscriber> m_servoSub;
-  ros::Subscriber m_speedCommandSub;
-//  ros::Subscriber m_irDataSub;
-  ros::Publisher m_servoMSGPub; ///<Publisher for autorally_chassisStatus
+  //ros::Subscriber m_speedCommandSub;
+  ros::Publisher m_chassisStatePub; ///<Publisher for autorally_chassis Status
   ros::Timer m_throttleTimer; ///<Timer to trigger throttle set
-//  ros::Timer m_servoStatusTimer; ///<Timer to trigger status message publishing
-  PololuMaestro m_maestro; ///< Local instance connected to the hardware
-  SafeSpeed m_ss; ///< Local instance used to computer the safe speed value
+  //PololuMaestro m_maestro; ///< Local instance connected to the hardware
+  //SafeSpeed m_ss; ///< Local instance used to computer the safe speed value
 
   double m_speedCommand; ///< Speed someone wants the vehicle to go
-//  signed char m_previousThrottleValue; ///< Value used for PD controller
 
-//  autorally_msgs::servoMSG m_servoMSG; ///<Current command message
-//  autorally_msgs::servoMSGPtr m_servoMSGStatus; ///<Local status message
   std::map<std::string, ServoSettings> m_servoSettings;
-  BrakeSetup m_brakeSetup;
   double m_servoCommandMaxAge;
-//  std::string m_steeringCommander;
-//  std::string m_throttleCommander;
 
   struct priorityEntry
   {
@@ -126,7 +116,7 @@ class autorally_chassis : public nodelet::Nodelet
     }
   };
   
-  std::map<std::string, autorally_msgs::servoMSG> m_servoCommandMsgs;
+  std::map<std::string, autorally_msgs::chassisCommand> m_chassisCommandMsgs;
   std::vector<priorityEntry> m_servoCommandPriorities;
 
   /**
@@ -137,17 +127,17 @@ class autorally_chassis : public nodelet::Nodelet
 
   /**
    * @brief Callback for receiving control messages
-   * @see autorally_core::servoMSG
+   * @see autorally_core::chassisCommand
    * @param msg the message received from ros comms
    */
-  void servoMSGCallback(const autorally_msgs::servoMSGConstPtr& msg);
+  void chassisCommandCallback(const autorally_msgs::chassisCommandConstPtr& msg);
 
   /**
    * @brief Callback for receiving speed command messages
    * @param msg the message received from ros comms
    */
-  void speedCallback(const std_msgs::Float64ConstPtr& msg)
-    {m_speedCommand = msg->data;}
+  //void speedCallback(const std_msgs::Float64ConstPtr& msg)
+  //  {m_speedCommand = msg->data;}
 
   /**
    * @brief Time triggered callback to set position of throttle servo
@@ -158,7 +148,7 @@ class autorally_chassis : public nodelet::Nodelet
   /**
    * @brief Retrieves servo positiona from control board and scales them to 0-254
    */
-  void populateStatusMessage(autorally_msgs::servoMSGPtr& status);
+  //void populateStatusMessage(autorally_msgs::servoMSGPtr& status);
 
   /**
    * @brief
