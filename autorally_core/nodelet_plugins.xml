@@ -6,14 +6,6 @@
   </class>
 </library>
 
-<library path="lib/libIMUNodelet">
-  <class name="autorally_core/IMUNodelet" type="autorally_core::IMUNodelet" base_class_type="nodelet::Nodelet">
-    <description>
-    IMU nodelet
-    </description>
-  </class>
-</library>
-
 <library path="lib/libArduinoOnboard">
   <class name="autorally_core/ArduinoOnboard" type="autorally_core::ArduinoOnboard" base_class_type="nodelet::Nodelet">
     <description>
@@ -26,6 +18,14 @@
   <class name="autorally_core/ImageRepublisher" type="autorally_core::ImageRepublisher" base_class_type="nodelet::Nodelet">
     <desription>
     Image republisher for OCS display
+    </description>
+  </class>
+</library>
+
+<library path="lib/libautorally_chassis">
+  <class name="autorally_core/autorally_chassis" type="autorally_core::autorally_chassis" base_class_type="nodelet::Nodelet">
+    <desription>
+      Interface for an AutoRally chassis
     </description>
   </class>
 </library>

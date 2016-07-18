@@ -44,6 +44,7 @@ add_subdirectory(src/servoInterface)
 add_subdirectory(src/xbee)
 add_subdirectory(src/ImageRepublisher)
 add_subdirectory(src/StateEstimator)
+add_subdirectory(src/autorally_chassis)
 
 install(TARGETS
  
