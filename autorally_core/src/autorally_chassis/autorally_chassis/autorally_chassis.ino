@@ -19,6 +19,7 @@
 //#include <avr/io.h>
 //#include <avr/interrupt.h>
 #include <Servo.h> 
+#include <chip.h>
 
 #define MAX_MEASUREMENT_AGE 400  ///< Zero the reading at 400 ms
 
@@ -153,6 +154,7 @@ void setup()
   //R1 2.18  KOhm
   //R2 5.07  KOhm
   //analogVoltageScaler1 = 0.0049*(7.25/2.18);
+
 }
 
 /**
