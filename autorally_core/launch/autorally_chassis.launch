@@ -3,15 +3,15 @@
 
   <node pkg="nodelet" type="nodelet" name="autorally_chassis" args="load autorally_core/autorally_chassis autorally_core_manager" machine="autorally-master" output="screen">
 
-    <param name="servoCommandRate" value="75" />
-    <param name="servoCommandMaxAge" value="0.2" />
+    <param name="commandRate" value="75" />
+    <param name="commandMaxAge" value="0.2" />
+    <param name="runstopMaxAge" value="2" />
 
-    <rosparam param="servos" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
-    <!-- <rosparam param="throttleCalibration" command="load" file="$(env AR_CONFIG_PATH)/throttlePositionCalibration.yaml" /> -->
+    <rosparam param="actuators" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
 
-    <rosparam param="servoCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/servoCommandPriorities.yaml" />
-    <!--configure settings for 57600 baud, 8N1 -->
+    <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
     
+    <!--configure settings for 115200 baud, 8N1 -->
     <param name="port" value="/dev/arChassis" />
     <param name="serialBaud" value="115200" />
     <param name="serialDataBits" value="8" />

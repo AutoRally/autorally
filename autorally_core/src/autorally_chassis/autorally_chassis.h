@@ -1,6 +1,6 @@
 /*
 * Software License Agreement (BSD License)
-* Copyright (c) 2013, Georgia Institute of Technology
+* Copyright (c) 2016, Georgia Institute of Technology
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * @copyright 2016 Georgia Institute of Technology
  * @brief Interface for and AutoRally chassis
  *
- * @details This file contains the autorally_chassis class
+ * @details This file contains the autorally_chassis class definition
  ***********************************************/
 #ifndef AUTORALLY_CHASSIS_H_
 #define AUTORALLY_CHASSIS_H_
@@ -38,6 +38,8 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+
+#include <boost/thread.hpp>
 
 #include <ros/ros.h>
 #include <ros/time.h>
@@ -63,7 +65,7 @@ namespace autorally_core
 class autorally_chassis : public nodelet::Nodelet
 {
  public:
-  struct ServoSettings
+  struct ActuatorConfig
   {
     unsigned short center; ///< calibrated zero of servo in us
     unsigned short min;    ///< calibrated minimum of servo in us (left)
@@ -73,7 +75,7 @@ class autorally_chassis : public nodelet::Nodelet
     bool reverse;          ///< if the servo should be reversed
 
     // center should be (min+max)/2
-    ServoSettings():
+    ActuatorConfig():
       center(1500),
       min(1000),
       max(2000),
@@ -88,19 +90,20 @@ class autorally_chassis : public nodelet::Nodelet
   virtual void onInit();
 
  private:
-  SerialInterfaceThreaded m_serialPort;
+  SerialInterfaceThreaded serialPort_;
 
-  std::map<std::string, ros::Subscriber> m_servoSub;
-  //ros::Subscriber m_speedCommandSub;
-  ros::Publisher m_chassisStatePub; ///<Publisher for autorally_chassis Status
-  ros::Timer m_throttleTimer; ///<Timer to trigger throttle set
-  //PololuMaestro m_maestro; ///< Local instance connected to the hardware
-  //SafeSpeed m_ss; ///< Local instance used to computer the safe speed value
+  std::map<std::string, ros::Subscriber> chassisCommandSub_;
+  ros::Subscriber runstopSub_;
 
-  double m_speedCommand; ///< Speed someone wants the vehicle to go
+  ros::Publisher chassisStatePub_; ///<Publisher for autorally_chassis Status
+  ros::Publisher wheelSpeedsPub_;
+  ros::Publisher chassisCommandPub_;
 
-  std::map<std::string, ServoSettings> m_servoSettings;
-  double m_servoCommandMaxAge;
+  ros::Timer chassisControlTimer_; ///<Timer to trigger throttle set
+
+  std::map<std::string, ActuatorConfig> actuatorConfig_;
+  ros::Duration chassisCommandMaxAge_;
+  ros::Duration runstopMaxAge_;
 
   struct priorityEntry
   {
@@ -116,14 +119,24 @@ class autorally_chassis : public nodelet::Nodelet
     }
   };
   
-  std::map<std::string, autorally_msgs::chassisCommand> m_chassisCommandMsgs;
-  std::vector<priorityEntry> m_servoCommandPriorities;
+  std::map<std::string, autorally_msgs::chassisCommand> chassisCommands_;
+  std::map<std::string, autorally_msgs::runstop> runstops_;
+  std::vector<priorityEntry> chassisCommandPriorities_;
 
-  /**
-   * @brief Timer triggered callback to publish a autorally_chassisStatus message
-   * @param time information about callback execution
-   */
-  //void servoStatusTimerCallback(const ros::TimerEvent& time);
+  std::vector<std::pair<std::string, double> > escRegisterData_ =
+        { {"ESC Input Voltage", 20.0},
+          {"ESC Input Ripple Voltage", 4.0},
+          {"Current", 50.0},
+          {"Throttle ms", 1.0},
+          {"Output Power", 0.2502},
+          {"Motor RPM", 20416.66},
+          {"Temperature", 50.0},
+          {"BEC Voltage", 4.0},
+          {"BEC Current", 4.0}, };
+
+  boost::mutex chassisStateMutex_; ///< mutex for accessing incoming data
+  bool throttleRelayEnabled_;
+  bool autonomousEnabled_;
 
   /**
    * @brief Callback for receiving control messages
@@ -132,6 +145,11 @@ class autorally_chassis : public nodelet::Nodelet
    */
   void chassisCommandCallback(const autorally_msgs::chassisCommandConstPtr& msg);
 
+
+  void runstopCallback(const autorally_msgs::runstopConstPtr& msg) {runstops_[msg->sender] = *msg;}
+
+  void chassisFeedbackCallback();
+  void processChassisMessage(std::string msgType, std::string msg);
   /**
    * @brief Callback for receiving speed command messages
    * @param msg the message received from ros comms
@@ -140,27 +158,18 @@ class autorally_chassis : public nodelet::Nodelet
   //  {m_speedCommand = msg->data;}
 
   /**
-   * @brief Time triggered callback to set position of throttle servo
+   * @brief Time triggered callback to set chassis actuators
    * @param time information about callback firing
    */
-  void setServos(const ros::TimerEvent& time);
-
-  /**
-   * @brief Retrieves servo positiona from control board and scales them to 0-254
-   */
-  //void populateStatusMessage(autorally_msgs::servoMSGPtr& status);
-
-  /**
-   * @brief
-   *
-   * @param channel which channel (throttle or steering) should be set
-   * @param target value to set channel to (-100.0 to 100.0)
-   */
-  bool setServo(const std::string &channel, const double target);
-  bool getServo(const std::string &channel, double& position);
+  void setChassisActuators(const ros::TimerEvent& time);
   
-  void loadServoParams();
-  void loadServoCommandPriorities();
+  void sendCommandToChassis(autorally_msgs::chassisStatePtr& state);
+  short actuatorCmdToMs(double actuatorValue, std::string actuator);
+  double actuatorMsToCmd(int pulseWidth, std::string actuator);
+
+
+  void loadChassisConfig();
+  void loadChassisCommandPriorities();
 };
 
 }//end autorally_core
