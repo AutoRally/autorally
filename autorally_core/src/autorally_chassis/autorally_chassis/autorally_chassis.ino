@@ -74,15 +74,15 @@ int steerSrvNeutralUs = 1500;
 int throttleSrvNeutralUs = 1500;
 int frontBrakeSrvNeutralUs = 1500;
 unsigned long timeOfLastServo = 0;
-unsigned long servoTimeoutMs = 250;
+unsigned long servoTimeoutMs = 100;
 
 Servo steerSrv;
 Servo throttleSrv;
 Servo frontBrakeSrv;
 
-int castleLinkPeriod = 2000; //get info once every 1000ms
+int castleLinkPeriod = 1000; //get info once per second
 char castlLinkDeviceID = 0;
-char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 char castleLinkData[2*sizeof(castleLinkRegisters)];
 unsigned long timeOfCastleLinkData = 0;
 
@@ -162,28 +162,34 @@ void setup()
 */
 void loop()
 {
-  //make sure we are framed at the beginning of a message
-  if(Serial.available() && Serial.read() == '#')
+  //if enough data is available (a command msg is 9 bytes)
+  if(Serial.available() >= 9)
   {
-    char msgType = Serial.read();
-    //parse servo message and set the servos if at least 7 bytes available (6 payload + \n)
-    if(msgType == 's' && Serial.available() >= 7)
+    //make sure we are framed at the beginning of a message
+    if(Serial.read() == '#')
     {
-      char buf[7];
-      if(Serial.readBytes(buf, 7) == 7)
+      char msgType = Serial.read();
+      //errorMsg += "received message type " + String(msgType);
+      //parse servo message and set the servos if at least 7 bytes available (6 payload + \n)
+      if(msgType == 's')
       {
-        short steer = buf[0]<<8 + buf[1]&0xFFFF;
-        short throttle = buf[2]<<8 + buf[3]&0xFFFF;
-        short frontBrake = buf[4]<<8 + buf[5]&0xFFFF;
-        
-        timeOfLastServo = millis();
-        
-        steerSrv.writeMicroseconds(steer);
-        throttleSrv.writeMicroseconds(throttle);
-        frontBrakeSrv.writeMicroseconds(frontBrake);
+        char buf[7];
+        if(Serial.readBytes(buf, 7) == 7)
+        {
+          short steer = ((short)buf[0]<<8) + buf[1]&0xFFFF;
+          short throttle = ((short)buf[2]<<8) + buf[3]&0xFFFF;
+          short frontBrake = ((short)buf[4]<<8) + buf[5]&0xFFFF;
+          
+          timeOfLastServo = millis();
+          
+          steerSrv.writeMicroseconds(steer);
+          throttleSrv.writeMicroseconds(throttle);
+          frontBrakeSrv.writeMicroseconds(frontBrake);
+        }
       }   
     }
   }
+
 
   if( timeOfLastServo+servoTimeoutMs < millis())
   {
