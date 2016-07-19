@@ -1,9 +1,9 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <node pkg="autorally_control" type="GenerateWaypoints" name="WaypointGen" output="screen">
+  <node pkg="autorally_control" type="GenerateWaypoints" name="WaypointGen" output="screen" machine="autorally-master">
     <param name="WaypointDistance" value="0.5" />
-    <param name="WaypointFile" value="$(find autorally_control/launch)/waypoints" />
+    <param name="WaypointFile" value="$(find autorally_control)/launch/waypoints" />
     <remap from="/WaypointGen/gps" to="/pose_estimate"/>
   </node>
 
