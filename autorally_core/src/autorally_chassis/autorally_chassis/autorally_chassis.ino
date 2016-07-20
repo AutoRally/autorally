@@ -19,7 +19,18 @@
 //#include <avr/io.h>
 //#include <avr/interrupt.h>
 #include <Servo.h> 
-#include <chip.h>
+#include "tc_lib.h"
+
+capture_tc6_declaration();
+capture_tc7_declaration();
+capture_tc8_declaration();
+
+auto& cap_ovr=capture_tc6;
+auto& cap_steer=capture_tc7;
+auto& cap_thr=capture_tc8;
+
+// 50 ms max period, in us
+#define SERVO_TIME_WINDOW 50000
 
 #define MAX_MEASUREMENT_AGE 400  ///< Zero the reading at 400 ms
 
@@ -39,12 +50,12 @@ volatile unsigned long w3period;      ///< Total period of wheel0
 unsigned long w3prevtimer;            ///< Previous timer value of wheel0
 volatile unsigned long w3updatetime;  ///< Last update time for wheel0
 
-volatile unsigned int rc_risingEdge4;  ///< Record the rising edge of rc signal on IC4
-volatile unsigned int rc_width4;       ///< Record the pulse width of the rc signal on IC4
-volatile unsigned int rc_risingEdge5;  ///< Record the rising edge time of rc signal on IC5
-volatile unsigned int rc_width5;       ///< Record the pulse width of the rc signal on IC5
-
-volatile unsigned int rc_width6 = 0;
+//volatile unsigned int rc_risingEdge4;  ///< Record the rising edge of rc signal on IC4
+//volatile unsigned int rc_width4;       ///< Record the pulse width of the rc signal on IC4
+//volatile unsigned int rc_risingEdge5;  ///< Record the rising edge time of rc signal on IC5
+//volatile unsigned int rc_width5;       ///< Record the pulse width of the rc signal on IC5
+//
+//volatile unsigned int rc_width6 = 0;
 
 int pulsesPerRevolution = 6; ///< Number of magnets on each wheel
 //int frontPulsesPerRevolution = 6;
@@ -60,9 +71,9 @@ int throttleReadPin = 4;
 int manualModePin = 5;
 int runStopPin = 6;
 
-int frontBrakePin = 10;
-int throttlePin = 11;
-int steerPin = 12;
+int frontBrakePin = 8;
+int throttlePin = 9;
+int steerPin = 10;
 
 int rightRearRotationPin = 18;
 int leftRearRotationPin = 19;
@@ -149,6 +160,12 @@ void setup()
   {
     Serial3.write('0x00');
   }
+
+  // Setup input captures
+  cap_ovr.config(SERVO_TIME_WINDOW);
+  cap_steer.config(SERVO_TIME_WINDOW);
+  cap_thr.config(SERVO_TIME_WINDOW);
+
   //R1 0.96  KOhm
   //R2 1.99  KOhm
   //analogVoltageScaler0 = 0.0049*(2.95/1.99);
@@ -223,12 +240,15 @@ void loop()
     Serial.print(rightBack,3);
     Serial.print('\n');
 
+    uint32_t rc_1, rc_2, rc_3;
+    getRcWidths(rc_1, rc_2, rc_3);
+
     Serial.print("#r");
-    Serial.print(rc_width4);
+    Serial.print(rc_1);
     Serial.print(",");
-    Serial.print(rc_width5);
+    Serial.print(rc_2);
     Serial.print(",");
-    Serial.print(rc_width6);
+    Serial.print(rc_3);
     Serial.print(",");
     Serial.print(digitalRead(runStopPin));
     Serial.print('\n');
@@ -307,6 +327,16 @@ void configureRcInput()
   interrupts();
 }
 
+void getRcWidths(uint32_t &rc_1, uint32_t &rc_2, uint32_t &rc_3)
+{
+  uint32_t ret, duty, period, pulses;
+  ret = cap_ovr.get_duty_period_and_pulses(duty, period, pulses);
+  rc_1 = (double)duty/(double)cap_ovr.ticks_per_usec();
+  ret = cap_steer.get_duty_period_and_pulses(duty, period, pulses);
+  rc_2 = (double)duty/(double)cap_steer.ticks_per_usec();
+  ret = cap_thr.get_duty_period_and_pulses(duty, period, pulses);
+  rc_3 = (double)duty/(double)cap_thr.ticks_per_usec();     
+}
 
 void getrps(float &w0, float &w1, float &w2, float &w3)
 {
@@ -355,17 +385,6 @@ void getrps(float &w0, float &w1, float &w2, float &w3)
     w3 = 1000000.0 / (pulsesPerRevolution * w3temp);
   }
   
-}
-
-
-void TC7_Handler()
-{
-  long dummy=REG_TC2_SR1;
-}
-
-void TC8_Handler()
-{
-  long dummy=REG_TC2_SR2;
 }
 
 /*
