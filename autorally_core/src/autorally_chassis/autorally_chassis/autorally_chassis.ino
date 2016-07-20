@@ -23,9 +23,6 @@
 
 #define MAX_MEASUREMENT_AGE 400  ///< Zero the reading at 400 ms
 
-//int triggerPin = 40;
-//int triggerFPS = 40;
-
 float analogVoltageScaler0; ///< Scale the analog reading 0-1024 to 0-5 volts, value from ADC specs
 float analogVoltageScaler1; ///< Scale the analog reading 0-1024 to 0-5 volts, value from ADC specs
 
@@ -53,12 +50,10 @@ int pulsesPerRevolution = 6; ///< Number of magnets on each wheel
 //int frontPulsesPerRevolution = 6;
 float divisor = 0.0; ///< Divisor calculated to turn absolute pulse count into rps
 float divisorFront=0.0;
-float rpsPublishPeriod = 1000.0;///< Period (in ms) for publishing arduinoData messages, 70hz
-time_t recTime; ///< Time that the last message was published
-//unsigned long diagTime; ///< Time that the last diagnostic message was published
-//unsigned long elapsed; ///< Calculated elapsed time since last transmission
-//unsigned long diagElapsed; ///< Calculated elapsed time since last transmission
-int counter=0;
+float rpsPublishPeriod = 13.0;///< Period (in ms) for publishing arduinoData messages, 70hz
+time_t rpsPublishTime; ///< Time that the last message was published
+
+//int counter=0;
 
 int steerReadPin = 3;
 int throttleReadPin = 4;
@@ -68,6 +63,12 @@ int runStopPin = 6;
 int frontBrakePin = 10;
 int throttlePin = 11;
 int steerPin = 12;
+
+int rightRearRotationPin = 18;
+int leftRearRotationPin = 19;
+int rightFrontRotationPin = 20;
+int leftFrontRotationPin = 21;
+
 
 //endpoints and neutral for each servo
 int steerSrvNeutralUs = 1500;
@@ -80,10 +81,10 @@ Servo steerSrv;
 Servo throttleSrv;
 Servo frontBrakeSrv;
 
-int castleLinkPeriod = 1000; //get info once per second
-char castlLinkDeviceID = 0;
-char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-char castleLinkData[2*sizeof(castleLinkRegisters)];
+int castleLinkPeriod = 500; //get info at 2 Hz
+char castlLinkDeviceID = 0; ///< ESC Device ID (set to default)
+char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; //< ESC data register numbers
+char castleLinkData[2*sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
 unsigned long timeOfCastleLinkData = 0;
 
 String errorMsg = "";
@@ -95,26 +96,26 @@ void setup()
   //pinMode(triggerPin, OUTPUT);
   //configureTriggerTimers();
   
-  pinMode(18, INPUT); //right rear
-  pinMode(19, INPUT); //left rear
-  pinMode(20, INPUT); //right front
-  pinMode(21, INPUT); //right rear
-  digitalWrite(18,HIGH);
-  digitalWrite(19,HIGH);
-  digitalWrite(20,HIGH);
-  digitalWrite(21,HIGH);
+  pinMode(rightRearRotationPin, INPUT); //right rear
+  pinMode(leftRearRotationPin, INPUT); //left rear
+  pinMode(rightFrontRotationPin, INPUT); //right front
+  pinMode(leftFrontRotationPin, INPUT); //left rear
+  digitalWrite(rightRearRotationPin,HIGH);
+  digitalWrite(leftRearRotationPin,HIGH);
+  digitalWrite(rightFrontRotationPin,HIGH);
+  digitalWrite(leftFrontRotationPin,HIGH);
 
   pinMode(runStopPin, INPUT);
   digitalWrite(runStopPin, HIGH);
   
   configureRcInput();
   
-  recTime = 0;
+  rpsPublishTime = 0;
   //attach all interrupts for rpm sensors
-  attachInterrupt(18, int0, RISING);
-  attachInterrupt(19, int1, RISING);
-  attachInterrupt(20, int2, RISING);
-  attachInterrupt(21, int3, RISING);
+  attachInterrupt(rightRearRotationPin, int0, RISING);
+  attachInterrupt(leftRearRotationPin, int1, RISING);
+  attachInterrupt(rightFrontRotationPin, int2, RISING);
+  attachInterrupt(leftFrontRotationPin, int3, RISING);
   
   w0period = 0;      ///< Total period of wheel0
   w0prevtimer = 0;            ///< Previous timer value of wheel0
@@ -141,6 +142,7 @@ void setup()
 
   Serial.begin(115200);
   Serial3.begin(115200);
+  Serial3.setTimeout(10);
   
   //clear serial link command buffer
   for(int i = 0; i < 5; i++)
@@ -190,18 +192,19 @@ void loop()
     }
   }
 
-
-  if( timeOfLastServo+servoTimeoutMs < millis())
+  //if no servo msg has been received in a while, set them to neutral
+  if(timeOfLastServo+servoTimeoutMs < millis())
   {
     steerSrv.writeMicroseconds(steerSrvNeutralUs);
     throttleSrv.writeMicroseconds(throttleSrvNeutralUs);
     frontBrakeSrv.writeMicroseconds(frontBrakeSrvNeutralUs);
   }
- 
-  if(recTime+rpsPublishPeriod < millis())
+
+  
+  if(rpsPublishTime+rpsPublishPeriod < millis())
   {
-    counter++;
-    recTime = millis();
+    rpsPublishTime = millis();
+    //++counter;
     //divisor = (pulsesPerRevolution*(elapsed/1000.0));
     //divisorFront = (frontPulsesPerRevolution*(elapsed/1000.0));
     
@@ -406,7 +409,7 @@ ISR(TIMER5_CAPT_vect)
 //}
 
 /**
-* @brief Interrupt service routine 0 (front left rpm sensor)
+* @brief Interrupt service routine 0 (right rear rpm sensor)
 */
 void int0()
 {
@@ -417,7 +420,7 @@ void int0()
 }
 
 /**
-* @brief Interrupt service routine 1 (front right rpm sensor)
+* @brief Interrupt service routine 1 (left rear rpm sensor)
 */
 void int1()
 {
@@ -428,7 +431,7 @@ void int1()
 }
 
 /**
-* @brief Interrupt service routine 2 (back left rpm sensor)
+* @brief Interrupt service routine 2 (right front rpm sensor)
 */
 void int2()
 {
@@ -439,7 +442,7 @@ void int2()
 }
 
 /**
-* @brief Interrupt service routine 3 (back right rpm sensor)
+* @brief Interrupt service routine 3 (left front rpm sensor)
 */
 void int3()
 {
@@ -454,43 +457,22 @@ bool getCastleSerialLinkData()
   char request[5];
   char bufRec[3];
   int count = 0;
+
+  request[0] = (0x1<<7) + castlLinkDeviceID;
+  request[2] = 0;
+  request[3] = 0;
   
   for(int i = 0; i < sizeof(castleLinkRegisters); i++)
   {
-    request[0] = (0x1<<7) + castlLinkDeviceID;
-    request[1] = castleLinkRegisters[i];
-    request[2] = 0;
-    request[3] = 0;
+    request[1] = castleLinkRegisters[i];  
     request[4] = castleChecksum(request);
 
     Serial3.write(request, 5);
-    //Serial.print("request "); 
-    //for(int j = 0; j < 5; j++)
-    //{
-    //  Serial.print((unsigned int)request[j]);
-    //  Serial.print(" ");
-    //}
-    //Serial.println(); 
 
     //read 3 byte responses
     int bytesRead = Serial3.readBytes(bufRec, 3);
     if(bytesRead == 3)
     {
-      //for(int i = 0; i < 3; i++)
-      //{
-      //  Serial.print((unsigned int)bufRec[i]);
-      //  Serial.print(" ");
-      //}
-
-      //unsigned int reg = (bufRec[0]<<8) + bufRec[1]&0xFFFF;
-      //Serial.print(reg);
-      //Serial.print(" ");
-      //float vol = ( reg/2042.0)*4.0;
-      //Serial.print(vol);
-      //make sure cheksum checks out
-      //char checksum = (bufRec[0] + bufRec[1] + bufRec[2]);
-      //Serial.print((int)checksum);
-      //Serial.println();
       
       if( (char)(bufRec[0] + bufRec[1] + bufRec[2]) == 0)
       {
@@ -500,9 +482,6 @@ bool getCastleSerialLinkData()
           //invalid register of corrupted command
         } else
         {
-          //bufReg[0] is register
-          //bufReg[1] is value of register
-
           castleLinkData[2*count] = bufRec[0];
           castleLinkData[2*count+1] = bufRec[1];
           ++count;
