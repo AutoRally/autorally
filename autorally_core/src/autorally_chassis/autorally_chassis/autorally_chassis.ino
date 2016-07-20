@@ -81,7 +81,7 @@ Servo steerSrv;
 Servo throttleSrv;
 Servo frontBrakeSrv;
 
-int castleLinkPeriod = 500; //get info at 2 Hz
+int castleLinkPeriod = 200; //get info at 2 Hz
 char castlLinkDeviceID = 0; ///< ESC Device ID (set to default)
 char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; //< ESC data register numbers
 char castleLinkData[2*sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
