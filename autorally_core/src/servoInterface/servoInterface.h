@@ -42,14 +42,12 @@
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
-#include <std_msgs/Float64.h>
 
-//#include <autorally_msgs/servoControllerMSG.h>
-#include <autorally_msgs/servoMSG.h>
+#include <autorally_msgs/chassisCommand.h>
+#include <autorally_msgs/chassisState.h>
 #include <autorally_msgs/wheelSpeeds.h>
+#include <autorally_msgs/runstop.h>
 #include <autorally_core/PololuMaestro.h>
-#include <autorally_core/SafeSpeed.h>
-//#include <autorally_core/RingBuffer.h>
 
 #warning autorally_core/servoInterface.h has been deprecated, refer to autorally_chassis
 
@@ -91,24 +89,14 @@ class ServoInterface : public nodelet::Nodelet
 
  private:
   std::map<std::string, ros::Subscriber> m_servoSub;
-  ros::Subscriber m_speedCommandSub;
-//  ros::Subscriber m_irDataSub;
-  ros::Publisher m_servoMSGPub; ///<Publisher for servoInterfaceStatus
+  ros::Subscriber m_runstopSub; ///< Subscriber for all incoming runstop messages
+  ros::Publisher m_chassisStatePub; ///<Publisher for servoInterfaceStatus
   ros::Timer m_throttleTimer; ///<Timer to trigger throttle set
-//  ros::Timer m_servoStatusTimer; ///<Timer to trigger status message publishing
   PololuMaestro m_maestro; ///< Local instance connected to the hardware
-  SafeSpeed m_ss; ///< Local instance used to computer the safe speed value
 
-  double m_speedCommand; ///< Speed someone wants the vehicle to go
-//  signed char m_previousThrottleValue; ///< Value used for PD controller
-
-//  autorally_msgs::servoMSG m_servoMSG; ///<Current command message
-//  autorally_msgs::servoMSGPtr m_servoMSGStatus; ///<Local status message
   std::map<std::string, ServoSettings> m_servoSettings;
   BrakeSetup m_brakeSetup;
   double m_servoCommandMaxAge;
-//  std::string m_steeringCommander;
-//  std::string m_throttleCommander;
 
   struct priorityEntry
   {
@@ -124,39 +112,32 @@ class ServoInterface : public nodelet::Nodelet
     }
   };
   
-  std::map<std::string, autorally_msgs::servoMSG> m_servoCommandMsgs;
+  std::map<std::string, autorally_msgs::chassisCommand> m_servoCommandMsgs;
   std::vector<priorityEntry> m_servoCommandPriorities;
 
-  /**
-   * @brief Timer triggered callback to publish a servoInterfaceStatus message
-   * @param time information about callback execution
-   */
-  //void servoStatusTimerCallback(const ros::TimerEvent& time);
+  ros::Duration m_runstopMaxAge;
+  std::map<std::string, autorally_msgs::runstop> m_runstops; ///< Map of the most recently received runstop message from
+                                                            ///< all nodes publishing the message
 
   /**
    * @brief Callback for receiving control messages
-   * @see autorally_core::servoMSG
+   * @see autorally_core::chassisCommand
    * @param msg the message received from ros comms
    */
-  void servoMSGCallback(const autorally_msgs::servoMSGConstPtr& msg);
+  void chassisCommandCallback(const autorally_msgs::chassisCommandConstPtr& msg);
 
-  /**
-   * @brief Callback for receiving speed command messages
-   * @param msg the message received from ros comms
+   /**
+   * @brief Callback for incoming runstop messages
+   * @see autorally_core::runstop
+   * @param msg the runstop message received from ros comms
    */
-  void speedCallback(const std_msgs::Float64ConstPtr& msg)
-    {m_speedCommand = msg->data;}
+  void runstopCallback(const autorally_msgs::runstopConstPtr& msg) {m_runstops[msg->sender] = *msg;}
 
   /**
    * @brief Time triggered callback to set position of throttle servo
    * @param time information about callback firing
    */
   void setServos(const ros::TimerEvent& time);
-
-  /**
-   * @brief Retrieves servo positiona from control board and scales them to 0-254
-   */
-  void populateStatusMessage(autorally_msgs::servoMSGPtr& status);
 
   /**
    * @brief

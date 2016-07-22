@@ -60,7 +60,7 @@ void ServoInterface::onInit()
   loadServoCommandPriorities();
 
   m_maestro.init(nh, getName(), port);
-  m_ss.init(nh);
+  //m_ss.init(nh);
 
   double servoCommandRate = 0.0;
   if(!nhPvt.getParam("servoCommandRate", servoCommandRate) ||
@@ -72,31 +72,26 @@ void ServoInterface::onInit()
 
   for (auto& mapIt : m_servoCommandMsgs)
   {
-    ros::Subscriber sub = nh.subscribe(mapIt.first+"/servoCommand", 2,
-                        &ServoInterface::servoMSGCallback, this);
+    ros::Subscriber sub = nh.subscribe(mapIt.first+"/chassisCommand", 1,
+                        &ServoInterface::chassisCommandCallback, this);
     m_servoSub[mapIt.first] = sub;
-    NODELET_INFO_STREAM("ServoInterface: subscribed to srv cmd:" << mapIt.first+"/servoCommand");
+    NODELET_INFO_STREAM("ServoInterface: subscribed to chassis command:" << mapIt.first+"/servoCommand");
   }
-  
-  m_speedCommandSub = nh.subscribe("vehicleSpeedCommand", 2,
-                        &ServoInterface::speedCallback, this);
 
-  //m_servoStatusTimer = nh.createTimer(ros::Rate(servoStatusPubRate),
-  //                    &ServoInterface::servoStatusTimerCallback, this);
+  m_runstopMaxAge = ros::Duration(1.0);
+  m_runstopSub = nh.subscribe("/runstop", 5, &ServoInterface::runstopCallback, this);  
+
   m_throttleTimer = nh.createTimer(ros::Rate(servoCommandRate),
                       &ServoInterface::setServos, this);
 
-  m_servoMSGPub = nh.advertise<autorally_msgs::servoMSG>
-                     ("servoStatus", 2);
-
-  //m_servoMSGStatus = autorally_msgs::servoMSGPtr(new autorally_msgs::servoMSG);
-  //m_servoMSGStatus->header.frame_id = "servoController";
+  m_chassisStatePub = nh.advertise<autorally_msgs::chassisState>
+                     ("chassisState", 1);
 }
 
-void ServoInterface::servoMSGCallback(
-                     const autorally_msgs::servoMSGConstPtr& msg)
+void ServoInterface::chassisCommandCallback(
+                     const autorally_msgs::chassisCommandConstPtr& msg)
 {
-  std::map<std::string, autorally_msgs::servoMSG>::iterator mapIt;
+  std::map<std::string, autorally_msgs::chassisCommand>::iterator mapIt;
   if((mapIt = m_servoCommandMsgs.find(msg->header.frame_id)) == m_servoCommandMsgs.end())
   {
     NODELET_ERROR_STREAM("ServoInterface: Unknown controller " <<
@@ -112,19 +107,42 @@ void ServoInterface::servoMSGCallback(
 
 void ServoInterface::setServos(const ros::TimerEvent&)
 {
-  bool throttleFound = false;
-  bool frontBrakeFound = false;
-  bool backBrakeFound = false;
-  bool steeringFound = false;
-  double throttle = -10.0;
-  double frontBrake = -10.0;
-  double backBrake = -10.0;
-  double steering = -10.0;
+
+  autorally_msgs::chassisStatePtr chassisState(new autorally_msgs::chassisState);
+  
+  chassisState->steeringCommander = "";
+  chassisState->steering = 0.0;
+
+  chassisState->throttleCommander = "";
+  chassisState->throttle = 0.0;
+
+  chassisState->frontBrakeCommander = "";
+  chassisState->frontBrake = 0.0;
+
+  ros::Time currentTime = ros::Time::now();
+
+  //check if motion is enabled (all runstop message runstopMotionEnabled = true)
+  if(m_runstops.empty())
+  {
+    chassisState->runstopMotionEnabled = false;
+  } else
+  {
+    chassisState->runstopMotionEnabled = true;
+    for(auto& runstop : m_runstops)
+    {
+      if(currentTime-runstop.second.header.stamp < m_runstopMaxAge)
+      {
+        if(runstop.second.motionEnabled == 0)
+        {
+          chassisState->runstopMotionEnabled = false;
+          chassisState->throttleCommander = "runstop";
+        }
+      }
+    }
+  }
 
   //find highest priority (lowest priority value) command message for each servo
   //across all currently valid servo commands
-  ros::Time currentTime = ros::Time::now();
-
   std::vector<priorityEntry>::const_iterator vecIt;
   for(vecIt = m_servoCommandPriorities.begin();
       vecIt != m_servoCommandPriorities.end();
@@ -133,94 +151,63 @@ void ServoInterface::setServos(const ros::TimerEvent&)
     if( currentTime-m_servoCommandMsgs[vecIt->id].header.stamp <
         ros::Duration(m_servoCommandMaxAge))
     {
-      if(!throttleFound &&
+      if(chassisState->throttleCommander.empty() && chassisState->runstopMotionEnabled &&
          m_servoCommandMsgs[vecIt->id].throttle <= 1.0 &&
          m_servoCommandMsgs[vecIt->id].throttle >= -1.0)
       {
-        throttleFound = true;
-        throttle = m_servoCommandMsgs[vecIt->id].throttle;
+        chassisState->throttleCommander = m_servoCommandMsgs[vecIt->id].sender;
+        chassisState->throttle = m_servoCommandMsgs[vecIt->id].throttle;
       }
 
-      if(!steeringFound &&
+      //valid steeringBrake commands are on [-1,1]
+      if(chassisState->steeringCommander.empty() &&
          m_servoCommandMsgs[vecIt->id].steering <= 1.0 &&
          m_servoCommandMsgs[vecIt->id].steering >= -1.0)
       {
-        steeringFound = true;
-        steering = m_servoCommandMsgs[vecIt->id].steering;
+        chassisState->steeringCommander = m_servoCommandMsgs[vecIt->id].sender;
+        chassisState->steering = m_servoCommandMsgs[vecIt->id].steering;
       }
 
-      if(!frontBrakeFound &&
+      //valid frontBrake commands are on [0,1]
+      if(chassisState->frontBrakeCommander.empty() &&
          m_servoCommandMsgs[vecIt->id].frontBrake <= 1.0 &&
-         m_servoCommandMsgs[vecIt->id].frontBrake >= -1.0)
+         m_servoCommandMsgs[vecIt->id].frontBrake >= 0.0)
       {
-        frontBrakeFound = true;
-        frontBrake = m_servoCommandMsgs[vecIt->id].frontBrake;
-      }
-
-      if(!backBrakeFound &&
-         m_servoCommandMsgs[vecIt->id].backBrake <= 1.0 &&
-         m_servoCommandMsgs[vecIt->id].backBrake >= -1.0)
-      {
-        backBrakeFound = true;
-        backBrake = m_servoCommandMsgs[vecIt->id].backBrake;
+        chassisState->frontBrakeCommander = m_servoCommandMsgs[vecIt->id].sender;
+        chassisState->frontBrake = m_servoCommandMsgs[vecIt->id].frontBrake;
       }
     }
   }
-
-  autorally_msgs::servoMSGPtr servoStatus(new autorally_msgs::servoMSG);
 
   //only set servos if a valid command value was found
-  if(throttleFound)
+  if(!chassisState->throttleCommander.empty() && chassisState->runstopMotionEnabled == true)
   {
-    double safeThrottle = m_ss.safeThrottle(throttle);
-    //NODELET_INFO_STREAM("safeThrottle:" << safeThrottle << " throttle:" << throttle);
-    if(safeThrottle != throttle)
-    {
-      m_maestro.m_serialPort.diag("in control", "safeThrottle");
-    } else
-    {
-      m_maestro.m_serialPort.diag("in control", "servoCommand");
-    }
-
-    //if theres no brake with the throttle, throttle cant go negative
-    if(!m_brakeSetup.coupledWithThrottle)
-    {
-      safeThrottle = std::max(safeThrottle, 0.0);
-    }
-    setServo("throttle", safeThrottle);
-    servoStatus->throttle = safeThrottle;
+    setServo("throttle", chassisState->throttle);
+    chassisState->throttle = chassisState->throttle;
   }
 
-  if(steeringFound)
+  if(!chassisState->steeringCommander.empty())
   {
-    setServo("steering", steering);
-    servoStatus->steering = steering;
+    setServo("steering", chassisState->steering);
+    chassisState->steering = chassisState->steering;
   } else
   {
-    servoStatus->steering = -10.0;
+    chassisState->steering = -10.0;
   }
 
-  if(frontBrakeFound && m_brakeSetup.independentFront)
+  if(!chassisState->frontBrakeCommander.empty())
   {
-    setServo("frontBrake", std::max(frontBrake, 0.0));
-    servoStatus->frontBrake = std::max(frontBrake, 0.0);
+    setServo("frontBrake", std::max(chassisState->frontBrake, 0.0));
+    chassisState->frontBrake = std::max(chassisState->frontBrake, 0.0);
   } else
   {
-    servoStatus->frontBrake = -10.0;
-  }
-  if(backBrakeFound && m_brakeSetup.independentBack)
-  {
-    setServo("backBrake", std::max(backBrake, 0.0));
-    servoStatus->backBrake = std::max(backBrake, 0.0);
-  } else
-  {
-    servoStatus->backBrake = -10.0;
+    chassisState->frontBrake = -10.0;
   }
 
-  servoStatus->header.stamp = ros::Time::now();
-  servoStatus->header.frame_id = "servoController";
-  m_servoMSGPub.publish(servoStatus);
-  m_maestro.m_serialPort.tick("servoStatus");
+  chassisState->header.stamp = ros::Time::now();
+  chassisState->header.frame_id = "servoController";
+  m_chassisStatePub.publish(chassisState);
+  m_maestro.m_serialPort.tick("chassisState");
 }
 
 bool ServoInterface::setServo(const std::string& channel, const double target)
@@ -293,43 +280,6 @@ bool ServoInterface::getServo(const std::string& channel, double& position)
   return false;
 }
 
-/*
-void ServoInterface::servoStatusTimerCallback(const ros::TimerEvent&)
-{
-  populateStatusMessage(m_servoMSGStatus);
-  m_servoMSGStatus->header.stamp = ros::Time::now();
-  m_servoMSGPub.publish(m_servoMSGStatus);
-  m_maestro.m_serialPort.tick("servoStatus");
-}
-
-void ServoInterface::populateStatusMessage(autorally_msgs::servoMSGPtr& status)
-{
-  if( (status->safeSpeed = m_ss.getSafeSpeed()) == -1.0)
-  {
-    NODELET_ERROR("No valid safeSpeed");
-    m_maestro.m_serialPort.diag_error("NO valid safeSpeed");
-  }
-
-  double position;
-  if(getServo("steering", position))
-  {
-    status->steering = position;
-  }
-  if(getServo("throttle", position))
-  {
-    status->throttle = position;
-  }
-  if(getServo("frontBrake", position))
-  {
-    status->frontBrake = position;
-  }
-  if(getServo("backBrake", position))
-  {
-    status->backBrake = position;
-  }
-}
-*/
-
 void ServoInterface::loadServoParams()
 {
   //read in servo settings
@@ -390,7 +340,7 @@ void ServoInterface::loadServoCommandPriorities()
       toAdd.id = mapIt->first;
       toAdd.priority = static_cast<int>(mapIt->second);
       m_servoCommandPriorities.push_back(toAdd);
-      m_servoCommandMsgs[mapIt->first] = autorally_msgs::servoMSG();
+      m_servoCommandMsgs[mapIt->first] = autorally_msgs::chassisCommand();
 
     } else
     {
