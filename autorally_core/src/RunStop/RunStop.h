@@ -26,9 +26,9 @@
 /**********************************************
  * @file RunStop.h
  * @author Brian Goldfain <bgoldfai@gmail.com>
- * @date May 17, 2013
- * @copyright 2012 Georgia Institute of Technology
- * @brief Publishes a safeSpeed message based on run stop state
+ * @date July 20, 2016
+ * @copyright 2016 Georgia Institute of Technology
+ * @brief Publishes an autorally_msgs::runstop message based on run stop box state
  *
  * @details This file contains the RunStop class definition
  ***********************************************/
@@ -37,8 +37,8 @@
 
 #include <ros/ros.h>
 #include <ros/time.h>
-#include <autorally_core/SerialSensorInterface.h>
-#include <autorally_msgs/safeSpeed.h>
+#include <autorally_core/SerialInterfaceThreaded.h>
+#include <autorally_msgs/runstop.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -50,30 +50,26 @@
  *  "RunStop/RunStop.h"
  *  @brief Interacts with Arduino connected to a 4 button run stop box
  *
- *  Provides a safeSpeed message based on the combined state of a 4-button run
- *  stop box. It is assumed that the three states of the run stop are: {RED,
- *  YELLOW, GREEN} indicating stop, caution, race, respectively.
+ *  Provides a runstop message based on the combined state of a 4-button run
+ *  stop box. Any red or yellow button pressed will set motionEnabled to false.
+ *  The green button must be pressed to set motionEnabled to true.
  */
-class RunStop : public SerialSensorInterface
+class RunStop
 {
 
  public:
-  ros::Timer m_doWorkTimer; ///<Timer to trigger data processing
-  ros::Publisher m_safeSpeedPub;  ///<Publisher for safeSpeed message
+  ros::Timer doWorkTimer_; ///<Timer to trigger data processing
+  ros::Publisher runstopPub_;  ///<Publisher for runstop message
 
   /**
    * @brief Constructor requires all configuration needed to connect to arduino
-   *        as well as safeSpeed values to publish
+   *        as well as runstop values to publish
    *
    * @param nh NodeHandle to use for setup
    * @param port to connect to arduino
-   * @param safeSpeedMax SafeSpeed value to use when state is green
-   * @param safeSpeedCaution SafeSpeed value to use when state is yellow
    */
   RunStop(ros::NodeHandle &nh,
-                const std::string& port,
-                double safeSpeedMax,
-                double safeSpeedCaution);
+                const std::string& port);
 
   ~RunStop();
 
@@ -85,16 +81,15 @@ class RunStop : public SerialSensorInterface
 
 
   /**
-     * @brief Timer triggered callback to publish safeSpeed
+     * @brief Timer triggered callback to publish runstop
      * @param time information about callback execution
      */
   void doWorkTimerCallback(const ros::TimerEvent&);
 
  private:
-  double m_safeSpeedMax; ///< SafeSpeed value if run stop state is GREEN
-  double m_safeSpeedCaution; ///< SafeSpeed value to publish if etop state is RED
-  std::string m_state; ///< Current run stop button state received from Arduino
-  ros::Time m_lastMessageTime; ///< Time of most recent message from Arduino
-  autorally_msgs::safeSpeed m_safeSpeedData; ///< Local safeSpeed message
+  SerialInterfaceThreaded serialPort_;
+  std::string state_; ///< Current run stop button state received from Arduino
+  ros::Time lastMessageTime_; ///< Time of most recent message from Arduino
+  autorally_msgs::runstop runstopData_; ///< Local runstop message
 };
 #endif //RUN_STOP
