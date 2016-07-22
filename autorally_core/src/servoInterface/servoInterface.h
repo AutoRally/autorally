@@ -51,6 +51,8 @@
 #include <autorally_core/SafeSpeed.h>
 //#include <autorally_core/RingBuffer.h>
 
+#warning autorally_core/servoInterface.h has been deprecated, refer to autorally_chassis
+
 namespace autorally_core
 {
 

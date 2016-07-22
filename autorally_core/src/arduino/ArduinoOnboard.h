@@ -52,6 +52,8 @@
 #include <stdio.h>
 #include <string>
 
+#warning autorally_core/ArduinoOnboard.h has been deprecated, refer to autorally_chassis
+
 namespace autorally_core
 {
 
@@ -71,7 +73,7 @@ class ArduinoOnboard : public nodelet::Nodelet
    * @brief Constructor requires all configuration needed to connect to arduino
    *
    */
-  ArduinoOnboard();
+  ROS_DEPRECATED ArduinoOnboard();
 
   ~ArduinoOnboard();
 
