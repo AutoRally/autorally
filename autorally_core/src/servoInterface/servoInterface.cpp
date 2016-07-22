@@ -72,10 +72,11 @@ void ServoInterface::onInit()
 
   for (auto& mapIt : m_servoCommandMsgs)
   {
-    ros::Subscriber sub = nh.subscribe(mapIt.first+"/chassisCommand", 1,
+    std::string commandTopic = mapIt.first+"/chassisCommand";
+    ros::Subscriber sub = nh.subscribe(commandTopic, 1,
                         &ServoInterface::chassisCommandCallback, this);
     m_servoSub[mapIt.first] = sub;
-    NODELET_INFO_STREAM("ServoInterface: subscribed to chassis command:" << mapIt.first+"/servoCommand");
+    NODELET_INFO_STREAM("ServoInterface: subscribed to chassis command:" << commandTopic);
   }
 
   m_runstopMaxAge = ros::Duration(1.0);

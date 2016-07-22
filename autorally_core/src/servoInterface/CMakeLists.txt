@@ -1,6 +1,6 @@
 add_library(ServoInterface servoInterface.cpp PololuMaestro.cpp)
 add_dependencies(ServoInterface autorally_msgs_gencpp)
-target_link_libraries(ServoInterface ${catkin_LIBRARIES} ${Boost_LIBRARIES} RingBuffer SafeSpeed SerialSensorInterface Diagnostics)
+target_link_libraries(ServoInterface ${catkin_LIBRARIES} ${Boost_LIBRARIES} SerialSensorInterface Diagnostics)
 
 #add_executable(servoInterface servoInterfaceMain.cpp)
 #target_link_libraries(servoInterface ${catkin_LIBRARIES} ${Boost_LIBRARIES} ServoInterface SerialSensorInterface SafeSpeed Diagnostics RingBuffer)
