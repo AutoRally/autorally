@@ -7,11 +7,18 @@
   <include file="$(find autorally_core)/launch/ocs.launch" />
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
 
+  <!-- depending on if we're using an old or new chassis, launch the appropriate interface -->
+  <group if="$(optenv AR_CHASSIS_NEW true)">
+    <include file="$(find autorally_core)/launch/autorally_chassis.launch" />
+  </group>
+  <group unless="$(optenv AR_CHASSIS_NEW false)">
+    <include file="$(find autorally_core)/launch/arduinoOnboard.launch" />
+    <include file="$(find autorally_core)/launch/servoInterface.launch" />
+  </group>
+
   <group unless="$(optenv PLAYBACK false)">
     <include file="$(find autorally_core)/launch/xbeeNode.launch"/>
     <include file="$(find autorally_core)/launch/autorally_imu_3dm_gx4.launch" />
-    <include file="$(find autorally_core)/launch/arduinoOnboard.launch" />
-    <include file="$(find autorally_core)/launch/servoInterface.launch" />
     <include file="$(find autorally_core)/launch/gpsRover.launch" />
     <include file="$(find autorally_core)/launch/systemStatus.launch" />
     <include file="$(find autorally_core)/launch/chronyStatus.launch" />

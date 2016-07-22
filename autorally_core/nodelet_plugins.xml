@@ -1,3 +1,11 @@
+<library path="lib/libAutoRallyChassis">
+  <class name="autorally_core/AutoRallyChassis" type="autorally_core::AutoRallyChassis" base_class_type="nodelet::Nodelet">
+    <desription>
+      Interface nodelet for an AutoRally chassis
+    </description>
+  </class>
+</library>
+
 <library path="lib/libServoInterface">
   <class name="autorally_core/ServoInterface" type="autorally_core::ServoInterface" base_class_type="nodelet::Nodelet">
     <description>
@@ -18,14 +26,6 @@
   <class name="autorally_core/ImageRepublisher" type="autorally_core::ImageRepublisher" base_class_type="nodelet::Nodelet">
     <desription>
     Image republisher for OCS display
-    </description>
-  </class>
-</library>
-
-<library path="lib/libautorally_chassis">
-  <class name="autorally_core/autorally_chassis" type="autorally_core::autorally_chassis" base_class_type="nodelet::Nodelet">
-    <desription>
-      Interface for an AutoRally chassis
     </description>
   </class>
 </library>

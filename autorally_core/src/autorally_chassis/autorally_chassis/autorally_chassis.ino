@@ -1,15 +1,15 @@
-
-
 /**********************************************
  * @file autorally_chassis.ino
  * @author Brian Goldfain <bgoldfai@gmail.com>
  * @date July 10, 2016
  * @copyright 2016 Georgia Institute of Technology
- * @brief Brains of the AutoRally chassis
+ * @brief Brains of the AutoRally chassis, for an Arduino Due
  *
  * @details Collects wheel rotation sensor, ESC, RC PWM, and error message data and sends it over the programming
  *          port to a compute box. Receives actuator commands over the programming port and controls the steering,
  *          throttle, and front brake using the Arduino Servo library
+ *          
+ * @note install tc_lib found here: https://github.com/antodom/tc_lib to compile this program
  ***********************************************/
 
 #include <Servo.h> 
@@ -77,7 +77,7 @@ int throttleSrvNeutralUs = 1500; ///< default neutral value for throttle
 int frontBrakeSrvNeutralUs = 1500; ///< default neutral value for front brake
 unsigned long timeOfLastServo = 0; ///< time that the last command message was received from the compute box
 
-//have to receive actuator commants at at least 10Hz to control the platform (50-60Hz recommended)
+///< have to receive actuator commants at at least 10Hz to control the platform (50-60Hz recommended)
 unsigned long servoTimeoutMs = 100;
 
 Servo steerSrv; ///< Arduino Servo object to control steering servo
