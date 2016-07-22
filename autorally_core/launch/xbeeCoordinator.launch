@@ -3,7 +3,7 @@
 
   <node name="xbeeCoordinator" pkg="autorally_core" type="xbeeCoordinator"
         machine="autorally-ocs" output="screen">
-    <remap from="safeSpeed" to="runstopSafeSeed"/>
+    <remap from="runstop" to="runstopBox"/>
     <remap from="gpsBaseRTCM3" to="gpsBaseRTCM3Xbee" />
 
     <param name="frameID" type="string" value="41"/>

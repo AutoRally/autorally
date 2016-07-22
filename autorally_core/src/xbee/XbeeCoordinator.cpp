@@ -24,8 +24,8 @@ XbeeCoordinator::XbeeCoordinator(ros::NodeHandle &nh, const std::string& port):
 {
   m_xbee.registerReceiveMessageCallback(boost::bind(&XbeeCoordinator::processXbeeMessage, this, _1, _2, _3, _4) );
 
-  m_safeSpeedSubscriber = nh.subscribe("safeSpeed", 1,
-                                       &XbeeCoordinator::safeSpeedCallback,
+  m_runstopSubscriber = nh.subscribe("runstop", 1,
+                                       &XbeeCoordinator::runstopCallback,
                                        this);
   m_baseStationRTKSubscriber = nh.subscribe("gpsBaseRTCM3", 1,
                                        &XbeeCoordinator::gpsCorrectionsCallback,
@@ -72,27 +72,27 @@ void XbeeCoordinator::processXbeeMessage(const std::string& sender,
   }
 }
 
-void XbeeCoordinator::safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg)
+void XbeeCoordinator::runstopCallback(const autorally_msgs::runstopConstPtr& msg)
 {
   std::ostringstream ss;
   ss << std::fixed << std::setprecision(2);
-  ss << msg->speed;
+  ss << msg->motionEnabled;
 
-  std::string sendData = "SS " + msg->sender + " " + ss.str();
+  std::string sendData = "RS " + msg->sender + " " + ss.str();
   m_xbee.sendTransmitPacket(sendData);
   //ROS_INFO(sendData.c_str());  
 
   ros::Time now = ros::Time::now();
   std::map<std::string, RobotState>::const_iterator mapIt;
   //if state has not been received from a node in > 2 seconds, send a
-  //safeSpeed = 0.0 to that node (overriding the broadcast safeSpeed),
-  //regardless of what overall system safeSpeed is
+  //runstop = 0.0 to that node (overriding the broadcast runstop),
+  //regardless of what overall system runstop is
   for(mapIt = m_robotInfos.begin(); mapIt != m_robotInfos.end(); mapIt++)
   {
     if( (now-mapIt->second.lastHeartbeat).toSec() > 5.0)
     {
       ROS_WARN("No recent heartbeat from %s", mapIt->first.c_str());
-      sendData = "SS " + msg->sender + " 0.00";
+      sendData = "RS " + msg->sender + " 0.00";
       m_xbee.sendTransmitPacket(sendData, mapIt->second.address);
     }
   }
