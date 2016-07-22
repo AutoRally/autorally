@@ -3,6 +3,7 @@
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 #include <opencv2/opencv.hpp>
+#include <mutex>
 
 namespace autorally_core
 {
@@ -23,11 +24,14 @@ namespace autorally_core
   {
     public:
       ImageRepublisher();
-      virtual void onInit();
+      virtual void onInit() override;
+
     protected:
       void imageCallback(const sensor_msgs::Image::ConstPtr &msg);
 
       void copyVectorToMat(const std::vector<uint8_t>& v, cv::Mat& m);
+
+      void subscriberCallback();
 
       ros::NodeHandle nh;
       ros::NodeHandle pnh;
@@ -39,6 +43,8 @@ namespace autorally_core
       image_transport::ImageTransport it;
       image_transport::Publisher pub;
       image_transport::Subscriber sub;
+
+      std::mutex connectMutex;
   };
 
 }

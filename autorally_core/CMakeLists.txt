@@ -33,7 +33,6 @@ include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 include_directories(include)
 
 add_subdirectory(src/arduino)
-add_subdirectory(src/ChronyStatus)
 add_subdirectory(src/Diagnostics)
 add_subdirectory(src/gps)
 add_subdirectory(src/ocs)
@@ -55,7 +54,7 @@ install(TARGETS
 
 install(PROGRAMS
   src/systemStatus/systemStatus.py
-  src/ChronyStatus/chronyStatus.py
+  src/chronyStatus/chronyStatus.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch/

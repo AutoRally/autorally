@@ -13,7 +13,7 @@
   </group>
 
   <node pkg="nodelet" type="nodelet" name="ServoInterface" args="load autorally_core/ServoInterface autorally_core_manager" output="screen">
-<!--  <node name="servoInterface" pkg="autorally_core" type="servoInterface" machine="muri-laptop" output="screen"> -->
+<!--  <node name="servoInterface" pkg="autorally_core" type="servoInterface" machine="autorally-master" output="screen"> -->
     <param name="controllerType" value="micro"/>
     <param name="servoCommandRate" value="75" />
     <param name="throttleBrakeCoupled" value="true" />

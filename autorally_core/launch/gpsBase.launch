@@ -1,7 +1,7 @@
 <launch>
 
   <include file="$(find autorally_core)/launch/hardware.machine" />
-  <node name="gpsBase" pkg="autorally_core" type="gpsHemisphereInterface" output="screen" machine="muri-ocs">
+  <node name="gpsBase" pkg="autorally_core" type="gpsHemisphereInterface" output="screen" machine="autorally-ocs">
 
     <!-- mode can be either "base" or "rover" -->
     <param name="mode" value="base" />

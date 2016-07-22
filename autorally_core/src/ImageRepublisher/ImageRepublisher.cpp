@@ -24,19 +24,19 @@ void ImageRepublisher::onInit()
   secondsPerFrame = 1.0 / fps;
   pnh.param("resizeHeight", resizeHeight, 480);
 
-  pub = it.advertise("camera/image_display", 10);
+  
+  image_transport::SubscriberStatusCallback subscriberCB = boost::bind(&ImageRepublisher::subscriberCallback, this);
 
-  sub = it.subscribe("camera/image_raw", 1, &ImageRepublisher::imageCallback, this);
+  connectMutex.lock();
+
+  pub = it.advertise("camera/image_display", 1, subscriberCB, subscriberCB);
+
+  connectMutex.unlock();
+  
 }
 
 void ImageRepublisher::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
-  // Don't bother computing if no nodes are subscribed.
-  if(sub.getNumPublishers() == 0)
-  {
-    return;
-  }
-
   // Limit frame rate
   if( (ros::Time::now() - lastFrameTime).toSec() < secondsPerFrame )
   {
@@ -46,69 +46,18 @@ void ImageRepublisher::imageCallback(const sensor_msgs::Image::ConstPtr& msg)
 
   std::string encoding = msg->encoding;
 
-  cv::Mat dst;
+  cv_bridge::CvImageConstPtr source = cv_bridge::toCvShare(msg, "rgb8");
 
-  if(encoding == "mono8")
-  {
-      dst = cv::Mat(msg->height, msg->width, CV_8UC1);
-      copyVectorToMat(msg->data, dst);
-  }
-  else if(encoding == "mono16")
-  {
-      std::vector<unsigned char> src_data = msg->data;
-      dst = cv::Mat(msg->height, msg->width, CV_8UC1);
-      uchar *data = dst.data;
-      for(size_t i = 0; i < msg->height * msg->width * 2; i += 2)
-      {
-          *(data++) = ( 255 * (src_data[i] << 8 | src_data[i+1]) ) / 65536;
-      }
-  }
-  else if(encoding == "bayer_bggr8") // raw8
-  {
-      cv::Mat bayer(msg->height, msg->width, CV_8UC1);
-      copyVectorToMat(msg->data, bayer);
-      dst = cv::Mat(msg->height, msg->width, CV_8UC3);
-      cv::cvtColor(bayer, dst, CV_BayerRG2RGB);
-  }
-  else if(encoding == "bayer_bggr16") // raw16
-  {
-      std::vector<unsigned char> src_data = msg->data;
-      cv::Mat bayer(msg->height, msg->width, CV_8UC1);
-      uchar *data = bayer.data;
-      for(size_t i = 0; i < msg->height * msg->width * 2; i += 2)
-          *(data++) = ( 255 * (src_data[i] << 8 | src_data[i+1]) ) / 65536;
-      dst = cv::Mat(msg->height, msg->width, CV_8UC3);
-      cv::cvtColor(bayer, dst, CV_BayerRG2RGB);
-  }
-  else if(encoding == "rgb8") // RGB24, YUV444, YUV422, YUV411
-  {
-      dst = cv::Mat(msg->height, msg->width, CV_8UC3);
-      copyVectorToMat(msg->data, dst);
-      copyVectorToMat(msg->data, dst);
-  }
-  else if(encoding == "bgr8") // raw8
-  {
-      cv::Mat bayer(msg->height, msg->width, CV_8UC3);
-      copyVectorToMat(msg->data, bayer);
-      dst = cv::Mat(msg->height, msg->width, CV_8UC3);
-      cv::cvtColor(bayer, dst, CV_BGR2RGB);
-  }
-  else
-  {
-      ROS_INFO("Unrecognized encoding: [%s]", encoding.c_str());
-  }
+  cv_bridge::CvImage resized;
+  resized.header.stamp = msg->header.stamp;
+  resized.header.frame_id = "image";
+  resized.encoding = "rgb8";
 
-  float aspect_ratio = (float)dst.cols / (float)dst.rows;
+  float aspect_ratio = (float)source->image.cols / (float)source->image.rows;
 
-  cv::resize(dst, dst, cv::Size(aspect_ratio*resizeHeight,resizeHeight));
+  cv::resize(source->image, resized.image, cv::Size(aspect_ratio*resizeHeight,resizeHeight));
 
-  cv_bridge::CvImage cvi;
-  cvi.header.stamp = msg->header.stamp;
-  cvi.header.frame_id = "image";
-  cvi.encoding = ( dst.channels() > 1 ? "rgb8" : "mono8" );
-  cvi.image = dst;
-
-  sensor_msgs::ImageConstPtr im = cvi.toImageMsg();
+  sensor_msgs::ImageConstPtr im = resized.toImageMsg();
   pub.publish(im);
 }
 
@@ -117,6 +66,18 @@ void ImageRepublisher::copyVectorToMat(const std::vector<uint8_t> &v, cv::Mat &m
     auto data = m.data;
     for(auto element : v)
         *(data++) = element;
+}
+
+void ImageRepublisher::subscriberCallback()
+{
+  connectMutex.lock();
+  if(pub.getNumSubscribers() == 0)
+  {
+    sub.shutdown();
+  } else if(!sub) {
+    sub = it.subscribe("camera/image_raw", 1, &ImageRepublisher::imageCallback, this);
+  }
+  connectMutex.unlock();
 }
 
 }

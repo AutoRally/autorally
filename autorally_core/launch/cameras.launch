@@ -1,18 +1,31 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="muri-laptop" output="screen" args="manager" />
+  <arg name="enable_trigger" default="true"/>
+
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" />
 
   <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_LEFTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
-    <arg name="guid" value="$(optenv AR_LEFTCAM 'none')" />
+    <arg name="serial" value="$(optenv AR_LEFTCAM 'none')" />
     <arg name="side" value="left" />
+    <arg name="enable_trigger" value="$(arg enable_trigger)" />
   </include>
   
   <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_RIGHTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
-    <arg name="guid" value="$(optenv AR_RIGHTCAM 'none')" />
+    <arg name="serial" value="$(optenv AR_RIGHTCAM 'none')" />
     <arg name="side" value="right" />
+    <arg name="enable_trigger" value="$(arg enable_trigger)" />
   </include>
 
+  <include file="$(find autorally_private_vision)/launch/camera_auto_balance.launch" if="$(env AR_LEFTCAM_CONNECTED)">
+    <arg name="serial" value="$(optenv AR_LEFTCAM 'none')" />
+    <arg name="side" value="left" />
+  </include>
+
+  <include file="$(find autorally_private_vision)/launch/camera_auto_balance.launch" if="$(env AR_RIGHTCAM_CONNECTED)">
+    <arg name="serial" value="$(optenv AR_RIGHTCAM 'none')" />
+    <arg name="side" value="right" />
+  </include>
 </launch>

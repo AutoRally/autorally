@@ -24,7 +24,7 @@ class WaypointGen():
 
             self.points.append(Point(position.x,position.y,position.z))
 
-            rospy.loginfo('Added ' + str(position.x) + ' ' + str(position.y))
+            rospy.logwarn('Added ' + str(position.x) + ' ' + str(position.y))
             
             # Write it to a file
             f = open(self.filename, 'w')
