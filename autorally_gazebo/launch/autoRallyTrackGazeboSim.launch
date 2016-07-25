@@ -88,7 +88,6 @@ limitations under the License.
       <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
     </node>
     
-    <node name="wheelSpeeds" pkg="autorally_gazebo" type="wheelSpeedsGazebo.py" output="screen" />
   </group>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
   <include file="$(find autorally_control)/launch/joystickController.launch" />
