@@ -132,6 +132,7 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
   {
     if(msg == "RS")
     {
+      //std::cout << "RS:" << ss << std::endl;
       m_lastrunstop = ros::Time::now();
       if(!broadcast)
       {
@@ -145,7 +146,7 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
       if( timeDiff <= 1.0 && !broadcast)
       {
         ss >> m_runstop.sender >> motionEnabled;
-        m_runstop.motionEnabled = boost::lexical_cast<bool>(motionEnabled);
+        m_runstop.motionEnabled = boost::lexical_cast<int>(motionEnabled);
         m_runstop.header.stamp = m_lastTargetedrunstop;
         m_runstopPublisher.publish(m_runstop);
       } else if(broadcast)

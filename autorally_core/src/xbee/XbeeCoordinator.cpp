@@ -75,8 +75,8 @@ void XbeeCoordinator::processXbeeMessage(const std::string& sender,
 void XbeeCoordinator::runstopCallback(const autorally_msgs::runstopConstPtr& msg)
 {
   std::ostringstream ss;
-  ss << std::fixed << std::setprecision(2);
-  ss << msg->motionEnabled;
+  ss << std::fixed << std::setprecision(1);
+  ss << (int)msg->motionEnabled;
 
   std::string sendData = "RS " + msg->sender + " " + ss.str();
   m_xbee.sendTransmitPacket(sendData);

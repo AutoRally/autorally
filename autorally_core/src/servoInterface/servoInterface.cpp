@@ -93,10 +93,10 @@ void ServoInterface::chassisCommandCallback(
                      const autorally_msgs::chassisCommandConstPtr& msg)
 {
   std::map<std::string, autorally_msgs::chassisCommand>::iterator mapIt;
-  if((mapIt = m_servoCommandMsgs.find(msg->header.frame_id)) == m_servoCommandMsgs.end())
+  if((mapIt = m_servoCommandMsgs.find(msg->sender)) == m_servoCommandMsgs.end())
   {
     NODELET_ERROR_STREAM("ServoInterface: Unknown controller " <<
-                         msg->header.frame_id <<
+                         msg->sender <<
                          " attempting to control servos, please add entry " <<
                          " to servoCommandPriorities.yaml");
   } else
