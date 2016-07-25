@@ -7,7 +7,7 @@ Control the wheels of a vehicle with Ackermann steering.
 Subscribed Topics:
     servoCommand (autorally_msgs/servoMSG)
         Servo command for the position fo each of the servos [-1, 1]
-    servoCommand (autorally_msgs/safeSpeed)
+    servoCommand (autorally_msgs/runstop)
         Whether the vehicle can move or not
         
 Published Topics:
@@ -122,8 +122,13 @@ from math import pi
 import rospy
 import tf
 
+from autorally_msgs.msg import chassisCommand
+from autorally_msgs.msg import chassisState
+from autorally_msgs.msg import runstop
+
 from autorally_msgs.msg import servoMSG
-from autorally_msgs.msg import safeSpeed
+from autorally_msgs.msg import runstop
+
 from std_msgs.msg import Float64
 from controller_manager_msgs.srv import ListControllers
 
@@ -256,9 +261,9 @@ class AutoRallyCtrlr(object):
         self.commandPriorities = sorted(self.commandPriorities.items(), key=operator.itemgetter(1))
         rospy.loginfo("AutoRallyGazeboController: Loaded %d servo commanders", len(self.commandPriorities))
 
-        #safeSpeed information
-        self.safeSpeeds = dict()
-        self.safeSpeedLock = threading.Lock()
+        #runstop information
+        self.runstops = dict()
+        self.runstopLock = threading.Lock()
 
         self.front_axle_max_effort = 2.5 
         self.rear_axle_max_effort = 8
@@ -288,8 +293,8 @@ class AutoRallyCtrlr(object):
                 rospy.Subscriber("/"+cmd+"/servoCommand", servoMSG,
                                  self.servoCmdCb, queue_size=1)
 
-        self.safeSpeedSub = rospy.Subscriber("/safeSpeed", safeSpeed,
-                                 self.safeSpeedCb, queue_size=1)
+        self.runstopSub = rospy.Subscriber("/runstop", runstop,
+                                 self.runstopCb, queue_size=5)
 
         self.servoStatusPub = rospy.Publisher("/servoStatus", servoMSG, queue_size=1)
 
@@ -306,7 +311,7 @@ class AutoRallyCtrlr(object):
             frontBrake = 0.0;
             speed = 0.0;
             servoStatus = servoMSG()
-            servoStatus.safeSpeed = self.getSafeSpeed();
+            servoStatus.runstopMotionEnabled = self.getrunstop();
             if (self._cmd_timeout > 0.0 and
                 t - self._last_cmd_time > self._cmd_timeout):
                 # Too much time has elapsed since the last command. Stop the
@@ -329,7 +334,7 @@ class AutoRallyCtrlr(object):
                   foundSteering = False
                   accel = 0.0
                   
-                  if servoStatus.safeSpeed < 0.0001:
+                  if servoStatus.runstop < 0.0001:
                     servoStatus.throttle = 0.0;
                     foundThrottle = True
 
@@ -424,17 +429,16 @@ class AutoRallyCtrlr(object):
         self.servoCmds[servoCommand.header.frame_id] = servoCommand
         self._last_cmd_time = rospy.get_time()
 
-    def safeSpeedCb(self, safeSpeed):
-        with self.safeSpeedLock:
-            self.safeSpeeds[safeSpeed.sender] = safeSpeed
+    def runstopCb(self, runstop):
+        with self.runstopLock:
+            self.runstops[runstop.sender] = runstop
 
-    def getSafeSpeed(self):
-        with self.safeSpeedLock:
-            ss = 25;
-            for safeSpeed in self.safeSpeeds:
-                if self.safeSpeeds[safeSpeed].speed < ss:
-                    ss = self.safeSpeeds[safeSpeed].speed
-            return ss
+    def getrunstop(self):
+        with self.runstopLock:
+            runstop = True
+            for runstop in self.runstops:
+                runstop &= self.runstops[runstop].motionEnabled
+            return runstop
 
     def _get_front_wheel_params(self, side):
         # Get front wheel parameters. Return a tuple containing the steering

@@ -23,6 +23,9 @@ SUBSYSTEM=="tty", ATTRS{serial}=="XBEE_ADAPTER_SERIAL", MODE="0666", SYMLINK+="a
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1e10", ATTRS{serial}=="CAMERA_SERIAL", MODE="0666", SYMLINK+="arCamera_CAMERAGUID", GROUP="plugdev"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1e10", ATTRS{serial}=="CAMERA_SERIAL", MODE="0666", SYMLINK+="arCamera_CAMERAGUID", GROUP="plugdev"
 
+# Arduino Due in the chassis
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.org)", ATTRS{idProduct}=="003d", ATTRS{product}=="Arduino Due Prog. Port", MODE="0666", SYMLINK+="arChassis"
+
 #
 # The following rules do not need to be customized
 #
@@ -33,9 +36,6 @@ SUBSYSTEMS=="usb", ATTRS{manufacturer}=="Arduino (www.arduino.cc)", ATTRS{produc
 
 # Arduino Micro
 SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino Srl", ATTRS{idProduct}=="8037", ATTRS{product}=="Arduino Micro", SYMLINK+="arComputeBoxArduino"
-
-# Arduino Due
-SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.org)", ATTRS{idProduct}=="003d", ATTRS{product}=="Arduino Due Prog. Port", MODE="0666", SYMLINK+="arChassis"
 
 # IMU
 DRIVERS=="usb", ATTRS{manufacturer}=="Lord Microstrain", ATTRS{product}=="Lord Inertial Sensor", MODE="0666", SYMLINK+="arLordIMU"
