@@ -5,9 +5,9 @@
 Control the wheels of a vehicle with Ackermann steering.
 
 Subscribed Topics:
-    servoCommand (autorally_msgs/servoMSG)
-        Servo command for the position fo each of the servos [-1, 1]
-    servoCommand (autorally_msgs/runstop)
+    chassisCommand (autorally_msgs/chassisCOmmand)
+        Actuator command to control all actuators, valid values [-1, 1]
+    runstop (autorally_msgs/runstop)
         Whether the vehicle can move or not
         
 Published Topics:
@@ -126,8 +126,8 @@ from autorally_msgs.msg import chassisCommand
 from autorally_msgs.msg import chassisState
 from autorally_msgs.msg import runstop
 
-from autorally_msgs.msg import servoMSG
-from autorally_msgs.msg import runstop
+#from autorally_msgs.msg import servoMSG
+#from autorally_msgs.msg import runstop
 
 from std_msgs.msg import Float64
 from controller_manager_msgs.srv import ListControllers
@@ -253,19 +253,20 @@ class AutoRallyCtrlr(object):
         self._wheelbase_sqr = self._wheelbase ** 2
 
         #self.lastCmdTime = rospy.get_time()
-        self.servoCmds = dict()
-        self.servoCmdLock = threading.Lock()
+        self.chassisCmds = dict()
+        self.chassisCmdLock = threading.Lock()
 
-        #load servo commander priorities
-        self.commandPriorities = rospy.get_param("~servoCommandProirities", [])
+        #load chassis commander priorities
+        self.commandPriorities = rospy.get_param("~chassisCommandProirities", [])
         self.commandPriorities = sorted(self.commandPriorities.items(), key=operator.itemgetter(1))
-        rospy.loginfo("AutoRallyGazeboController: Loaded %d servo commanders", len(self.commandPriorities))
+        rospy.loginfo("AutoRallyGazeboController: Loaded %d chassis commanders", len(self.commandPriorities))
 
         #runstop information
         self.runstops = dict()
         self.runstopLock = threading.Lock()
 
         self.front_axle_max_effort = 2.5 
+        self.front_axle_brake_effort = 2.5
         self.rear_axle_max_effort = 8
         self.rear_axle_brake_effort = 4
         
@@ -286,17 +287,18 @@ class AutoRallyCtrlr(object):
             _create_axle_cmd_pub(list_ctrlrs, left_rear_axle_ctrlr_name)
         self._right_rear_axle_cmd_pub = \
             _create_axle_cmd_pub(list_ctrlrs, right_rear_axle_ctrlr_name)
-            
-        self.servoCmdSub = dict()             
+
+        self.chassisStatePub = rospy.Publisher("/chassisState", chassisState, queue_size=1)
+
+        self.chassisCmdSub = dict()             
         for cmd, priority in self.commandPriorities:
-            self.servoCmdSub[cmd] = \
-                rospy.Subscriber("/"+cmd+"/servoCommand", servoMSG,
-                                 self.servoCmdCb, queue_size=1)
+            self.chassisCmdSub[cmd] = \
+                rospy.Subscriber("/"+cmd+"/chassisCommand", chassisCommand,
+                                 self.chassisCmdCb, queue_size=1)
 
         self.runstopSub = rospy.Subscriber("/runstop", runstop,
                                  self.runstopCb, queue_size=5)
 
-        self.servoStatusPub = rospy.Publisher("/servoStatus", servoMSG, queue_size=1)
 
     def spin(self):
         """Control the vehicle."""
@@ -310,8 +312,8 @@ class AutoRallyCtrlr(object):
 
             frontBrake = 0.0;
             speed = 0.0;
-            servoStatus = servoMSG()
-            servoStatus.runstopMotionEnabled = self.getrunstop();
+            chassisSt = chassisState()
+            chassisSt.runstopMotionEnabled = self.getrunstop();
             if (self._cmd_timeout > 0.0 and
                 t - self._last_cmd_time > self._cmd_timeout):
                 # Too much time has elapsed since the last command. Stop the
@@ -325,7 +327,7 @@ class AutoRallyCtrlr(object):
                 #    steer_ang_vel = self._steer_ang_vel
                 #    speed = self._speed
                 #    accel = self._accel
-                with self.servoCmdLock:
+                with self.chassisCmdLock:
                   foundSteering = False
                   foundThrottle = False
                   foundFrontBrake = False
@@ -334,47 +336,51 @@ class AutoRallyCtrlr(object):
                   foundSteering = False
                   accel = 0.0
                   
-                  if servoStatus.runstop < 0.0001:
-                    servoStatus.throttle = 0.0;
+                  if not chassisSt.runstopMotionEnabled:
+                    chassisSt.throttle = 0.0;
+                    chassisSt.throttleCommander = 'runstop';
                     foundThrottle = True
 
                   for cmd,priority in self.commandPriorities:
-                    #rospy.logwarn("looking for servo commander %s with priority %d", cmd, priority)
-                    if cmd in self.servoCmds:
-                      if abs(self.servoCmds[cmd].steering) <= 1.0 and \
-                         (rospy.Time.now()-self.servoCmds[cmd].header.stamp) < \
+                    #rospy.logwarn("looking for chassis commander %s with priority %d", cmd, priority)
+                    if cmd in self.chassisCmds:
+                      if abs(self.chassisCmds[cmd].steering) <= 1.0 and \
+                         (rospy.Time.now()-self.chassisCmds[cmd].header.stamp) < \
                             rospy.Duration.from_sec(0.2) and\
                          not foundSteering:
                         #rospy.loginfo("%s in control of steering", cmd);
-                        steer_ang = -math.radians(25)*self.servoCmds[cmd].steering
+                        steer_ang = -math.radians(25)*self.chassisCmds[cmd].steering
                         steer_ang_vel = 0.0
-                        servoStatus.steering = self.servoCmds[cmd].steering
+                        chassisSt.steering = self.chassisCmds[cmd].steering
+                        chassisSt.steeringCommander = self.chassisCmds[cmd].sender
                         foundSteering = True
     
-                      if abs(self.servoCmds[cmd].throttle) <= 1.0 and \
-                         (rospy.Time.now()-self.servoCmds[cmd].header.stamp) < \
+                      if abs(self.chassisCmds[cmd].throttle) <= 1.0 and \
+                         (rospy.Time.now()-self.chassisCmds[cmd].header.stamp) < \
                             rospy.Duration.from_sec(0.2) and\
                          not foundThrottle:
     
                         #rospy.loginfo("%s in control of throttle", cmd);
-                        if self.servoCmds[cmd].throttle >= 0.0:
-                          speed = self.rear_axle_max_effort*self.servoCmds[cmd].throttle
+                        if self.chassisCmds[cmd].throttle >= 0.0:
+                          speed = self.rear_axle_max_effort*self.chassisCmds[cmd].throttle
                         else:
-                          speed = self.rear_axle_brake_effort*self.servoCmds[cmd].throttle
+                          speed = self.rear_axle_brake_effort*self.chassisCmds[cmd].throttle
                         
                         accel = 0.0
-                        servoStatus.throttle = self.servoCmds[cmd].throttle
+                        chassisSt.throttle = self.chassisCmds[cmd].throttle
+                        chassisSt.throttleCommander = self.chassisCmds[cmd].sender
                         foundThrottle = True
     
-                      if self.servoCmds[cmd].frontBrake > 0.0 and \
-                         self.servoCmds[cmd].frontBrake < 1.0 and \
-                         (rospy.Time.now()-self.servoCmds[cmd].header.stamp) < \
+                      if self.chassisCmds[cmd].frontBrake > 0.0 and \
+                         self.chassisCmds[cmd].frontBrake < 1.0 and \
+                         (rospy.Time.now()-self.chassisCmds[cmd].header.stamp) < \
                             rospy.Duration.from_sec(0.2) and\
                          not foundFrontBrake:
                         
                         #rospy.loginfo("%s in control of front brake", cmd);
-                        frontBrake = -self.front_axle_brake_effort*self.servoCmds[cmd].frontBrake
-                        servoStatus.frontBrake = self.servoCmds[cmd].frontBrake
+                        frontBrake = -self.front_axle_brake_effort*self.chassisCmds[cmd].frontBrake
+                        chassisSt.frontBrake = self.chassisCmds[cmd].frontBrake
+                        chassisSt.frontBrakeCommander = self.chassisCmds[cmd].sender
                         foundFrontBrake = True
     
                       else:
@@ -398,8 +404,8 @@ class AutoRallyCtrlr(object):
             if self._right_rear_axle_cmd_pub:
                 self._right_rear_axle_cmd_pub.publish(self._right_rear_ang_vel)
             '''
-            servoStatus.header.stamp = rospy.Time.now()
-            self.servoStatusPub.publish(servoStatus)
+            chassisSt.header.stamp = rospy.Time.now()
+            self.chassisStatePub.publish(chassisSt)
 
             self._left_steer_cmd_pub.publish(self._theta_left)
             self._right_steer_cmd_pub.publish(self._theta_right)
@@ -417,16 +423,16 @@ class AutoRallyCtrlr(object):
             except rospy.exceptions.ROSTimeMovedBackwardsException:
                 continue #rospy.loginfo()
 
-    def servoCmdCb(self, servoCommand):
-      """Servo command callback
+    def chassisCmdCb(self, chassisCommand):
+      """Chassis command callback
 
         :Parameters:
-            servoCommand : autorally_msgs.msg.servoMSG
-                           Position to set the control servos
+            chassisCommand : autorally_msgs.msg.chassisCommand
+                           Position to set the control actuators
       """
-      with self.servoCmdLock:
+      with self.chassisCmdLock:
         #self.lastCmdTime = rospy.get_time()
-        self.servoCmds[servoCommand.header.frame_id] = servoCommand
+        self.chassisCmds[chassisCommand.sender] = chassisCommand
         self._last_cmd_time = rospy.get_time()
 
     def runstopCb(self, runstop):
@@ -436,8 +442,8 @@ class AutoRallyCtrlr(object):
     def getrunstop(self):
         with self.runstopLock:
             runstop = True
-            for runstop in self.runstops:
-                runstop &= self.runstops[runstop].motionEnabled
+            for item in self.runstops:
+                runstop &= self.runstops[item].motionEnabled
             return runstop
 
     def _get_front_wheel_params(self, side):
@@ -561,7 +567,7 @@ class AutoRallyCtrlr(object):
     _DEF_EQ_POS = 0.0       # Default equilibrium position. Unit: meter.
     _DEF_CMD_TIMEOUT = 0.5  # Default command timeout. Unit: second.
     _DEF_PUB_FREQ = 50.0    # Default publishing frequency. Unit: hertz.
-# end _AckermannCtrlr
+# end _AutoRallyCtrlr
 
 
 def _wait_for_ctrlr(list_ctrlrs, ctrlr_name):
