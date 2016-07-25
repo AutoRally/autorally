@@ -44,7 +44,7 @@
 //#include <std_msgs/Float64.h>
 #include <autorally_core/SerialInterfaceThreaded.h>
 #include <autorally_msgs/wheelSpeeds.h>
-#include <autorally_msgs/servoMSG.h>
+#include <autorally_msgs/chassisCommand.h>
 
 #include <boost/tokenizer.hpp>
 //#include <boost/circular_buffer.hpp>

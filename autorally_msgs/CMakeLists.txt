@@ -14,15 +14,13 @@ find_package(Boost REQUIRED thread)
 add_message_files(
   DIRECTORY msg
   FILES
-  safeSpeed.msg
-  wheelSpeeds.msg
-  imageMask.msg
-  servoMSG.msg
-  line2D.msg
-  point2D.msg
-  runstop.msg
   chassisCommand.msg
   chassisState.msg
+  wheelSpeeds.msg
+  runstop.msg
+  imageMask.msg
+  line2D.msg
+  point2D.msg
 )
 
 generate_messages(DEPENDENCIES
