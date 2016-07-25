@@ -42,11 +42,9 @@
 #include <tf/transform_listener.h>
 #include <std_msgs/Float64.h>
 
-#include <autorally_msgs/servoMSG.h>
+#include <autorally_msgs/chassisCommand.h>
 #include <autorally_msgs/wheelSpeeds.h>
-#include <autorally_msgs/safeSpeed.h>
 #include <autorally_core/RingBuffer.h>
-//#include <autorally_core/TimeTaggedRingBuffer.h>
 
 namespace autorally_control
 {
@@ -68,15 +66,14 @@ class ConstantSpeedController : public nodelet::Nodelet
   };
 
   SpeedControllerState m_controllerState;
-  ros::Subscriber m_safeSpeedSub;
+  ros::Subscriber m_speedCommandSub;
   ros::Subscriber m_wheelSpeedsSub;
-  ros::Publisher m_servoMSGPub; ///<Publisher for servoCommands
+  ros::Publisher m_chassisCommandPub; ///<Publisher for chassisCommands
   ros::Timer m_controlTimer;
   ros::Timer m_controlEnableTimer;
   std::string m_speedCommander;
 
   double m_constantSpeedPrevThrot; ///< Difference between desired and actual velocity from previous iteration
-//  double m_safeSpeedISum; ///< Accumulated velocity error
   double m_constantSpeedKP; ///< Scaler for the proportion component
   double m_constantSpeedKD; ///< Scaler for the derivative component
   double m_constantSpeedKI; ///< Scaler for the integral component
@@ -89,8 +86,7 @@ class ConstantSpeedController : public nodelet::Nodelet
   double m_accelerationRate;
   double m_frontWheelsSpeed;
   double m_backWheelsSpeed;
-  autorally_msgs::safeSpeed m_mostRecentSafeSpeed;
-  autorally_msgs::servoMSGPtr m_servoMSG; ///<Current command message
+  std_msgs::Float64 m_mostRecentSpeedCommand;
   double m_speedSetPoint;
   double m_throttleAccStart;
   double m_throttleAccEnd;
@@ -99,7 +95,7 @@ class ConstantSpeedController : public nodelet::Nodelet
 
   autorally_core::RingBuffer<double> m_throttleMappings;
   std::vector<double> m_accelerationProfile;
-  void safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg);
+  void speedCallback(const std_msgs::Float64ConstPtr& msg);
   void wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg);
 
   void enableControlCallback(const ros::TimerEvent& time);
