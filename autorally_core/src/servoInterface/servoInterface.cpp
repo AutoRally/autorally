@@ -205,9 +205,13 @@ void ServoInterface::setServos(const ros::TimerEvent&)
     chassisState->frontBrake = -10.0;
   }
 
-  m_maestro.m_serialPort.diag("steering commander", chassisState->steeringCommander);
-  m_maestro.m_serialPort.diag("throttle commander", chassisState->throttleCommander);
-  m_maestro.m_serialPort.diag("frontBrake commander", chassisState->frontBrakeCommander);
+  m_maestro.m_serialPort.diag("steering commander:", chassisState->steeringCommander);
+  m_maestro.m_serialPort.diag("throttle commander:", chassisState->throttleCommander);
+  if(chassisState->frontBrakeCommander.empty())
+  {
+    chassisState->frontBrakeCommander = "n/a";
+  }
+  m_maestro.m_serialPort.diag("frontBrake commander:", chassisState->frontBrakeCommander);
   
   chassisState->header.stamp = ros::Time::now();
   chassisState->header.frame_id = "servoController";
