@@ -73,7 +73,7 @@ class ArduinoOnboard : public nodelet::Nodelet
    * @brief Constructor requires all configuration needed to connect to arduino
    *
    */
-  ROS_DEPRECATED ArduinoOnboard();
+  ArduinoOnboard();
 
   ~ArduinoOnboard();
 
@@ -92,10 +92,6 @@ class ArduinoOnboard : public nodelet::Nodelet
   ros::Time m_lastTime;
 
   SerialInterfaceThreaded m_port; ///<Serial port for arduino data
-  //autorally_msgs::arduinoDataPtr m_arduinoData; ///< local imu data message to be published
-  //autorally_msgs::vehicleSpeedPtr m_vehicleSpeed; ///<Local speed message
-  //autorally_msgs::wheelSpeedsPtr m_wheelSpeeds; ///<Local wheel speeds message
-  //std_msgs::Float64Ptr m_irData;
 
   double m_wheelDiameter; ///<Diameter of wheels on vehicle in m
   int m_numMovingAverageValues; ///< Number of values used in moving average

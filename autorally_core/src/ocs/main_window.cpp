@@ -67,8 +67,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   QObject::connect(ui.motionControlButton, SIGNAL(clicked(bool)),
                    this, SLOT(enableMotion(bool)));
-  //QObject::connect(ui.runstopSetButton, SIGNAL(clicked(bool)),
-  //                 this, SLOT(setRunstop(bool)));
   QObject::connect(ui.tab_manager, SIGNAL(currentChanged(int)),
                    this, SLOT(currentTabChanged(int)));
 
@@ -178,20 +176,6 @@ void MainWindow::updateWheelSpeeds(const autorally_msgs::wheelSpeedsConstPtr& ms
 
 void MainWindow::updateActuatorData(const autorally_msgs::chassisStateConstPtr& msg)
 {
-  /*QString tmp;
-  tmp.setNum(msg->throttleRelayEnabled);
-  ui.throttleRelayLabel->setText(tmp);
-  QPalette palette = ui.throttleRelayLabel->palette();
-  if(msg->throttleRelayEnabled)
-  {
-    palette.setColor(ui.throttleRelayLabel->backgroundRole(), Qt::green);
-  } else
-  {
-    palette.setColor(ui.throttleRelayLabel->foregroundRole(), Qt::red);
-  }
-  ui.throttleRelayLabel->setPalette(palette);*/
-
-
   setEnableLabel(ui.throttleRelayLabel, msg->throttleRelayEnabled);
   setEnableLabel(ui.autonomousLabel, msg->autonomousEnabled);
   setEnableLabel(ui.runstopLabel, msg->runstopMotionEnabled);
@@ -281,38 +265,14 @@ void MainWindow::enableMotion(const bool check)
 {
   if(check)
   {
-    //ui.runstopValueBox->setEnabled(true);
-    //ui.runstopSetButton->setEnabled(true);
     ui.motionControlButton->setText("Runstop Motion Disabled");
     qnode.setRunstop(0.0);
   } else
   {
-    //ui.runstopValueBox->setEnabled(false);
-    //ui.runstopSetButton->setEnabled(false);
     ui.motionControlButton->setText("Runstop Motion Enabled");
     qnode.setRunstop(1.0);
-    //setRunstop(ui.runstopSetButton->isChecked());
   }
 }
-
-/*void MainWindow::setRunstop(const bool check)
-{
-  if(check)
-  {
-    ui.runstopValueBox->setEnabled(false);
-    if(!ui.motionControlButton->isChecked())
-    {
-      qnode.setRunstop(ui.runstopValueBox->value());
-    }
-  } else
-  {
-    ui.runstopValueBox->setEnabled(true);
-    if(!ui.motionControlButton->isChecked())
-    {
-      qnode.setRunstop(25.0);
-    }
-  }
-}*/
 
 void MainWindow::setControl(bool check)
 {
@@ -323,7 +283,6 @@ void MainWindow::setControl(bool check)
   {
     m_chassisCommandTimer.stop();
   }
-  //m_sendServoCommand = check;
 }
 
 void MainWindow::sendChassisCommand()
