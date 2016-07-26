@@ -324,16 +324,23 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
   } else
   {
     chassisState->runstopMotionEnabled = true;
+    int validRunstopCount = 0;
     for(auto& runstop : runstops_)
     {
       if(currentTime-runstop.second.header.stamp < runstopMaxAge_)
       {
+        ++validRunstopCount;
         if(runstop.second.motionEnabled == 0)
         {
           chassisState->runstopMotionEnabled = false;
           chassisState->throttleCommander = "runstop";
         }
       }
+    }
+    if(validRunstopCount == 0)
+    {
+      chassisState->runstopMotionEnabled = false;
+      chassisState->throttleCommander = "runstop";
     }
   }
 

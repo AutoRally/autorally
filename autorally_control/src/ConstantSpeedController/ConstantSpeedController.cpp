@@ -68,7 +68,7 @@ void ConstantSpeedController::onInit()
 
   m_mostRecentSpeedCommand.data = 0;
 
-  m_speedCommandSub = nh.subscribe("speedCommand", 1,
+  m_speedCommandSub = nh.subscribe("constantSpeedController/speedCommand", 1,
                           &ConstantSpeedController::speedCallback, this);
   m_wheelSpeedsSub = nh.subscribe("wheelSpeeds", 1,
                           &ConstantSpeedController::wheelSpeedsCallback,
