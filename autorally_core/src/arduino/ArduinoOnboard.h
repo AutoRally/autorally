@@ -73,7 +73,7 @@ class ArduinoOnboard : public nodelet::Nodelet
    * @brief Constructor requires all configuration needed to connect to arduino
    *
    */
-  ArduinoOnboard();
+  ROS_DEPRECATED ArduinoOnboard();
 
   ~ArduinoOnboard();
 
