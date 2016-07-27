@@ -157,7 +157,7 @@ class AutoRallyChassis : public nodelet::Nodelet
           {"BEC Voltage", 4.0},
           {"BEC Current", 4.0}, };
 
-  boost::mutex chassisStateMutex_; ///< mutex for accessing chassis state variables
+  boost::mutex chassisEnableMutex_; ///< mutex for accessing chassis state variables
   bool throttleRelayEnabled_; ///< indicated whther the throttle relay is engaged or not
   bool autonomousEnabled_; ///< indicates if the chassis is in autonomous or manual mode
 

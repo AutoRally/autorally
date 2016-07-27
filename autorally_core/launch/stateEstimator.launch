@@ -42,8 +42,8 @@
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>
       <param name="InvertX" value="false"/>
-      <param name="InvertY" value="false"/>
-      <param name="InvertZ" value="false"/>
+      <param name="InvertY" value="true"/>
+      <param name="InvertZ" value="true"/>
       
       
   </node>
