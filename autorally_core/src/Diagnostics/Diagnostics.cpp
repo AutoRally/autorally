@@ -105,7 +105,7 @@ void Diagnostics::diag_error(const std::string msg)
   m_dataMutex.unlock();
 }
 
-void Diagnostics::diagUpdate(const ros::TimerEvent&)
+void Diagnostics::diagUpdate(const ros::TimerEvent& /*time*/)
 {
   //force the publishing of a diagnostics array based on the desired frequency
   if(ros::ok())

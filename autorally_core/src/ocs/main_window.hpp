@@ -84,13 +84,8 @@ public slots:
   */
   void enableMotion(const bool check);
 
-  	/**
-  * @brief Slot that is activated when the user wants to send a runstop
-  * @param check The state of the button
-  */
-  //void setRunstop(const bool check);
 
-  	/**
+	/**
   * @brief Slot used to trigger display updates
   */
   void updateTimeBoxes();

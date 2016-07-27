@@ -84,7 +84,7 @@ class RunStop
      * @brief Timer triggered callback to publish runstop
      * @param time information about callback execution
      */
-  void doWorkTimerCallback(const ros::TimerEvent&);
+  void doWorkTimerCallback(const ros::TimerEvent& time);
 
  private:
   SerialInterfaceThreaded serialPort_;

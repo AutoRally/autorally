@@ -181,7 +181,7 @@ class AutoRallyChassis : public nodelet::Nodelet
   void runstopCallback(const autorally_msgs::runstopConstPtr& msg) {runstops_[msg->sender] = *msg;}
 
   /**
-   * @Callback triggered by the serial interface when data from the chassis is available to read
+   * @brief Callback triggered by the serial interface when data from the chassis is available to read
    */
   void chassisFeedbackCallback();
   

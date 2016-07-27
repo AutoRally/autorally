@@ -107,7 +107,7 @@ bool RunStop::processData()
   }
 }
 
-void RunStop::doWorkTimerCallback(const ros::TimerEvent&)
+void RunStop::doWorkTimerCallback(const ros::TimerEvent& /*time*/)
 {
   //get out all the messages
  	while(processData())

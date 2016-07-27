@@ -110,7 +110,7 @@ class GPSHemisphere
    * @brief Timer triggered callback to request RTK status from base station
    * @param time information about callback execution
    */
-  void rtkStatusCallback(const ros::TimerEvent& /*time*/);
+  void rtkStatusCallback(const ros::TimerEvent& time);
 
   /**
   * @brief Timer triggered callback to update the device reference location
@@ -118,7 +118,7 @@ class GPSHemisphere
   *
   * This may be periodically needed for the base station??????
   */
-  void updateReferenceLocationCallback(const ros::TimerEvent& /*time*/);
+  void updateReferenceLocationCallback(const ros::TimerEvent& time);
 
  private:
   ros::Timer m_rtkStatusTimer; ///<Timer to trigger RTK status updates
