@@ -45,6 +45,8 @@
 #include <ros/time.h>
 #include <autorally_core/SerialInterfaceThreaded.h>
 
+#warning autorally_core/ArduinoOnboard.h has been deprecated, refer to autorally_chassis
+
 #define MAX_CONTROL_VALUE 254 ///< Allowable control values are [0-254]
 #define SERVO_NEUTRAL_VALUE 127 ///< Middle value that puts servo in neutral
 #define SERVO_HOME_POSITION 255 ///< Sends the servo to its 'home' position
@@ -79,7 +81,7 @@ class PololuMaestro
    * and properly control connected servos
    *
    */
-  PololuMaestro();
+  ROS_DEPRECATED PololuMaestro();
 
   ~PololuMaestro();
 
