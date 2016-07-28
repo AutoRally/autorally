@@ -44,13 +44,15 @@
 //#include <std_msgs/Float64.h>
 #include <autorally_core/SerialInterfaceThreaded.h>
 #include <autorally_msgs/wheelSpeeds.h>
-#include <autorally_msgs/servoMSG.h>
+#include <autorally_msgs/chassisCommand.h>
 
 #include <boost/tokenizer.hpp>
 //#include <boost/circular_buffer.hpp>
 
 #include <stdio.h>
 #include <string>
+
+#warning autorally_core/ArduinoOnboard.h has been deprecated, refer to autorally_chassis
 
 namespace autorally_core
 {
@@ -71,7 +73,7 @@ class ArduinoOnboard : public nodelet::Nodelet
    * @brief Constructor requires all configuration needed to connect to arduino
    *
    */
-  ArduinoOnboard();
+  ROS_DEPRECATED ArduinoOnboard();
 
   ~ArduinoOnboard();
 
@@ -90,10 +92,6 @@ class ArduinoOnboard : public nodelet::Nodelet
   ros::Time m_lastTime;
 
   SerialInterfaceThreaded m_port; ///<Serial port for arduino data
-  //autorally_msgs::arduinoDataPtr m_arduinoData; ///< local imu data message to be published
-  //autorally_msgs::vehicleSpeedPtr m_vehicleSpeed; ///<Local speed message
-  //autorally_msgs::wheelSpeedsPtr m_wheelSpeeds; ///<Local wheel speeds message
-  //std_msgs::Float64Ptr m_irData;
 
   double m_wheelDiameter; ///<Diameter of wheels on vehicle in m
   int m_numMovingAverageValues; ///< Number of values used in moving average

@@ -1,7 +1,7 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <node name="ocs" pkg="autorally_core" type="ocs" machine="muri-ocs" output="screen" required="true" args="_image_transport:=compressed">
+  <node name="ocs" pkg="autorally_core" type="ocs" machine="autorally-ocs" output="screen" required="true" args="_image_transport:=compressed">
     <param name="servoBatteryLow" value="7.0" />
     <param name="servoBatteryCrit" value="6.5" />
     <param name="cameraBatteryLow" value="14.0" />

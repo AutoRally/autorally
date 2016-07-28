@@ -26,21 +26,12 @@ if [[ $devList == *"arChassis"* ]] # If Arduino Due is connected...
     then
         AR_CHASSIS_SERIAL=`udevadm info --query=property --name=/dev/arChassis | grep 'ID_SERIAL_SHORT'`
         AR_CHASSIS_SERIAL=${AR_CHASSIS_SERIAL#*=}
-        if [ $AR_CHASSIS_SERIAL == '75439313737351F052A0' ]
+        if [ $AR_CHASSIS_SERIAL == 'ARDUINO_DUE_SERIAL_NUMBER' ]
           then
-            export AR_CHASSIS="gamma"
-        fi
-fi
-if [[ $devList == *"arServoController"* ]] # If Pololu Servo Controller is connected...
-    then
-        AR_CHASSIS_SERIAL=`udevadm info --query=property --name=/dev/arServoController | grep 'ID_SERIAL_SHORT'`
-        AR_CHASSIS_SERIAL=${AR_CHASSIS_SERIAL#*=}
-        if [ $AR_CHASSIS_SERIAL == '00082495' ]
-          then
-            export AR_CHASSIS="beta"
-        elif [ $AR_CHASSIS_SERIAL == '00026587' ]
-          then
-            export AR_CHASSIS="alpha"
+            export AR_CHASSIS="CHASSIS_NAME"
+        #elif [ $AR_CHASSIS_SERIAL == 'ARDUINO_DUE_SERIAL_NUMBER2' ]
+        #  then
+        #    export AR_CHASSIS="CHASSIS_NAME2"
         fi
 fi
 if [[ $DEBUG == true ]]; then
@@ -48,23 +39,32 @@ if [[ $DEBUG == true ]]; then
 fi
 
 # Setup cameras
-if [[ $devList == *"arCamera_b09d0100d70a0a"* ]]
+
+# Right Camera
+export AR_RIGHTCAM_CONNECTED=true
+if [[ $devList == *"arCamera_GUID"* ]]
     then
-        export AR_RIGHTCAM="b09d0100d70a0a"
-elif [[ $devList == *"arCamera_b09d0100d70a17"* ]]
-    then
-        export AR_RIGHTCAM="b09d0100d70a17"
+        export AR_RIGHTCAM="GUID"
+#elif [[ $devList == *"arCamera_GUID"* ]]
+#    then
+#        export AR_RIGHTCAM="GUID"
+else
+    export AR_RIGHTCAM_CONNECTED=false
 fi
 if [[ $DEBUG == true ]]; then
     echo "AR_RIGHTCAM set to ${AR_RIGHTCAM}"
 fi
 
-if [[ $devList == *"arCamera_b09d0100d70a1c"* ]]
+# Left Camera
+export AR_LEFTCAM_CONNECTED=true
+if [[ $devList == *"arCamera_GUID"* ]]
     then
-        export AR_LEFTCAM="b09d0100d70a1c"
-elif [[ $devList == *"arCamera_b09d0100c6fd73"* ]]
-    then
-        export AR_LEFTCAM="b09d0100c6fd73"
+        export AR_LEFTCAM="GUID"
+#elif [[ $devList == *"arCamera_GUID"* ]]
+#    then
+#        export AR_LEFTCAM="GUID"
+else
+    export AR_LEFTCAM_CONNECTED=false
 fi
 if [[ $DEBUG == true ]]; then
     echo "AR_LEFTCAM set to ${AR_LEFTCAM}"

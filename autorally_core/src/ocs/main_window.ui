@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1041</width>
-    <height>691</height>
+    <height>697</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,7 +26,7 @@
    <string>Auto-Rally OCS</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resources/images.qrc">
+   <iconset>
     <normaloff>:/doc/car_logo.png</normaloff>:/doc/car_logo.png</iconset>
   </property>
   <property name="locale">
@@ -122,60 +122,14 @@
        <locale language="English" country="Australia"/>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_diagMsgs">
        <attribute name="title">
         <string>System Info</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_8">
-        <item row="2" column="1">
-         <widget class="QGroupBox" name="groupBox_3">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="title">
-           <string>Safe Speed</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_9">
-           <item row="0" column="0">
-            <widget class="QTreeView" name="safeSpeedTreeView">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="statusTip">
-              <string>Current safe speeds published</string>
-             </property>
-             <property name="autoScroll">
-              <bool>false</bool>
-             </property>
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::NoSelection</enum>
-             </property>
-             <property name="sortingEnabled">
-              <bool>true</bool>
-             </property>
-             <property name="animated">
-              <bool>true</bool>
-             </property>
-             <attribute name="headerVisible">
-              <bool>false</bool>
-             </attribute>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="1" column="1">
+        <item row="0" column="0">
          <widget class="QGroupBox" name="groupBox_2">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -223,7 +177,7 @@
               <bool>true</bool>
              </property>
              <attribute name="headerVisible">
-              <bool>false</bool>
+              <bool>true</bool>
              </attribute>
             </widget>
            </item>
@@ -232,6 +186,61 @@
              <property name="text">
               <string>Clear Stale Messages</string>
              </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="runstopGroupBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Runstop</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_9">
+           <item row="0" column="0">
+            <widget class="QTreeView" name="runstopTreeView">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>120</height>
+              </size>
+             </property>
+             <property name="statusTip">
+              <string>Current safe speeds published</string>
+             </property>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="autoScroll">
+              <bool>false</bool>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::NoSelection</enum>
+             </property>
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+             <property name="animated">
+              <bool>true</bool>
+             </property>
+             <attribute name="headerVisible">
+              <bool>true</bool>
+             </attribute>
             </widget>
            </item>
           </layout>
@@ -397,7 +406,7 @@
         <string>Control</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_10">
-        <item row="2" column="1">
+        <item row="1" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
            <widget class="QLabel" name="label_8">
@@ -440,20 +449,7 @@
           </item>
          </layout>
         </item>
-        <item row="0" column="1">
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="3" column="1">
+        <item row="2" column="1">
          <widget class="QPushButton" name="controlButton">
           <property name="text">
            <string>Control</string>
@@ -463,7 +459,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item row="0" column="0">
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -476,7 +472,7 @@
           </property>
          </spacer>
         </item>
-        <item row="1" column="2">
+        <item row="0" column="2">
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -489,7 +485,7 @@
           </property>
          </spacer>
         </item>
-        <item row="1" column="1">
+        <item row="0" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -561,7 +557,7 @@
                </sizepolicy>
               </property>
               <property name="minimum">
-               <number>-100</number>
+               <number>0</number>
               </property>
               <property name="maximum">
                <number>100</number>
@@ -586,58 +582,9 @@
             </item>
            </layout>
           </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Back Brake</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSlider" name="backBrakeControlSlider">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimum">
-               <number>-100</number>
-              </property>
-              <property name="maximum">
-               <number>100</number>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="tickPosition">
-               <enum>QSlider::TicksBothSides</enum>
-              </property>
-              <property name="tickInterval">
-               <number>50</number>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="backBrakeControlEnable">
-              <property name="layoutDirection">
-               <enum>Qt::LeftToRight</enum>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
          </layout>
         </item>
-        <item row="4" column="1">
+        <item row="3" column="1">
          <spacer name="verticalSpacer_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -689,7 +636,7 @@
    <property name="minimumSize">
     <size>
      <width>352</width>
-     <height>644</height>
+     <height>650</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -730,108 +677,10 @@
         <item row="0" column="0">
          <widget class="QGroupBox" name="vehicleData">
           <property name="title">
-           <string>Vehicle Information</string>
+           <string>Chassis State</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_6">
-           <item row="3" column="0">
-            <widget class="QLabel" name="wheelRPS_fl">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="text">
-              <string>0.0</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="speedLabelName">
-             <property name="statusTip">
-              <string>Current Vhicle Speed</string>
-             </property>
-             <property name="text">
-              <string>Speed (m/s)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="safeSpeedLabelName">
-             <property name="statusTip">
-              <string>SafeSpeed from servoInterface</string>
-             </property>
-             <property name="text">
-              <string>SafeSpeed</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="speedLabel">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="text">
-              <string>0.0</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLabel" name="safeSpeedLabel">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="text">
-              <string>0.0</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLabel" name="wheelRPS_fr">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="text">
-              <string>0.0</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="wheelRPS_bl">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="text">
-              <string>0.0</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QLabel" name="wheelRPS_br">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="text">
-              <string>0.0</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2" rowspan="6">
+           <item row="0" column="2" rowspan="9">
             <widget class="QProgressBar" name="throttleBar">
              <property name="minimum">
               <number>-100</number>
@@ -853,26 +702,14 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="3" rowspan="6">
-            <widget class="QProgressBar" name="backBrakeBar">
-             <property name="maximum">
-              <number>100</number>
-             </property>
-             <property name="value">
-              <number>0</number>
-             </property>
-             <property name="textVisible">
-              <bool>true</bool>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="format">
-              <string>Back Brake</string>
+           <item row="10" column="0">
+            <widget class="QLabel" name="steeringLabel">
+             <property name="text">
+              <string>Steering</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="4" rowspan="6">
+           <item row="0" column="3" rowspan="9">
             <widget class="QProgressBar" name="frontBrakeBar">
              <property name="minimum">
               <number>0</number>
@@ -894,14 +731,7 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="steeringLabel">
-             <property name="text">
-              <string>Steering</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="1" colspan="4">
+           <item row="10" column="1" colspan="3">
             <widget class="QSlider" name="steeringSlider">
              <property name="enabled">
               <bool>false</bool>
@@ -929,10 +759,138 @@
              </property>
             </widget>
            </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Throttle Relay En</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLabel" name="throttleRelayLabel">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
            <item row="2" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Autonomous En</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="autonomousLabel">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="runstopLabelName">
+             <property name="statusTip">
+              <string>SafeSpeed from servoInterface</string>
+             </property>
+             <property name="text">
+              <string>Runstop Motion En</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLabel" name="runstopLabel">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
             <widget class="QLabel" name="wheelRPSLabel">
              <property name="text">
-              <string>Wheel RPS</string>
+              <string>Wheel Speeds</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLabel" name="speedLabel">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0.0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="wheelRPS_fl">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0.0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLabel" name="wheelRPS_fr">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0.0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QLabel" name="wheelRPS_br">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0.0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="wheelRPS_bl">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="text">
+              <string>0.0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -942,52 +900,10 @@
         <item row="1" column="0">
          <widget class="QGroupBox" name="vehicleControl">
           <property name="title">
-           <string>Vehicle Control</string>
+           <string>OCS Runstop Control</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_7">
-           <item row="1" column="0">
-            <widget class="QLabel" name="safeSPeedLabel">
-             <property name="statusTip">
-              <string>SafeSpeed control</string>
-             </property>
-             <property name="text">
-              <string>SafeSpeed</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="safeSpeedValueBox">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="statusTip">
-              <string>SafeSpeed control</string>
-             </property>
-             <property name="suffix">
-              <string> m/s</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QPushButton" name="safeSpeedSetButton">
-             <property name="statusTip">
-              <string>SafeSpeed control</string>
-             </property>
-             <property name="text">
-              <string>Set</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-             <property name="flat">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="3">
+           <item row="1" column="0" colspan="2">
             <widget class="QPushButton" name="motionControlButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -998,7 +914,7 @@
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>70</height>
+               <height>80</height>
               </size>
              </property>
              <property name="toolTip">
@@ -1011,7 +927,7 @@
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Enable Motion</string>
+              <string>Runstop Motion Disabled</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1032,10 +948,13 @@
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Ignored</enum>
+       </property>
        <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
-         <height>40</height>
+         <height>2000</height>
         </size>
        </property>
       </spacer>

@@ -1,7 +1,0 @@
-<launch>
-  <include file="$(find autorally_core)/launch/hardware.machine" />
-  <node pkg="nodelet" type="nodelet" name="ImageRepublisher" args="load autorally_core/ImageRepublisher camera_nodelet_manager" output="screen" machine="muri-laptop" >
-    <param name="fps" value="24" />
-    <param name="resizeHeight" value="480" />
-  </node>
-</launch>

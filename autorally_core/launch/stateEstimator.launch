@@ -3,10 +3,10 @@
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
 
-  <node name="gps_imu" pkg="autorally_core" type="imuGpsEstimator" output="screen">
+  <node name="gps_imu" pkg="autorally_core" type="imuGpsEstimator" output="screen" machine="autorally-master">
       <remap from="/gps_imu/gps" to="/gpsRoverStatus"/>
       <remap from="/gps_imu/imu" to="/imu/imu"/>
-      <remap from="/gps_imu/pose" to="/pose_estimate_new"/>
+      <remap from="/gps_imu/pose" to="/pose_estimate"/>
       <remap from="/gps_imu/filter" to="/imu/filter"/>
       <remap from="/gps_imu/bias_acc" to="/bias_acc"/>
       <remap from="/gps_imu/bias_gyro" to="/bias_gyro"/>
@@ -34,8 +34,10 @@
       
       <!--<param name="Gravity" value="-9.79509"/>-->
       
-      <!-- in sumulation use "rosparam set /gps_imu/FixedInitialPose true" -->
-      <!-- <param name="FixedInitialPose" value="false"/> -->
+      <!-- To use in sumulation set "rosparam set /gps_imu/FixedInitialPose true" -->
+      <!-- and <param name="InvertY" value="false"/> -->
+      <!-- and <param name="InvertZ" value="false"/> -->
+      <param name="FixedInitialPose" value="true"/>
       <param name="initialRoll" value="0"/>
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>

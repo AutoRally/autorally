@@ -1,12 +1,9 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <param name="safeSpeedMax" value="25.0" />
-  <param name="safeSpeedCaution" value="1.5" />
-
   <node name="runStop" pkg="autorally_core" type="runStop"
-        machine="muri-ocs" output="screen">
-    <remap from="safeSpeed" to="runstopSafeSeed"/>
+        machine="autorally-ocs" output="screen">
+    <remap from="runstop" to="runstopBox"/>
 
     <param name="port" value="/dev/arRunStop" />
 

@@ -11,9 +11,9 @@
 #include "XbeeInterface.h"
 
 #include <boost/lexical_cast.hpp>
-#include <autorally_msgs/safeSpeed.h>
+#include <autorally_msgs/runstop.h>
 #include <std_msgs/ByteMultiArray.h>
- #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Odometry.h>
 
 /**
  *  @class XbeeCoordinator XbeeCoordinator.h
@@ -23,7 +23,7 @@
  *  XbeeCoordinator is designed to send periodic information to any XbeeNodes within
  *  range. It gives us the ability to send information to multiple robot while each
  *  independant ROS systems. The current information sent from the coordinator is
- *  a safeSpeed message based on the state of the runStop and gps corrections as
+ *  a runstop message based on the state of the runStop and gps corrections as
  *  RTCM3 messages for RTK-enabled gps devices on each robot to use.
  *
  */
@@ -77,7 +77,7 @@ class XbeeCoordinator
 
   XbeeInterface m_xbee;  ///< Xbee object that manages sending/receiving data
   std::map<std::string, RobotState> m_robotInfos;  ///< Info for all XbeeCoordinators in system
-  ros::Subscriber m_safeSpeedSubscriber; ///< Subscriber for safeSpeed
+  ros::Subscriber m_runstopSubscriber; ///< Subscriber for runstop
   ros::Subscriber m_baseStationRTKSubscriber; ///< Subscriber for RTK corrections
 
   std::map<std::string, ros::Publisher> m_recOdomPublishers;
@@ -96,10 +96,10 @@ class XbeeCoordinator
                           const bool broadcast);
 
   /**
-  * @brief Callback for new safeSpeed messages
+  * @brief Callback for new runstop messages
   * @param msg The new vehicle speed
   */
-  void safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg);
+  void runstopCallback(const autorally_msgs::runstopConstPtr& msg);
   
   /**
   * @brief Broadcast RTK correction messages to all XbeeCoordinator

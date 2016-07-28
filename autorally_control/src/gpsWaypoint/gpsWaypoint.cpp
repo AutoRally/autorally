@@ -45,7 +45,7 @@ namespace autorally_control
   GpsWaypoint::GpsWaypoint() :
     m_nh("~"), m_speed(0.0), m_useThetaGPS(true), m_prevTime(0.0)
   {
-    m_nh.param("WaypointFile", m_filename, std::string("Waypoints"));
+    m_nh.param("WaypointFile", m_filename, std::string("waypoints.txt"));
     m_nh.param("WaypointRadius", m_wpRadius, 1.5);
     m_nh.param("HeadingP", m_headingP, 2.0);
     
@@ -53,7 +53,7 @@ namespace autorally_control
     m_odomSub = m_nh.subscribe("Odom", 1, &GpsWaypoint::Odomcb, this);
 //    m_poseSub = m_nh.subscribe("Pose", 1, &GpsWaypoint::Posecb, this);
 
-    m_servoPub = m_nh.advertise<autorally_msgs::servoMSG>("WPController/servoCommand", 1);
+    m_chassisCommandPub = m_nh.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
     vis_pub = m_nh.advertise<visualization_msgs::Marker>( "markers", 200 );
     m_maskPub = m_nh.advertise<autorally_msgs::imageMask>("imageMask", 1);
     m_imMask.sender = "Waypoint Follower";
@@ -151,30 +151,29 @@ namespace autorally_control
     double bearing = atan2(yn-y,xn-x);
     double error = AngleDiff(bearing, theta);
 
-    autorally_msgs::servoMSG servos;
-    servos.throttle = -5.0;
-    servos.frontBrake = -5.0;
-    servos.backBrake = -5.0;
-    servos.steering = Clamp(m_headingP * error,-1.0,1.0);
+    autorally_msgs::chassisCommand command;
+    command.throttle = -5.0;
+    command.frontBrake = -5.0;
+    command.steering = Clamp(m_headingP * error,-1.0,1.0);
 
-    servos.header.stamp = ros::Time::now();
-    servos.header.frame_id = "WPController";
-    m_servoPub.publish(servos);
+    command.header.stamp = ros::Time::now();
+    command.sender = "waypointFollower";
+    m_chassisCommandPub.publish(command);
 
-    //m_imMask.lines[0].end.x = 256 - (100 * cos((servos.steering * PI / 2.0) + PI/2.0));
-    //m_imMask.lines[0].end.y = 320 - (100 * sin((servos.steering * PI / 2.0) + PI/2.0));
+    //m_imMask.lines[0].end.x = 256 - (100 * cos((command.steering * PI / 2.0) + PI/2.0));
+    //m_imMask.lines[0].end.y = 320 - (100 * sin((command.steering * PI / 2.0) + PI/2.0));
     double time = ros::Time::now().toSec();
 
     if (time > (m_prevTime + 0.1))
     {
       m_prevTime = time;
-      m_imMask.lines[0].end.x = 256 - (100 * sin(servos.steering * PI / 2.0));
-      m_imMask.lines[0].end.y = 320 - (100 * cos(servos.steering * PI / 2.0));
-      std::cout << " Error " << error << " Steering " << servos.steering;
-      std::cout << "At theta " << theta << " bearing " << bearing;
-      std::cout << " x " << x << " y " << y << std::endl;
-      std::cout << " xn " << xn << " yn " << yn << std::endl;
-      std::cout << " dx " << deltaX<< " dy " << deltaY << std::endl;
+      m_imMask.lines[0].end.x = 256 - (100 * sin(command.steering * PI / 2.0));
+      m_imMask.lines[0].end.y = 320 - (100 * cos(command.steering * PI / 2.0));
+      // std::cout << " Error " << error << " Steering " << command.steering;
+      // std::cout << "At theta " << theta << " bearing " << bearing;
+      // std::cout << " x " << x << " y " << y << std::endl;
+      // std::cout << " xn " << xn << " yn " << yn << std::endl;
+      // std::cout << " dx " << deltaX<< " dy " << deltaY << std::endl;
       m_maskPub.publish(m_imMask);
 
       PublishMarkers(x,y,theta,xn,yn);

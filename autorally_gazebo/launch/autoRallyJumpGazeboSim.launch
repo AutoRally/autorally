@@ -43,6 +43,9 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
   <arg name="world_name" default="worlds/empty_sky.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
+  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
+  <param name="autorally_simulation" value="true" />
+
   <!-- Vehicle pose -->
   <arg name="x" default="-10"/>
   <arg name="y" default="-4"/>
@@ -60,15 +63,6 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
   <remap from="/$(arg namespace)/gpsRoverStatus" to="/gpsRoverStatus" />
   <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
-  
-  <!-- Remap for servo command entries, need an entry for every commander -->
-  <remap from="/$(arg namespace)/mppi_controller/servoCommand" to="/mppi_controller/servoCommand" />
-  <remap from="/$(arg namespace)/joystick/servoCommand" to="/joystick/servoCommand" />
-  <remap from="/$(arg namespace)/RC/servoCommand" to="/RC/servoCommand" />
-  <remap from="/$(arg namespace)/OCS/servoCommand" to="/OCS/servoCommand" />
-  <remap from="/$(arg namespace)/constantSpeedController/servoCommand" to="/constantSpeedController/servoCommand" />
-  <remap from="/$(arg namespace)/jumpControllerOptimal/servoCommand" to="/jumpControllerOptimal/servoCommand" />
-  <remap from="/$(arg namespace)/WPController/servoCommand" to="/WPController/servoCommand" />
 
   <group ns="$(arg namespace)">
     <!-- Create the world. -->
@@ -94,7 +88,7 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
           type="autorally_controller.py" output="screen">
       <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
       <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-      <rosparam param="servoCommandProirities" command="load" file="$(env AR_CONFIG_PATH)//servoCommandPriorities.yaml" />
+      <rosparam param="servoCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/servoCommandPriorities.yaml" />
     </node>
 
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find autorally_gazebo)/custom_rosconsole.conf" />
