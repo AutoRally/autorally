@@ -27,6 +27,7 @@
     <param name="brightness" value="0"/>
     <param name="auto_white_balance" value="false"/>
     <param name="auto_shutter" value="false"/>
+    <param name="auto_gain" value="false"/>
     <param name="enable_trigger" value="$(arg enable_trigger)"/>
 
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />

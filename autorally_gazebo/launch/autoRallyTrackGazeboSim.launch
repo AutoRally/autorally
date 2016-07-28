@@ -85,10 +85,9 @@ limitations under the License.
           type="autorally_controller.py" output="screen">
       <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
       <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-      <rosparam param="servoCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/servoCommandPriorities.yaml" />
+      <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
     </node>
     
-    <node name="wheelSpeeds" pkg="autorally_gazebo" type="wheelSpeedsGazebo.py" output="screen" />
   </group>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
   <include file="$(find autorally_control)/launch/joystickController.launch" />

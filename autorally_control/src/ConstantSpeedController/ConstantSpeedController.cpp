@@ -24,13 +24,13 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /**********************************************
- * @file servoInterface.cpp
+ * @file ConstantSpeedController.cpp
  * @author Brian Goldfain <bgoldfai@gmail.com>
- * @date April 14,, 2014
+ * @date April 14, 2014
  * @copyright 2014 Georgia Institute of Technology
  * @brief Controller to drive robot at constant speed
  *
- * @details Detailed file description starts here.
+ * @details ComstantSpeed Controller class implementation
  ***********************************************/
 
 #include <math.h>
@@ -52,8 +52,7 @@ ConstantSpeedController::ConstantSpeedController():
   m_controlEnabled(true),
   m_frontWheelsSpeed(0.0),
   m_backWheelsSpeed(0.0),
-  m_integralError(0.0),
-  m_servoMSG(new autorally_msgs::servoMSG)
+  m_integralError(0.0)
 {}
 
 ConstantSpeedController::~ConstantSpeedController()
@@ -67,15 +66,15 @@ void ConstantSpeedController::onInit()
 
   loadThrottleCalibration();
 
-  m_mostRecentSafeSpeed.speed = 0;
+  m_mostRecentSpeedCommand.data = 0;
 
-  m_safeSpeedSub = nh.subscribe("safeSpeed", 1,
-                          &ConstantSpeedController::safeSpeedCallback, this);
+  m_speedCommandSub = nh.subscribe("constantSpeedController/speedCommand", 1,
+                          &ConstantSpeedController::speedCallback, this);
   m_wheelSpeedsSub = nh.subscribe("wheelSpeeds", 1,
                           &ConstantSpeedController::wheelSpeedsCallback,
                           this);
-  m_servoMSGPub = nh.advertise<autorally_msgs::servoMSG>
-                     ("constantSpeedController/servoCommand", 1);
+  m_chassisCommandPub = nh.advertise<autorally_msgs::chassisCommand>
+                        ("constantSpeedController/chassisCommand", 1);
 
   if(!nhPvt.getParam("speedCommander", m_speedCommander) ||
      !nhPvt.getParam("accelerationRate", m_accelerationRate) ||
@@ -88,12 +87,6 @@ void ConstantSpeedController::onInit()
     NODELET_ERROR("Could not get all ConstantSpeedController params");
   }
 
-  m_servoMSG->header.frame_id = "constantSpeedController";
-  m_servoMSG->header.stamp = ros::Time::now();
-  m_servoMSG->steering = -5.0;
-  m_servoMSG->frontBrake = 0.0;
-  m_servoMSG->backBrake = 0.0;
-
   //m_accelerationProfile = generateAccelerationProfile(100);
 
   m_controlTimer = nh.createTimer(ros::Rate(1),
@@ -104,21 +97,13 @@ void ConstantSpeedController::onInit()
 
 }
 
-void ConstantSpeedController::safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg)
+void ConstantSpeedController::speedCallback(const std_msgs::Float64ConstPtr& msg)
 {
-  //if the safespeed is from sender who can command the constant speed controller
-  //if(msg->sender == m_speedCommander)
-  //{
-  if (m_mostRecentSafeSpeed.speed != msg->speed)
-    {
-      NODELET_INFO("ConstantSpeedController: set safespeed to %f", msg->speed);
-    }
-  m_mostRecentSafeSpeed = *msg;
-  //}
-  //else
-  //{
-    //NODELET_WARN("ConstantSpeedController: safespeed from invalid source");
-  //}
+  if (m_mostRecentSpeedCommand.data != msg->data)
+  {
+    NODELET_INFO_STREAM("ConstantSpeedController: new speed setpoint:" << msg->data);
+  }
+  m_mostRecentSpeedCommand = *msg;
 }
 
 void ConstantSpeedController::wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg)
@@ -126,13 +111,18 @@ void ConstantSpeedController::wheelSpeedsCallback(const autorally_msgs::wheelSpe
   m_frontWheelsSpeed = 0.5*(msg->lfSpeed + msg->rfSpeed);
   //m_backWheelsSpeed = 0.2*m_backWheelsSpeed + 0.4*(msg->lbSpeed + msg->rbSpeed);
 
-  if (m_mostRecentSafeSpeed.speed > 0.1)
+  autorally_msgs::chassisCommandPtr command(new autorally_msgs::chassisCommand);
+  command->header.stamp = ros::Time::now();
+  command->sender = "constantSpeedController";
+  command->steering = -5.0;
+  command->frontBrake = 0.0;
+
+  if (m_mostRecentSpeedCommand.data > 0.1)
   {
-    m_servoMSG->header.stamp = ros::Time::now();
     double p;
-    if(m_throttleMappings.interpolateKey(m_mostRecentSafeSpeed.speed, p))
+    if(m_throttleMappings.interpolateKey(m_mostRecentSpeedCommand.data, p))
     {
-      m_integralError += m_mostRecentSafeSpeed.speed - m_frontWheelsSpeed;
+      m_integralError += m_mostRecentSpeedCommand.data - m_frontWheelsSpeed;
       if (m_integralError > (m_constantSpeedIMax / m_constantSpeedKI))
       {
         m_integralError = (m_constantSpeedIMax / m_constantSpeedKI);
@@ -143,26 +133,26 @@ void ConstantSpeedController::wheelSpeedsCallback(const autorally_msgs::wheelSpe
         m_integralError = -(m_constantSpeedIMax / m_constantSpeedKI);
       }
 
-      m_servoMSG->throttle = p +
-                 m_constantSpeedKP*(m_mostRecentSafeSpeed.speed - m_frontWheelsSpeed);
-      m_servoMSG->throttle += m_constantSpeedKI * m_integralError;
-      m_servoMSG->throttle = std::max(0.0, std::min(1.0, m_servoMSG->throttle));
+      command->throttle = p +
+                 m_constantSpeedKP*(m_mostRecentSpeedCommand.data - m_frontWheelsSpeed);
+      command->throttle += m_constantSpeedKI * m_integralError;
+      command->throttle = std::max(0.0, std::min(1.0, command->throttle));
 
-      // NODELET_INFO("interp %f, command %f",p, m_servoMSG->throttle);
-      m_servoMSGPub.publish(m_servoMSG);
+      // NODELET_INFO("interp %f, command %f",p, command->throttle);
       m_constantSpeedPrevThrot = p;
     }
     else
     {
-      NODELET_WARN("ConstantSpeedController could not interpolate speed %f", m_mostRecentSafeSpeed.speed);
-      m_servoMSG->throttle = 0;
+      NODELET_WARN("ConstantSpeedController could not interpolate speed %f", m_mostRecentSpeedCommand.data);
+      command->throttle = 0;
     }
   }
   else
   {
-    m_servoMSG->throttle = 0;
-    m_servoMSGPub.publish(m_servoMSG);
+    command->throttle = 0;
+    
   }
+  m_chassisCommandPub.publish(command);
 }
 
 /*void ConstantSpeedController::enableControlCallback(const ros::TimerEvent& time)

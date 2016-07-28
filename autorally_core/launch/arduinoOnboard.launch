@@ -26,6 +26,6 @@
     <param name="srvBatteryLow" value="0" />
     <param name="camBatteryCrit" value="0" />
     <param name="camBatteryLow" value="0" />
-    <remap from="/RC" to="/RC/servoCommand" />
+    <remap from="/RC" to="/RC/chassisCommand" />
   </node>
 </launch>

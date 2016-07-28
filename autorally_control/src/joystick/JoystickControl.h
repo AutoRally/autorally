@@ -40,8 +40,8 @@
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <sensor_msgs/Joy.h>
-#include <autorally_msgs/servoMSG.h>
-#include <autorally_msgs/safeSpeed.h>
+#include <autorally_msgs/chassisCommand.h>
+#include <autorally_msgs/runstop.h>
 
 /**
  *  @class JoystickControl JoystickControl.h "joystick/JoystickControl.h"
@@ -77,35 +77,33 @@ class JoystickControl
    */
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
 
-  void safeSpeedCallback(const ros::TimerEvent& time);
+  void runstopCallback(const ros::TimerEvent& time);
 
   ros::Subscriber m_joySub; ///< Channel to receive joystick state
-//  ros::Subscriber m_statusSub; ///< Channel to receive servo status
-  ros::Publisher m_commandPub; ///< Channel to publish servo commands
-  ros::Publisher m_safeSpeedPub; ///< Channel to publish servo commands
-  ros::Timer m_safeSpeedTimer;
+  ros::Publisher commandPub_; ///< publisher for chassis commands
+  ros::Publisher runstopPub_; ///< publisher for runstop commands
+  ros::Timer runstopTimer_;
+
  private:
-  ros::NodeHandle m_nh;
+  ros::NodeHandle nh_;
 
-  autorally_msgs::servoMSGPtr m_servoCommand; ///< command message
-  autorally_msgs::safeSpeedPtr m_safeSpeed; ///< command message
-  double m_throttleDamping;
-  double m_steeringDamping;
+  autorally_msgs::chassisCommand chassis_command_; ///< command message
+  autorally_msgs::runstop runstop_; ///< command message
+  double throttleDamping_;
+  double steeringDamping_;
   
-  bool m_throttleEnabled;
-  bool m_steeringEnabled;
-  bool m_throttleBrakePaired;
-  bool m_frontBrake;
+  bool throttleEnabled_;
+  bool steeringEnabled_;
+  bool throttleBrakePaired_;
+  bool frontBrake_;
 
-  int m_throttleAxis;
-  int m_steeringAxis;
-  int m_brakeAxis;
-  int m_safeSpeedIncButton;
-  int m_safeSpeedDecButton;
-  int m_safeSpeedZeroButton1;
-  int m_safeSpeedZeroButton2;
-  int m_throttleEnableButton;
-  int m_steeringEnableButton;
+  int throttleAxis_;
+  int steeringAxis_;
+  int brakeAxis_;
+  int throttleEnableButton_;
+  int steeringEnableButton_;
+  std::vector<int> runstopToggleButtons_;
+  sensor_msgs::Joy prevJoy_;
 };
 
 #endif //JOYSTICK_CONTROL_H_

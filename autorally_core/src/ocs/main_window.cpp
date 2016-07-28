@@ -51,15 +51,15 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt()));
 
   ReadSettings();
-	setWindowIcon(QIcon(":/doc/car_logo.png"));
+	setWindowIcon(QIcon(":/doc/autorally.png"));
 
   QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
 	ui.diagMsgsTreeView->setModel(qnode.diagnosticModel());
 	ui.diagMsgsTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
 
-	ui.safeSpeedTreeView->setModel(qnode.safeSpeedModel());
-  ui.safeSpeedTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
+	ui.runstopTreeView->setModel(qnode.runstopModel());
+  ui.runstopTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
 
   ui.imageMaskTreeView->setModel(qnode.imageMaskModel());
   ui.imageMaskTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
@@ -67,16 +67,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   QObject::connect(ui.motionControlButton, SIGNAL(clicked(bool)),
                    this, SLOT(enableMotion(bool)));
-  QObject::connect(ui.safeSpeedSetButton, SIGNAL(clicked(bool)),
-                   this, SLOT(setSafeSpeed(bool)));
-//  QObject::connect(ui.steeringControlSlider, SIGNAL(valueChanged(int)),
-//                   this, SLOT(setSteering(int)));
-//  QObject::connect(ui.throttleControlSlider, SIGNAL(valueChanged(int)),
-//                   this, SLOT(setThrottle(int)));
-//  QObject::connect(ui.frontBrakeControlSlider, SIGNAL(valueChanged(int)),
-//                   this, SLOT(setFrontBrake(int)));
-//  QObject::connect(ui.backBrakeControlSlider, SIGNAL(valueChanged(int)),
-//                   this, SLOT(setBackBrake(int)));
   QObject::connect(ui.tab_manager, SIGNAL(currentChanged(int)),
                    this, SLOT(currentTabChanged(int)));
 
@@ -84,14 +74,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
                       const autorally_msgs::wheelSpeedsConstPtr&)),
                    this, SLOT(updateWheelSpeeds(
                       const autorally_msgs::wheelSpeedsConstPtr&)));
-  //QObject::connect(&qnode, SIGNAL(newArduinoData(
-  //                    const autorally_msgs::arduinoDataConstPtr&)),
-  //                 this, SLOT(updateArduinoData(
-  //                    const autorally_msgs::arduinoDataConstPtr&)));
-  QObject::connect(&qnode, SIGNAL(newServoData(
-                 const autorally_msgs::servoMSGConstPtr&)),
-                 this, SLOT(updateServoData(
-                 const autorally_msgs::servoMSGConstPtr&)));
+
+  QObject::connect(&qnode, SIGNAL(newChassisState(
+                 const autorally_msgs::chassisStateConstPtr&)),
+                 this, SLOT(updateActuatorData(
+                 const autorally_msgs::chassisStateConstPtr&)));
   QObject::connect(&qnode, SIGNAL(newImage1()),
                    this, SLOT(updateImage1()));
   QObject::connect(&qnode, SIGNAL(newImage2()),
@@ -104,9 +91,9 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(ui.diagMsgsTreeView,
                    SIGNAL(doubleClicked(const QModelIndex&)),
                    &qnode.m_diagModel, SLOT(diagModelDoubleClicked(const QModelIndex&)));
-  QObject::connect(ui.safeSpeedTreeView,
+  QObject::connect(ui.runstopTreeView,
                    SIGNAL(doubleClicked(const QModelIndex&)),
-                   &qnode, SLOT(safeSpeedModelDoubleClicked(const QModelIndex&)));
+                   &qnode, SLOT(runstopModelDoubleClicked(const QModelIndex&)));
 
   QObject::connect(&m_updateTimeBoxesTimer, SIGNAL(timeout()),
                    this, SLOT(updateTimeBoxes()));
@@ -114,15 +101,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
                    &qnode, SLOT(updateTimes()));
   QObject::connect(&m_diagTimeTimer, SIGNAL(timeout()),
                    &qnode.m_diagModel, SLOT(updateTimes()));
-  QObject::connect(&m_servoCommandTimer, SIGNAL(timeout()),
-                   this, SLOT(sendServoCommand()));
+  QObject::connect(&m_chassisCommandTimer, SIGNAL(timeout()),
+                   this, SLOT(sendChassisCommand()));
 
   m_diagTimeTimer.start(75);
   m_updateTimeBoxesTimer.start(100);
-//  m_servoCommandTimer.start(100);
 
-  ui.motionControlButton->setStyleSheet("QPushButton:checked{background-color: \
-    red;} QPushButton:!checked{background-color: green;}");
+  ui.motionControlButton->setStyleSheet("QPushButton:checked{background-color: red;} QPushButton:!checked{background-color: green;}");
 
   m_progrssBarLevelStyleSheets[0] = "QProgressBar { \
                                     text-align: center;\
@@ -144,13 +129,20 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
                                        border-radius: 5px; }";
 
   ui.throttleBar->setFormat("Throttle: %v");
-  ui.backBrakeBar->setFormat("Back Brake: %v");
+  //ui.backBrakeBar->setFormat("Back Brake: %v");
   ui.frontBrakeBar->setFormat("Front Brake: %v");
-  m_servoCommand.header.frame_id = "OCS";
-  m_servoCommand.steering = -5.0;
-  m_servoCommand.throttle = -5.0;
-  m_servoCommand.frontBrake = -5.0;
-  m_servoCommand.backBrake = -5.0;
+  m_chassisCommand.sender = "OCS";
+  m_chassisCommand.steering = -5.0;
+  m_chassisCommand.throttle = -5.0;
+  m_chassisCommand.frontBrake = -5.0;
+
+  ui.throttleRelayLabel->setAutoFillBackground(true);
+  ui.autonomousLabel->setAutoFillBackground(true);
+  ui.runstopLabel->setAutoFillBackground(true);
+  setEnableLabel(ui.throttleRelayLabel, false);
+  setEnableLabel(ui.autonomousLabel, false);
+  setEnableLabel(ui.runstopLabel, false);
+
   //automatically connect into ROS system on startup
   qnode.init();
   m_startTime = ros::Time::now();
@@ -182,39 +174,32 @@ void MainWindow::updateWheelSpeeds(const autorally_msgs::wheelSpeedsConstPtr& ms
 
 }
 
-/*
-void MainWindow::updateArduinoData(
-                 const autorally_msgs::arduinoDataConstPtr& msg)
+void MainWindow::updateActuatorData(const autorally_msgs::chassisStateConstPtr& msg)
 {
-  QString text;
-  text.sprintf("%.2f", msg->leftFrontHallEffect);
-  ui.wheelRPS_fl->setText(text);
-  text.sprintf("%.2f", msg->rightFrontHallEffect);
-  ui.wheelRPS_fr->setText(text);
-  text.sprintf("%.2f", msg->leftBackHallEffect);
-  ui.wheelRPS_bl->setText(text);
-  text.sprintf("%.2f", msg->rightBackHallEffect);
-  ui.wheelRPS_br->setText(text);
-}
-*/
-
-void MainWindow::updateServoData(const autorally_msgs::servoMSGConstPtr& msg)
-{
-//  {
-//  if(msg->throttle >= 0)
-//    ui.throttleBar->setValue(100*msg->throttle);
-//    ui.backBrakeBar->setValue(0);
-//  } else
-//  {
-//    ui.throttleBar->setValue(0);
-//    ui.backBrakeBar->setValue(-msg->throttle);
-//  }
+  setEnableLabel(ui.throttleRelayLabel, msg->throttleRelayEnabled);
+  setEnableLabel(ui.autonomousLabel, msg->autonomousEnabled);
+  setEnableLabel(ui.runstopLabel, msg->runstopMotionEnabled);
 
   ui.steeringSlider->setValue(100*msg->steering);
   ui.throttleBar->setValue(100*msg->throttle);
   ui.frontBrakeBar->setValue(100*msg->frontBrake);
-  ui.backBrakeBar->setValue(100*msg->backBrake);
-  ui.safeSpeedLabel->setNum(msg->safeSpeed);
+}
+
+void MainWindow::setEnableLabel(QLabel* label, bool enabled)
+{
+  QString tmp;
+  tmp.setNum(enabled);
+  label->setText(tmp);
+  
+  QPalette palette = label->palette();
+  if(enabled)
+  {
+    palette.setColor(label->backgroundRole(), Qt::green);
+  } else
+  {
+    palette.setColor(label->backgroundRole(), Qt::red);
+  }
+  label->setPalette(palette);
 }
 
 void MainWindow::on_actionAbout_triggered() {
@@ -222,35 +207,35 @@ void MainWindow::on_actionAbout_triggered() {
 }
 
 void MainWindow::on_imageTopicsRefresh_button_clicked() {
-    std::vector<std::string> topics;
-    qnode.getImageTopics(topics);
-    ui.imageTopics_comboBox->clear();
-    ui.imageTopics_comboBox_2->clear();
-    ui.imageTopics_comboBox->addItem("None");
-    ui.imageTopics_comboBox_2->addItem("None");
-    for(size_t i = 0; i < topics.size(); i++)
-    {
-        ui.imageTopics_comboBox->addItem(topics[i].c_str());
-        ui.imageTopics_comboBox_2->addItem(topics[i].c_str());
-    }
+  std::vector<std::string> topics;
+  qnode.getImageTopics(topics);
+  ui.imageTopics_comboBox->clear();
+  ui.imageTopics_comboBox_2->clear();
+  ui.imageTopics_comboBox->addItem("None");
+  ui.imageTopics_comboBox_2->addItem("None");
+  for(size_t i = 0; i < topics.size(); i++)
+  {
+    ui.imageTopics_comboBox->addItem(topics[i].c_str());
+    ui.imageTopics_comboBox_2->addItem(topics[i].c_str());
+  }
 }
 
 void MainWindow::on_pushButton_saveLeft_clicked() {
-    m_saveOneImage = 1;
+  m_saveOneImage = 1;
 }
 
 void MainWindow::on_pushButton_saveRight_clicked() {
-    m_saveOneImage = 2;
+  m_saveOneImage = 2;
 }
 
 void MainWindow::on_saveImages_button_clicked() {
-    ui.saveImagesPath_lineEdit->setEnabled(!ui.saveImages_button->isChecked());
-    m_savingImages = ui.saveImages_button->isChecked();
+  ui.saveImagesPath_lineEdit->setEnabled(!ui.saveImages_button->isChecked());
+  m_savingImages = ui.saveImages_button->isChecked();
 }
 
 void MainWindow::on_imageTopics_comboBox_currentIndexChanged(int index)
 {
-    qnode.switchImageTopic(0, ui.imageTopics_comboBox->itemText(index).toStdString());
+  qnode.switchImageTopic(0, ui.imageTopics_comboBox->itemText(index).toStdString());
 }
 
 void MainWindow::on_imageTopics_comboBox_2_currentIndexChanged(int index)
@@ -280,35 +265,12 @@ void MainWindow::enableMotion(const bool check)
 {
   if(check)
   {
-    //ui.safeSpeedValueBox->setEnabled(true);
-    ui.safeSpeedSetButton->setEnabled(true);
-    ui.motionControlButton->setText("Enable Motion");
-    qnode.setSafeSpeed(0.0);
+    ui.motionControlButton->setText("Runstop Motion Disabled");
+    qnode.setRunstop(0.0);
   } else
   {
-    //ui.safeSpeedValueBox->setEnabled(false);
-    ui.safeSpeedSetButton->setEnabled(false);
-    ui.motionControlButton->setText("STOP");
-    setSafeSpeed(ui.safeSpeedSetButton->isChecked());
-  }
-}
-
-void MainWindow::setSafeSpeed(const bool check)
-{
-  if(check)
-  {
-    ui.safeSpeedValueBox->setEnabled(false);
-    if(!ui.motionControlButton->isChecked())
-    {
-      qnode.setSafeSpeed(ui.safeSpeedValueBox->value());
-    }
-  } else
-  {
-    ui.safeSpeedValueBox->setEnabled(true);
-    if(!ui.motionControlButton->isChecked())
-    {
-      qnode.setSafeSpeed(25.0);
-    }
+    ui.motionControlButton->setText("Runstop Motion Enabled");
+    qnode.setRunstop(1.0);
   }
 }
 
@@ -316,73 +278,54 @@ void MainWindow::setControl(bool check)
 {
   if(check)
   {
-    m_servoCommandTimer.start(100);
+    m_chassisCommandTimer.start(100);
   } else
   {
-    m_servoCommandTimer.stop();
+    m_chassisCommandTimer.stop();
   }
-  //m_sendServoCommand = check;
 }
 
-void MainWindow::sendServoCommand()
+void MainWindow::sendChassisCommand()
 {
-//  if(ui.steeringControlEnable->checkState() == Qt::Checked)
-//  {
-//    m_servoCommand.steering = val/100.0;
-//    qnode.servoControl(m_servoCommand);
-//  } else
-//  {
-//    m_servoCommand.steering = -5.0;
-//  }
-
   if(ui.steeringControlEnable->checkState() == Qt::Checked)
   {
-    m_servoCommand.steering = ui.steeringControlSlider->value()/100.0;
-    qnode.servoControl(m_servoCommand);
+    m_chassisCommand.steering = ui.steeringControlSlider->value()/100.0;
+    qnode.actuatorControl(m_chassisCommand);
   } else
   {
-    m_servoCommand.steering = -5.0;
+    m_chassisCommand.steering = -5.0;
   }
 
   if(ui.throttleControlEnable->checkState() == Qt::Checked)
   {
-    m_servoCommand.throttle = ui.throttleControlSlider->value()/100.0;
-    qnode.servoControl(m_servoCommand);
+    m_chassisCommand.throttle = ui.throttleControlSlider->value()/100.0;
+    qnode.actuatorControl(m_chassisCommand);
   } else
   {
-    m_servoCommand.throttle = -5.0;
+    m_chassisCommand.throttle = -5.0;
   }
 
   if(ui.frontBrakeControlEnable->checkState() == Qt::Checked)
   {
-    m_servoCommand.frontBrake = ui.frontBrakeControlSlider->value()/100.0;
-    qnode.servoControl(m_servoCommand);
+    m_chassisCommand.frontBrake = ui.frontBrakeControlSlider->value()/100.0;
+    qnode.actuatorControl(m_chassisCommand);
   } else
   {
-    m_servoCommand.frontBrake = -5.0;
+    m_chassisCommand.frontBrake = -5.0;
   }
 
-  if(ui.backBrakeControlEnable->checkState() == Qt::Checked)
-  {
-    m_servoCommand.backBrake = ui.backBrakeControlSlider->value()/100.0;
-    qnode.servoControl(m_servoCommand);
-  } else
-  {
-    m_servoCommand.backBrake = -5.0;
-  }
-
-  qnode.servoControl(m_servoCommand);
+  qnode.actuatorControl(m_chassisCommand);
 }
 
 void MainWindow::setSteering(const int val)
 {
   if(ui.steeringControlEnable->checkState() == Qt::Checked)
   {
-    m_servoCommand.steering = val/100.0;
-    qnode.servoControl(m_servoCommand);
+    m_chassisCommand.steering = val/100.0;
+    qnode.actuatorControl(m_chassisCommand);
   } else
   {
-    m_servoCommand.steering = -5.0;
+    m_chassisCommand.steering = -5.0;
   }
 }
 
@@ -390,11 +333,11 @@ void MainWindow::setThrottle(const int val)
 {
   if(ui.throttleControlEnable->checkState() == Qt::Checked)
   {
-    m_servoCommand.throttle = val/100.0;
-    qnode.servoControl(m_servoCommand);
+    m_chassisCommand.throttle = val/100.0;
+    qnode.actuatorControl(m_chassisCommand);
   } else
   {
-    m_servoCommand.throttle = -5.0;
+    m_chassisCommand.throttle = -5.0;
   }
 }
 
@@ -402,23 +345,11 @@ void MainWindow::setFrontBrake(const int val)
 {
   if(ui.frontBrakeControlEnable->checkState() == Qt::Checked)
   {
-    m_servoCommand.frontBrake = val/100.0;
-    qnode.servoControl(m_servoCommand);
+    m_chassisCommand.frontBrake = val/100.0;
+    qnode.actuatorControl(m_chassisCommand);
   } else
   {
-    m_servoCommand.frontBrake = -5.0;
-  }
-}
-
-void MainWindow::setBackBrake(const int val)
-{
-  if(ui.backBrakeControlEnable->checkState() == Qt::Checked)
-  {
-    m_servoCommand.backBrake = val/100.0;
-    qnode.servoControl(m_servoCommand);
-  } else
-  {
-    m_servoCommand.backBrake = -5.0;
+    m_chassisCommand.frontBrake = -5.0;
   }
 }
 

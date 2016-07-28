@@ -63,7 +63,6 @@
 #include "autorally_core/Diagnostics.h"
 #include "BlockingQueue.h"
 
-#include <autorally_msgs/servoMSG.h>
 #include <autorally_msgs/wheelSpeeds.h>
 #include <autorally_msgs/imageMask.h>
 #include <imu_3dm_gx4/FilterOutput.h>

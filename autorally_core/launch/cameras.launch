@@ -19,4 +19,13 @@
     <arg name="enable_trigger" value="$(arg enable_trigger)" />
   </include>
 
+  <include file="$(find autorally_private_vision)/launch/camera_auto_balance.launch" if="$(env AR_LEFTCAM_CONNECTED)">
+    <arg name="serial" value="$(optenv AR_LEFTCAM 'none')" />
+    <arg name="side" value="left" />
+  </include>
+
+  <include file="$(find autorally_private_vision)/launch/camera_auto_balance.launch" if="$(env AR_RIGHTCAM_CONNECTED)">
+    <arg name="serial" value="$(optenv AR_RIGHTCAM 'none')" />
+    <arg name="side" value="right" />
+  </include>
 </launch>

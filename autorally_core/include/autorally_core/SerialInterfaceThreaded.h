@@ -136,22 +136,14 @@ class SerialInterfaceThreaded : public SerialCommon
   void waitForData();
 
   /**
-    * @brief Waits (sleeps thread) for up to the specified number of
-      milliseconds for data to arrive
-    * @param timeMS the maximum amount of time in ms to wait before returning
-    * @return bool If data was available before timeout
-    */
-  //bool waitForData(const long& timeMS);
-
-    /**
-    * @brief Writes given data to file descriptor (threadsafe)
-    * @param data information to be pushed to file descriptor
-    *
-    * @return int -1 if write failed, number of bytes written if succeeded
-    *
-    * Overrides SerialCommon:writePort from base class to make a it
-    * Thread-safe version
-    */
+  * @brief Writes given data to file descriptor (threadsafe)
+  * @param data information to be pushed to file descriptor
+  *
+  * @return int -1 if write failed, number of bytes written if succeeded
+  *
+  * Overrides SerialCommon:writePort from base class to make a it
+  * Thread-safe version
+  */
   int writePort(const std::string data);
 
   /**

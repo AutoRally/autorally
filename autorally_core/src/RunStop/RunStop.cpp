@@ -25,10 +25,10 @@
 */
 /**********************************************
  * @file RunStop.cpp
- * @author Alex Bettadapur <alexbettadapur@gmail.com>
- * @date January 22, 2013
- * @copyright 2013 Georgia Institute of Technology
- * @brief Publishes a safeSpeed message based on run stop state
+ * @author Brian Goldfain <bgoldfai@gmail.com>
+ * @date July 20, 2016
+ * @copyright 2016 Georgia Institute of Technology
+ * @brief Publishes a autorally_msgs::runstop message based on run stop state
  *
  * @details Contains RunStop class implementation
  ***********************************************/
@@ -39,24 +39,19 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "RunStop");
 	ros::NodeHandle nh;
-  double safeSpeedDuration = 0.1;
-  double safeSpeedMax = 0.0;
-  double safeSpeedCaution = 0.0;
 
 	std::string runStopPort;
-	if(!nh.getParam("runStop/port", runStopPort) ||
-	   !nh.getParam("safeSpeedMax", safeSpeedMax)||
-	   !nh.getParam("safeSpeedCaution", safeSpeedCaution))
+	if(!nh.getParam("runStop/port", runStopPort))
 	{
 		ROS_ERROR("Could not get all RunStop parameters");
 		return -1;
 	}
-	nh.param<double>("safeSpeedDuration", safeSpeedDuration, 0.1);
 
-	RunStop runStop(nh, runStopPort, safeSpeedMax, safeSpeedCaution);
-	runStop.m_safeSpeedPub = nh.advertise<autorally_msgs::safeSpeed>("safeSpeed", 5);
+	RunStop runStop(nh, runStopPort);
+	runStop.runstopPub_ = nh.advertise<autorally_msgs::runstop>("runstop", 1);
 
-	runStop.m_doWorkTimer = nh.createTimer(ros::Duration(safeSpeedDuration),
+  //publish runsto pat 10Hz into system
+	runStop.doWorkTimer_ = nh.createTimer(ros::Rate(10),
 	                                     &RunStop::doWorkTimerCallback,
 	                                     &runStop);
 
@@ -65,19 +60,14 @@ int main(int argc, char **argv)
 }
 
 RunStop::RunStop(ros::NodeHandle &nh,
-                             const std::string& port,
-                             double safeSpeedMax,
-                             double safeSpeedCaution):
-	SerialSensorInterface(nh, "","RunStop", port, true),
-	m_safeSpeedMax(safeSpeedMax),
-	m_safeSpeedCaution(safeSpeedCaution),
-  m_state("RED")
+                             const std::string& port):
+  state_("RED")
 {
- 	m_safeSpeedData.header.seq=0;
-  m_safeSpeedData.header.frame_id="RUNSTOP";
-  m_safeSpeedData.sender = "RUNSTOP";
+  serialPort_.init(nh, ros::this_node::getName(), "","RunStop", port, true);
+  runstopData_.header.frame_id="RUNSTOP";
+  runstopData_.sender = "RUNSTOP";
 
-  m_lastMessageTime = ros::Time::now() + ros::Duration(1);
+  lastMessageTime_ = ros::Time::now() + ros::Duration(1);
 }
 
 RunStop::~RunStop()
@@ -86,70 +76,64 @@ RunStop::~RunStop()
 //leftfront, rightfront, leftback, rightback, servo, camera
 bool RunStop::processData()
 {
-  //std::cout << "m_data:" << m_data.c_str() << std::endl;
   //frame data, and parse if an entire message is waiting
-  int startPosition = m_data.find("#");
+  int startPosition = serialPort_.m_data.find("#");
   if(startPosition > 0)
-    {
-      m_data.erase(0, startPosition);
-    }
-  startPosition = m_data.find("#");
+  {
+    serialPort_.m_data.erase(0, startPosition);
+  }
+  startPosition = serialPort_.m_data.find("#");
 
-  size_t endPosition = m_data.find("\r\n");
+  size_t endPosition = serialPort_.m_data.find("\r\n");
   //std::cout << startPosition << " " << endPosition << std::endl;
   if(startPosition == 0 && endPosition!=std::string::npos)
   {
-    m_lastMessageTime = ros::Time::now();
-    std::string message = m_data.substr(0,endPosition);
+    lastMessageTime_ = ros::Time::now();
+    std::string message = serialPort_.m_data.substr(0,endPosition);
 
     //std::cout << "message:" << message.c_str() << std::endl;
     int statusStart = message.find(":");
-    m_state = message.substr(statusStart+1,std::string::npos);
+    state_ = message.substr(statusStart+1,std::string::npos);
 
-    m_data.erase(0, endPosition+1);
+    serialPort_.m_data.erase(0, endPosition+1);
     return true;
   } else
   {
     if(startPosition > 0)
     {
-      m_data.erase(0, startPosition);
+      serialPort_.m_data.erase(0, startPosition);
     }
     return false;
   }
 }
 
-void RunStop::doWorkTimerCallback(const ros::TimerEvent&)
+void RunStop::doWorkTimerCallback(const ros::TimerEvent& /*time*/)
 {
   //get out all the messages
  	while(processData())
  	{
  	  //std::cout << "." << std::endl;
  	}
-  //std::cout << "--state--" << m_state.size() << m_state.c_str() << "--" << std::endl;
 
-//  std::cout << "m_state:" << m_state << "euhwfuib" << std::endl;
-
-  m_safeSpeedData.header.stamp = ros::Time::now();
-  if(m_state == "GREEN")
+  runstopData_.header.stamp = ros::Time::now();
+  if(state_ == "GREEN")
   {
-    m_safeSpeedData.speed = m_safeSpeedMax;
-  } else if(m_state == "YELLOW")
+    runstopData_.motionEnabled = true;
+  } else if(state_ == "YELLOW")
   {
-    m_safeSpeedData.speed = m_safeSpeedCaution;
+    runstopData_.motionEnabled = false;
   } else
   {
-    m_safeSpeedData.speed = 0.0;
+    runstopData_.motionEnabled = false;
   }
 
-  //if no recent message, safespeed=0
- 	if((ros::Time::now()-m_lastMessageTime).toSec() > 1.0)
+  //if no recent message, runstop is false
+ 	if((ros::Time::now()-lastMessageTime_).toSec() > 1.0)
  	{
- 	  diag_error("No recent data from RUNSTOP");
- 	  m_safeSpeedData.speed = 0.0;
+ 	  serialPort_.diag_error("No recent data from runstop box");
+ 	  runstopData_.motionEnabled = false;
  	}
 
-  m_safeSpeedPub.publish(m_safeSpeedData);
- 	tick("RUNSTOP Status");
-
-
+  runstopPub_.publish(runstopData_);
+ 	serialPort_.tick("runstop Status");
 }
