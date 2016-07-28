@@ -157,12 +157,14 @@ void AutoRallyChassis::chassisFeedbackCallback()
     if(!data.empty())
     {
       processChassisMessage(data.substr(1,1), data.substr(2, endPosition-2));
+      data.erase();
     }
   } while(endPosition != std::string::npos); //look for another message if we haven't looked at all data available yet
 }
 
 void AutoRallyChassis::processChassisMessage(std::string msgType, std::string msg)
 {
+  //ROS_INFO_STREAM(msgType << ":" << msg);
   switch(msgType[0])
   {
     //wheel speeds data as comma separated doubles, units in m/s
@@ -281,6 +283,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
     //error message as an ASCII string
     case 'e':
     {
+      serialPort_.tick("Error message");
       serialPort_.diag_error(msg);
       break;
     }
@@ -394,9 +397,9 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
     serialPort_.diag("steering commander", "RC - manual");
     serialPort_.diag("frontBrake commander", "RC - manual");
     rcMutex_.lock();
-    chassisState->throttle = mostRecentRcSteering_;
+    chassisState->throttle = mostRecentRcThrottle_;
     chassisState->throttleCommander = "RC - manual";
-    chassisState->steering = mostRecentRcThrottle_;
+    chassisState->steering = mostRecentRcSteering_;
     chassisState->steeringCommander = "RC - manual";
     chassisState->frontBrake = mostRecentRcFrontBrake_;
     chassisState->frontBrakeCommander = "RC - manual";
@@ -478,8 +481,8 @@ double AutoRallyChassis::actuatorUsToCmd(int pulseWidth, std::string actuator)
   {
     serialPort_.diag_error("RC " + actuator + " pulse width out of valid range 900-2100ms (" +
                            std::to_string(pulseWidth) + ")");
-    NODELET_ERROR_STREAM(getName() << " RC " << actuator << " pulse width out of valid range 900-2100ms (" <<
-                         pulseWidth << ")");
+    //NODELET_ERROR_STREAM(getName() << " RC " << actuator << " pulse width out of valid range 900-2100ms (" <<
+    //                     pulseWidth << ")");
   } else
   {
     int val = pulseWidth-actuatorConfig_[actuator].center;
