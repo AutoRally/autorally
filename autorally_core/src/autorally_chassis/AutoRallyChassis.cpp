@@ -124,42 +124,51 @@ void AutoRallyChassis::chassisFeedbackCallback()
   //thread than the main thread. This is also a pretyt long callback, and ROS can shutdown underneath us, so check
   //if ROS system is still running any time anything ROS is used
 
+  serialPort_.lock();
+  size_t startPosition = serialPort_.m_data.find_first_of('#');
+  size_t endPosition = serialPort_.m_data.find_first_of('\n', startPosition);
+  serialPort_.unlock();
   std::string data = "";
-  size_t startPosition = 0;
-  size_t endPosition = 0;
 
-  //parse all messages from chassis
-  do
+  //retrieve and process all available messages from the chassis
+  while(endPosition != std::string::npos)
   {
+    //make sure we have start and end position
     serialPort_.lock();
-    //look for start and end of message
-    startPosition = serialPort_.m_data.find_first_of('#');
-    endPosition = serialPort_.m_data.find_first_of('\n', startPosition);
-
-    //pull message out of buffer if start and end are found
-    if(startPosition != std::string::npos && endPosition != std::string::npos)
+    if(startPosition !=  std::string::npos && endPosition != std::string::npos)
     {
       //frame data if not framed
       if(startPosition != 0)
       {
         serialPort_.m_data.erase(0, startPosition);
       }
+
       startPosition = 0;
       endPosition = serialPort_.m_data.find_first_of('\n', startPosition);
 
       //cut out and erase message from queue
       data = serialPort_.m_data.substr(0, endPosition);
       serialPort_.m_data.erase(0, endPosition);
+
+    } else if(startPosition != std::string::npos)
+    {
+      serialPort_.m_data.erase(0, startPosition);
     }
     serialPort_.unlock();
 
-    //process a complete messsage from the chassis with start ('#'), message type, and end ('\n') characters removed
+    //process a complete messsage from the chassis
     if(!data.empty())
     {
       processChassisMessage(data.substr(1,1), data.substr(2, endPosition-2));
       data.erase();
     }
-  } while(endPosition != std::string::npos); //look for another message if we haven't looked at all data available yet
+
+    //make sure we are framed
+    serialPort_.lock();
+    startPosition = serialPort_.m_data.find_first_of('#');
+    endPosition = serialPort_.m_data.find_first_of('\n', startPosition);
+    serialPort_.unlock();
+  }
 }
 
 void AutoRallyChassis::processChassisMessage(std::string msgType, std::string msg)
@@ -228,7 +237,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
             chassisCommandPub_.publish(chassisCommand);
           }
 
-          chassisEnableMutex_.lock();
+          chassisStateMutex_.lock();
           if(std::stoi(data[2]) > 1500)
           {
             autonomousEnabled_ = true;
@@ -237,7 +246,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
             autonomousEnabled_ = false;
           }
           throttleRelayEnabled_ = std::stoi(data[3]); //this value can be 0 or 1
-          chassisEnableMutex_.unlock();
+          chassisStateMutex_.unlock();
 
           serialPort_.tick("RC data");
         } catch(std::exception& e)
@@ -377,10 +386,10 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
   sendCommandToChassis(chassisState);
 
 
-  chassisEnableMutex_.lock();
+  chassisStateMutex_.lock();
   chassisState->throttleRelayEnabled = throttleRelayEnabled_;
   chassisState->autonomousEnabled = autonomousEnabled_;
-  chassisEnableMutex_.unlock();
+  chassisStateMutex_.unlock();
 
   //send diagnostic info about who is in control of each actuator
   if(chassisState->autonomousEnabled)
