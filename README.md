@@ -45,12 +45,6 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    * arduino
    * python-termcolor
    
-   _Compute Box Dependencies_
-   
-   When installing software on an AutoRally compute box, include these dependencies as well:
-   
-   ```sudo apt-get install lm-sensors acpi chrony gpsd-clients```
-   
 3. __[Install](http://www.ros.org/install/) ros-indigo-desktop-full__
 4. __Install gtsam__
 
@@ -104,7 +98,8 @@ To test that your setup process was successful, run the AutoRally simulator with
 
 ## What's Next
 
-Check out the [wiki](https://github.com/AutoRally/autorally/wiki) that includes:
-* Instructions to continue configuring a physical AutoRally platform
+Check out the [wiki](https://github.com/AutoRally/autorally/wiki) for:
+* Instructions to configure a physical AutoRally platform
 * Tutorials for released controllers (waypoint follower, constant speed controller)
 * Tutorial to use your own controller with the AutoRally platform
+* Information about how to run the included state estimator

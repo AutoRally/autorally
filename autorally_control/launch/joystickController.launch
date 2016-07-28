@@ -3,7 +3,7 @@
 
   <node name="joy_node" pkg="joy" type="joy_node" output="screen" machine="autorally-ocs">
     <param name="dev" value="/dev/input/js0" />
-    <param name="deadzone" value="0.02" />
+    <param name="deadzone" value="0.01" />
     <param name="autorepeat_rate" value="10" />
     <param name="coalesce_interval" value="0.01" />
   </node>
@@ -13,15 +13,13 @@
     <param name="steeringDamping" value="1.0" />
     <param name="throttleAxis" value="1" />
     <param name="steeringAxis" value="3" />
+    <rosparam param="runstopToggleButtons">[0, 1, 2, 3]</rosparam>
     <param name="safeSpeedIncButton" value="0" />
     <param name="safeSpeedDecButton" value="3" />
     <param name="safeSpeedZeroButton1" value="1" />
     <param name="safeSpeedZeroButton2" value="2" />
     <param name="throttleEnableButton" value="4" />
     <param name="steeringEnableButton" value="5" />
-    
-    <param name="throttleBrakePaired" value="True" />
-    <param name="frontBrake" value="True" />
     
     <param name="brakeAxis" value="2" />
     <remap from="/safeSpeed" to="/targetSpeed" />

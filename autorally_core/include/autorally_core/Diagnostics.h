@@ -64,7 +64,6 @@ class Diagnostics
   Diagnostics();
   /**
     * @brief Diagnostics constructor
-    * @param nh NodeHandle used to register stuff
     * @param otherInfo Short string of additional info about node
     * @param hardwareID some string to identify the corresponding hardware
     * @param hardwareLocation how or where the hardware is connected
@@ -84,6 +83,7 @@ class Diagnostics
     * @brief Send a standard diagnostic message with a key:value
     * @param key the key to queue
     * @param value the value to queue
+    * @param lock whether to lock the data mutex, should only be false if you already locked the mutex yoruself
     */
   void diag(const std::string key, const std::string value, bool lock = true);
 
@@ -148,7 +148,7 @@ class Diagnostics
     * @brief Timer triggered callback to force publishing of diagnostics
     * @param time information about callback execution
     */
-  void diagUpdate(const ros::TimerEvent&);
+  void diagUpdate(const ros::TimerEvent& time);
 
   /**
     * @brief Callback triggered to form diagnostics message

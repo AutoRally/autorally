@@ -1,18 +1,7 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <group ns="safeSpeed">
-    <param name="maxSafeSpeed" value="25" />
-    <param name="Timeout" value="5.0" />
-    <param name="KP" value="5.0" />
-    <param name="KD" value="0.5" />
-    <param name="KI" value="0.2" />
-    <param name="IResetRate" value="0.1" />
-    <param name="ThrottleOffset" value="17" />
-    <param name="Multiplier" value="0.012" /> <!--Assuming max speed of 40mph (17.88m/s) -->
-  </group>
-
-  <node pkg="nodelet" type="nodelet" name="ServoInterface" args="load autorally_core/ServoInterface autorally_core_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="ServoInterface" args="load autorally_core/ServoInterface autorally_core_manager" machine="autorally-master" output="screen">
 <!--  <node name="servoInterface" pkg="autorally_core" type="servoInterface" machine="autorally-master" output="screen"> -->
     <param name="controllerType" value="micro"/>
     <param name="servoCommandRate" value="75" />

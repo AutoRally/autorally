@@ -45,6 +45,8 @@
 #include <autorally_msgs/wheelSpeeds.h>
 #include <autorally_core/RingBuffer.h>
 
+#warning autorally_core/safeSpeed.h has been deprecated, refer to autorally_chassis
+
 namespace autorally_core
 {
 
@@ -77,7 +79,7 @@ class SafeSpeed : public nodelet::Nodelet
    * @brief Constructor for SafeSpeed
    *
    */
-  SafeSpeed();
+  ROS_DEPRECATED SafeSpeed();
   ~SafeSpeed();
 
   virtual void onInit();

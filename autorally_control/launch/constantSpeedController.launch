@@ -12,7 +12,6 @@
     <param name="accelerationRate" value="0.0" />
     <param name="KI" value="0.001" />
     <param name="IMax" value="0.2" />
-    <remap from="/safeSpeed" to="/targetSpeed" />
 
   </node>
 

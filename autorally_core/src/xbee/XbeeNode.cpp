@@ -34,8 +34,8 @@ int main(int argc, char **argv)
 XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
   m_xbee(nh, port),
   m_nh(nh),
-  m_lastSafeSpeed(0),
-  m_lastTargetedSafeSpeed(0),
+  m_lastrunstop(0),
+  m_lastTargetedrunstop(0),
   m_coordinatorAddress(""),
   m_prevGpsMsgNum(0)
 {
@@ -48,8 +48,8 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
 
   m_xbee.registerReceiveMessageCallback(boost::bind(&XbeeNode::processXbeeMessage, this, _1, _2, _3, _4) );
 
-  m_safeSpeedPublisher = nh.advertise<autorally_msgs::safeSpeed>
-	                                    ("safeSpeed", 1);
+  m_runstopPublisher = nh.advertise<autorally_msgs::runstop>
+	                                    ("runstop", 1);
 	m_gpsRTCM3Publisher = nh.advertise<std_msgs::ByteMultiArray>
 	                                    ("gpsBaseRTCM3", 3);
 
@@ -69,10 +69,10 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
                                   &XbeeNode::odomCallback,
                                   this);
   }
-  //until a safeSpeed is received from rf, it will publish safespeeds
+  //until a runstop is received from rf, it will publish runstops
   //with this name
-  m_safeSpeed.sender = "XbeeNode";
-  m_safeSpeed.speed = 0.0;
+  m_runstop.sender = "XbeeNode";
+  m_runstop.motionEnabled = false;
 
   
 }
@@ -106,12 +106,12 @@ void XbeeNode::sendState(const ros::TimerEvent& /*time*/)
 
 void XbeeNode::xbeeHeartbeatState(const ros::TimerEvent& /*time*/)
 {
-  if( (ros::Time::now()-m_lastSafeSpeed).toSec() > 1.0)
+  if( (ros::Time::now()-m_lastrunstop).toSec() > 1.0)
   {
-    m_safeSpeed.sender = "XbeeNode(No safeSpeed data from RF)";
-    m_safeSpeed.speed = 0.0;
-    m_safeSpeed.header.stamp = ros::Time::now();
-    m_safeSpeedPublisher.publish(m_safeSpeed);
+    m_runstop.sender = "XbeeNode(No runstop data from RF)";
+    m_runstop.motionEnabled = false;
+    m_runstop.header.stamp = ros::Time::now();
+    m_runstopPublisher.publish(m_runstop);
   }
 }
 
@@ -130,33 +130,34 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
   }
   else if(sender == m_coordinatorAddress)
   {
-    if(msg == "SS")
+    if(msg == "RS")
     {
-      m_lastSafeSpeed = ros::Time::now();
+      //std::cout << "RS:" << ss << std::endl;
+      m_lastrunstop = ros::Time::now();
       if(!broadcast)
       {
-        m_lastTargetedSafeSpeed = m_lastSafeSpeed;
+        m_lastTargetedrunstop = m_lastrunstop;
       }
 
-      //if I'm receiving targeted xbee safeSpeed messages, ignore broadcast xbee
-      //safeSpeed messages
-      std::string speed = "0.00";
-      double timeDiff = (m_lastSafeSpeed-m_lastTargetedSafeSpeed).toSec();
+      //if I'm receiving targeted xbee runstop messages, ignore broadcast xbee
+      //runstop messages
+      std::string motionEnabled = "0";
+      double timeDiff = (m_lastrunstop-m_lastTargetedrunstop).toSec();
       if( timeDiff <= 1.0 && !broadcast)
       {
-        ss >> m_safeSpeed.sender >> speed;
-        m_safeSpeed.speed = boost::lexical_cast<double>(speed);
-        m_safeSpeed.header.stamp = m_lastTargetedSafeSpeed;
-        m_safeSpeedPublisher.publish(m_safeSpeed);
+        ss >> m_runstop.sender >> motionEnabled;
+        m_runstop.motionEnabled = boost::lexical_cast<int>(motionEnabled);
+        m_runstop.header.stamp = m_lastTargetedrunstop;
+        m_runstopPublisher.publish(m_runstop);
       } else if(broadcast)
       {
-        ss >> m_safeSpeed.sender >> speed;
-        m_safeSpeed.speed = boost::lexical_cast<double>(speed);
-        m_safeSpeed.header.stamp = m_lastSafeSpeed;
-        m_safeSpeedPublisher.publish(m_safeSpeed);
+        ss >> m_runstop.sender >> motionEnabled;
+        m_runstop.motionEnabled = boost::lexical_cast<bool>(motionEnabled);
+        m_runstop.header.stamp = m_lastrunstop;
+        m_runstopPublisher.publish(m_runstop);
       } else
       {
-        ROS_ERROR("XbeeNode: something wrong with safeSpeed received over xbee");
+        ROS_ERROR("XbeeNode: something wrong with runstop received over xbee");
       }
 
     } else if(msg == "GC")

@@ -43,14 +43,20 @@ QNode::QNode(int argc, char** argv ) :
   init_argv(argv)
 {
   //register my data types so I can pass them around in signals and slots
-	qRegisterMetaType<autorally_msgs::safeSpeedConstPtr>
-	                ("autorally_msgs::safeSpeedConstPtr");
+	qRegisterMetaType<autorally_msgs::runstopConstPtr>
+	                ("autorally_msgs::runstopConstPtr");
 	qRegisterMetaType<autorally_msgs::wheelSpeedsConstPtr>
 	                ("autorally_msgs::wheelSpeedsConstPtr");
-  qRegisterMetaType<autorally_msgs::servoMSGConstPtr>
-	                ("autorally_msgs::servoMSGConstPtr");
+  //qRegisterMetaType<autorally_msgs::servoMSGConstPtr>
+	//                ("autorally_msgs::servoMSGConstPtr");
+  qRegisterMetaType<autorally_msgs::chassisStateConstPtr>
+                  ("autorally_msgs::chassisStateConstPtr");
+  qRegisterMetaType<autorally_msgs::chassisCommandConstPtr>
+                  ("autorally_msgs::chassisCommandConstPtr");
   qRegisterMetaType<diagnostic_msgs::DiagnosticStatus>
 	                ("diagnostic_msgs::DiagnosticStatus");
+  
+
   int init_err = pthread_mutex_init(&m_imageMutex, nullptr);
   if(init_err != 0) {
     switch(init_err) {
@@ -89,16 +95,13 @@ bool QNode::init() {
 	m_nh = new ros::NodeHandle;
 
 	// Add your ros communications here.
-	safeSpeed_publisher = m_nh->advertise<autorally_msgs::safeSpeed>
-	                      ("safeSpeed", 1);
-	servoCommandPub = m_nh->advertise<autorally_msgs::servoMSG>
-                        ("OCS/servoCommand", 1);
+	runstop_publisher = m_nh->advertise<autorally_msgs::runstop>
+	                      ("runstop", 1);
+	m_chassisCommandPub = m_nh->advertise<autorally_msgs::chassisCommand>
+                        ("OCS/chassisCommand", 1);
 
-	//vehicleSpeed_subscriber = n.subscribe("vehicleSpeed", 5,
-  //                                    &QNode::vehicleSpeedCallback,
-  //                                    this);
-  safeSpeed_subscriber = m_nh->subscribe("safeSpeed", 5,
-                                      &QNode::safeSpeedCallback,
+  runstop_subscriber = m_nh->subscribe("runstop", 5,
+                                      &QNode::runstopCallback,
                                       this);
   wheelSpeeds_subscriber = m_nh->subscribe("wheelSpeeds", 1,
                                       &QNode::wheelSpeedsCallback,
@@ -106,28 +109,27 @@ bool QNode::init() {
 	diagStatus_subscriber = m_nh->subscribe("diagnostics", 10,
                                       &QNode::diagStatusCallback,
                                       this);
-	servoStatus_subscriber = m_nh->subscribe("servoStatus", 1,
-                                      &QNode::newServoMSG,
+	chassisState_subscriber = m_nh->subscribe("chassisState", 1,
+                                      &QNode::chassisStateCb,
                                       this);
   imageMask_subscriber = m_nh->subscribe("imageMask", 10,
                                       &QNode::imageMaskCallback,
                                       this);
 
-	m_safeSpeedTimer = m_nh->createTimer(ros::Duration(0.1), &QNode::ssTimerCallback, this);
+	m_runstopTimer = m_nh->createTimer(ros::Duration(0.1), &QNode::ssTimerCallback, this);
 //	m_servoCommandTimer = n.createTimer(ros::Duration(0.1), &QNode::ssTimerCallback, this);
 //	m_servoCommandTimer.stop();
 
-	m_safeSpeed.header.seq = 0;
-	m_safeSpeed.sender = "OCS";
+	m_runstop.sender = "OCS";
 
   QStringList header;
-  header << "Sender" << "Value (m/s)" << "Time since last message";
-	m_safeSpeedModel.setColumnCount(3);
-  m_safeSpeedModel.setHorizontalHeaderLabels(header);
+  header << "Sender" << "Motion Enabled" << "Time since last message";
+	m_runstopModel.setColumnCount(3);
+  m_runstopModel.setHorizontalHeaderLabels(header);
 
   double diagFreq;
   ros::param::param<double>("diagnosticsFrequency", diagFreq, 1.0);
-  ros::param::param<double>("safeSpeed/Timeout", m_safeSpeedTimeout, 5.0);
+  ros::param::param<double>("runstop/Timeout", m_runstopTimeout, 5.0);
 
   m_diagModel.setDiagnosticFrequency(diagFreq);
 
@@ -137,8 +139,8 @@ bool QNode::init() {
 
 void QNode::ssTimerCallback(const ros::TimerEvent&)
 {
-  m_safeSpeed.header.stamp = ros::Time::now();
-  safeSpeed_publisher.publish(m_safeSpeed);
+  m_runstop.header.stamp = ros::Time::now();
+  runstop_publisher.publish(m_runstop);
 }
 
 void QNode::run() {
@@ -148,38 +150,33 @@ void QNode::run() {
 	emit rosShutdown(); //used to signal the gui to shutdown (useful to roslaunch)
 }
 
-//void QNode::vehicleSpeedCallback(const autorally_msgs::vehicleSpeedConstPtr& msg)
-//{
-//  emit newVehicleSpeed(msg);
-//}
-
-void QNode::safeSpeedCallback(const autorally_msgs::safeSpeedConstPtr& msg)
+void QNode::runstopCallback(const autorally_msgs::runstopConstPtr& msg)
 {
-  QList<QStandardItem *> items = m_safeSpeedModel.findItems(
+  QList<QStandardItem *> items = m_runstopModel.findItems(
                                           QString::fromStdString(msg->sender) );
   if(items.isEmpty())
   {
     //add new item for the sender
-    m_safeSpeedModel.appendRow(generateNewSafeSpeed(msg));
-    items = m_safeSpeedModel.findItems( QString::fromStdString(msg->sender) );
+    m_runstopModel.appendRow(generateNewrunstop(msg));
+    items = m_runstopModel.findItems( QString::fromStdString(msg->sender) );
   }
 
   if(items.size() == 1)
   {
-    //update the safeSpeed
-    m_safeSpeedModel.item(items.front()->index().row(),1)->
-        setText(QString::number(msg->speed, 'g', 4));
-    m_safeSpeedModel.item(items.front()->index().row(),2)->
+    //update the runstop
+    m_runstopModel.item(items.front()->index().row(),1)->
+        setText(QString::number(msg->motionEnabled, 'g', 4));
+    m_runstopModel.item(items.front()->index().row(),2)->
        setData(QVariant(msg->header.stamp.toSec()));
   } else //found more than one sender with the same name
   {
-    ROS_ERROR("Something is wrong with the OCS safeSpeedModel!!!!!");
+    ROS_ERROR("Something is wrong with the OCS runstopModel!!!!!");
   }
 }
 
-void QNode::safeSpeedModelDoubleClicked(const QModelIndex& index)
+void QNode::runstopModelDoubleClicked(const QModelIndex& index)
 {
-  m_safeSpeedModel.removeRows(index.row(), 1);
+  m_runstopModel.removeRows(index.row(), 1);
 }
 
 void QNode::wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg)
@@ -187,14 +184,20 @@ void QNode::wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg)
   emit newWheelSpeeds(msg);
 }
 
-void QNode::newServoMSG(const autorally_msgs::servoMSGConstPtr& msg)
+void QNode::chassisStateCb(const autorally_msgs::chassisStateConstPtr& msg)
 {
-  emit newServoData(msg);
+  emit newChassisState(msg);
 }
 
-void QNode::setSafeSpeed(const double& speed)
+void QNode::setRunstop(const double& speed)
 {
-  m_safeSpeed.speed = speed;
+  if(speed > 0)
+  {
+    m_runstop.motionEnabled = true;
+  } else
+  {
+    m_runstop.motionEnabled = false;
+  }
 }
 
 void QNode::diagStatusCallback(const diagnostic_msgs::DiagnosticArray& msg)
@@ -203,29 +206,29 @@ void QNode::diagStatusCallback(const diagnostic_msgs::DiagnosticArray& msg)
 }
 
 
-void QNode::servoControl(autorally_msgs::servoMSG& msg)
+void QNode::actuatorControl(autorally_msgs::chassisCommand& msg)
 {
 //  if(m_sendServoCommand)
   {
     msg.header.stamp = ros::Time::now();
-    servoCommandPub.publish(msg);
+    m_chassisCommandPub.publish(msg);
   }
 }
 
-QList<QStandardItem*> QNode::generateNewSafeSpeed(
-                     const autorally_msgs::safeSpeedConstPtr& msg)
+QList<QStandardItem*> QNode::generateNewrunstop(
+                     const autorally_msgs::runstopConstPtr& msg)
 {
-    QList<QStandardItem*> newSafeSpeed;
-    newSafeSpeed << new QStandardItem(msg->sender.c_str());
-    newSafeSpeed << new QStandardItem(QString::number(msg->speed, 'g', 4));
-    newSafeSpeed << new QStandardItem("0.000");
+    QList<QStandardItem*> newrunstop;
+    newrunstop << new QStandardItem(msg->sender.c_str());
+    newrunstop << new QStandardItem(QString::number(msg->motionEnabled, 'g', 4));
+    newrunstop << new QStandardItem("0.000");
 
-    newSafeSpeed[0]->setEditable(false);
-    newSafeSpeed[1]->setEditable(false);
-    newSafeSpeed[2]->setEditable(false);
-    newSafeSpeed[2]->setData(QVariant(msg->header.stamp.toSec()));
+    newrunstop[0]->setEditable(false);
+    newrunstop[1]->setEditable(false);
+    newrunstop[2]->setEditable(false);
+    newrunstop[2]->setData(QVariant(msg->header.stamp.toSec()));
 
-    return newSafeSpeed;
+    return newrunstop;
 }
 
 void QNode::updateTimes()
@@ -235,22 +238,22 @@ void QNode::updateTimes()
 
   if(m_currentTabText == "System Info")
   {
-    for(int i = 0; i < m_safeSpeedModel.rowCount(); i++)
+    for(int i = 0; i < m_runstopModel.rowCount(); i++)
     {
-      if( (node = m_safeSpeedModel.item(i,2)) == 0 || !node->data().isValid())
+      if( (node = m_runstopModel.item(i,2)) == 0 || !node->data().isValid())
       {
-        ROS_ERROR("Invalid safespeed child");
+        ROS_ERROR("Invalid runstop child");
       } else
       {
         time = ros::Time::now().toSec()-node->data().toDouble();
         node->setText(QString::number(time, 'g', 4));
         //set colors for stale
-        if(time > m_safeSpeedTimeout)
+        if(time > m_runstopTimeout)
         {
           node->setBackground(Qt::magenta);
         } else
         {
-          node->setBackground(m_safeSpeedModel.item(i,1)->background());
+          node->setBackground(m_runstopModel.item(i,1)->background());
         }
       }
     }

@@ -48,7 +48,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
 
-#include <autorally_msgs/servoMSG.h>
+#include <autorally_msgs/chassisCommand.h>
 #include <autorally_msgs/wheelSpeeds.h>
 #include <autorally_msgs/imageMask.h>
 #include <nav_msgs/Odometry.h>
@@ -71,7 +71,7 @@ namespace autorally_control
     ros::Subscriber m_speedSub;
     ros::Subscriber m_odomSub;
     ros::Subscriber m_poseSub;
-    ros::Publisher  m_servoPub;
+    ros::Publisher  m_chassisCommandPub;
     ros::Publisher vis_pub;
     ros::Timer m_paramTimer;
 

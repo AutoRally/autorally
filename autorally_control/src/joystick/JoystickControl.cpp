@@ -37,45 +37,44 @@
 #include "JoystickControl.h"
 
 JoystickControl::JoystickControl():
-  m_throttleDamping(0.0),
-  m_steeringDamping(0.0),
-  m_throttleEnabled(true),
-  m_steeringEnabled(true)
+  throttleDamping_(0.0),
+  steeringDamping_(0.0),
+  throttleEnabled_(true),
+  steeringEnabled_(true)
 {
-  m_joySub = m_nh.subscribe("joy", 1, &JoystickControl::joyCallback, this);
+  m_joySub = nh_.subscribe("joy", 1, &JoystickControl::joyCallback, this);
 
-  m_commandPub = m_nh.advertise
-                 <autorally_msgs::servoMSG>
-                 ("joystick/servoCommand", 5);
-  m_safeSpeedPub = m_nh.advertise
-                 <autorally_msgs::safeSpeed>
-                 ("safeSpeed", 1);
-  m_servoCommand = autorally_msgs::servoMSGPtr(new autorally_msgs::servoMSG);
-  m_servoCommand->header.frame_id = "joystick";
-  m_safeSpeed = autorally_msgs::safeSpeedPtr(new autorally_msgs::safeSpeed);
-  m_safeSpeed->sender = "joystick";
-  m_safeSpeed->speed = 0.0;
+  commandPub_ = nh_.advertise
+                 <autorally_msgs::chassisCommand>
+                 ("joystick/chassisCommand", 1);
+  runstopPub_ = nh_.advertise
+                 <autorally_msgs::runstop>
+                 ("runstop", 1);
 
-  if(!m_nh.getParam("joystickController/throttleDamping", m_throttleDamping) ||
-     !m_nh.getParam("joystickController/steeringDamping", m_steeringDamping) || 
-     !m_nh.getParam("joystickController/throttleAxis", m_throttleAxis) ||
-     !m_nh.getParam("joystickController/steeringAxis", m_steeringAxis) ||
-     !m_nh.getParam("joystickController/safeSpeedIncButton", m_safeSpeedIncButton) ||
-     !m_nh.getParam("joystickController/safeSpeedDecButton", m_safeSpeedDecButton) ||
-     !m_nh.getParam("joystickController/safeSpeedZeroButton1", m_safeSpeedZeroButton1) ||
-     !m_nh.getParam("joystickController/safeSpeedZeroButton2", m_safeSpeedZeroButton2) ||
-     !m_nh.getParam("joystickController/throttleEnableButton", m_throttleEnableButton) ||
-     !m_nh.getParam("joystickController/steeringEnableButton", m_steeringEnableButton) ||
-     !m_nh.getParam("joystickController/throttleBrakePaired", m_throttleBrakePaired) ||
-     !m_nh.getParam("joystickController/frontBrake", m_frontBrake) ||
-     !m_nh.getParam("joystickController/brakeAxis", m_brakeAxis) )
+  runstop_.sender = "joystick";
+  runstop_.motionEnabled = false;
+
+  if(!nh_.getParam("joystickController/throttleDamping", throttleDamping_) ||
+     !nh_.getParam("joystickController/steeringDamping", steeringDamping_) || 
+     !nh_.getParam("joystickController/throttleAxis", throttleAxis_) ||
+     !nh_.getParam("joystickController/steeringAxis", steeringAxis_) ||
+     !nh_.getParam("joystickController/throttleEnableButton", throttleEnableButton_) ||
+     !nh_.getParam("joystickController/steeringEnableButton", steeringEnableButton_) ||
+     !nh_.getParam("joystickController/brakeAxis", brakeAxis_) )
   {
     ROS_ERROR_STREAM("Couldn't get joystick control parameters");
   }
 
-  m_safeSpeedTimer = m_nh.createTimer(ros::Rate(5),
-                                    &JoystickControl::safeSpeedCallback,
-                                    this);
+  XmlRpc::XmlRpcValue v;
+  nh_.param("joystickController/runstopToggleButtons", v, v);
+  for(int i =0; i < v.size(); i++)
+  {
+    runstopToggleButtons_.push_back(v[i]);
+  }
+
+  runstopTimer_ = nh_.createTimer(ros::Rate(5),
+                                   &JoystickControl::runstopCallback,
+                                   this);
 
 }
 
@@ -86,74 +85,66 @@ void JoystickControl::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
   /* axes[0] is left/right of left sitck, axes[3] is up/down of right stick
    * I scale the range of values from the joystick [-1,1] to the range of
-   * valid servo command values [0-254], and reverse the steering command so it
+   * valid command values [-1.0, 1.0], and reverse the steering command so it
    * is drives as expected.
    */
 
-  if(joy->buttons[m_safeSpeedIncButton] == 1 && m_safeSpeed->speed > 0.0)
+  //toggle runstop if a runstop toggle button changed from 0 to 1  
+  for(auto vecIt : runstopToggleButtons_)
   {
-    m_safeSpeed->speed -= 0.5;
-  } else if(joy->buttons[m_safeSpeedDecButton] == 1)
-  {
-    m_safeSpeed->speed += 0.5;
-  } else if(joy->buttons[m_safeSpeedZeroButton1] == 1 || joy->buttons[m_safeSpeedZeroButton2] == 1)
-  {
-    m_safeSpeed->speed = 0.0;
+    if(joy->buttons[vecIt] == 1 && prevJoy_.buttons[vecIt] == 0)
+    {
+      runstop_.motionEnabled = !runstop_.motionEnabled;
+    }
   }
 
-  //can enable/disable throttle control with left bumpers on game pad
-  if(joy->buttons[m_throttleEnableButton] == 1)
+  //can enable/disable throttle control with L2 on game pad, only toggle if button changed from 0 to 1
+  if(joy->buttons[throttleEnableButton_] == 1 && prevJoy_.buttons[throttleEnableButton_] == 0)
   {
-    m_throttleEnabled = !m_throttleEnabled;
+    throttleEnabled_ = !throttleEnabled_;
   }
   
-  //can enable/disable steering control with right bumpers on game pad
-  if(joy->buttons[m_steeringEnableButton] == 1)
+  //can enable/disable steering control with R2 on game pad, only toggle if button changed from 0 to 1
+  if(joy->buttons[steeringEnableButton_] == 1 && prevJoy_.buttons[steeringEnableButton_] == 0)
   {
-    m_steeringEnabled = !m_steeringEnabled;
+    steeringEnabled_ = !steeringEnabled_;
   }
   
-  if(m_steeringEnabled)
+  if(steeringEnabled_)
   {
-    m_servoCommand->steering = -m_steeringDamping*joy->axes[m_steeringAxis];
+    chassis_command_.steering = -steeringDamping_*joy->axes[steeringAxis_];
   } else
   {
-    m_servoCommand->steering = -10.0;
+    chassis_command_.steering = -10.0;
   }
   
-  if(m_throttleEnabled)
+  if(throttleEnabled_)
   {
     
-    //if m_throttleBrakePaired, then throttle can be [-1,1],
-    //otherwise require throttle to be in [0, 1]
-    if(m_throttleBrakePaired)
-    {
-      m_servoCommand->throttle = m_throttleDamping*joy->axes[m_throttleAxis];
-    }
-    else
-    {
-      m_servoCommand->throttle = std::max((double)(m_throttleDamping*joy->axes[m_throttleAxis]), 0.0);
-    }
+    chassis_command_.throttle = throttleDamping_*joy->axes[throttleAxis_];
 
-    if(m_frontBrake && m_servoCommand->throttle < 0.0)
+    if(chassis_command_.throttle < 0.0)
     {
-      m_servoCommand->frontBrake = abs(m_servoCommand->throttle);
+      chassis_command_.frontBrake = fabs(chassis_command_.throttle);
     } else
     {
-      m_servoCommand->frontBrake = 0.0;
+      chassis_command_.frontBrake = 0.0;
     }
   } else
   {
-    m_servoCommand->throttle = -10.0;
-    m_servoCommand->frontBrake = -10.0;
+    chassis_command_.throttle = -10.0;
+    chassis_command_.frontBrake = -10.0;
   }
   
-  m_servoCommand->header.stamp = ros::Time::now();
-  m_commandPub.publish(m_servoCommand);
+  prevJoy_ = *joy;
+  chassis_command_.header.frame_id = "joystick";
+  chassis_command_.sender = "joystick";
+  chassis_command_.header.stamp = ros::Time::now();
+  commandPub_.publish(chassis_command_);
 }
 
-void JoystickControl::safeSpeedCallback(const ros::TimerEvent& time)
+void JoystickControl::runstopCallback(const ros::TimerEvent& time)
 {
-  m_safeSpeed->header.stamp = ros::Time::now();
-  m_safeSpeedPub.publish(m_safeSpeed);
+  runstop_.header.stamp = ros::Time::now();
+  runstopPub_.publish(runstop_);
 }
