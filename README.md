@@ -92,8 +92,10 @@ To view code documentation open `autorally/doc/html/index.html` in a web browser
 
 ### 5. Test Setup in Simulation
 
-To test that your setup process was successful, run the AutoRally simulator with the following command. If you have a USB gamepad, plug it in to your computer before launching this simulator. You will be able to drive the virtual platform around using this gamepad.
+To test that your setup process was successful, run the AutoRally simulator with the following command. You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the joystick node is false. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
 
+If you do not have a gamepad and want to control the platform autonomously in simulation, comment out the joystick node launch line in the simulation launch file so that it doesn't publish a `runstop` message that is always false.
+ 
 ```roslaunch autorally_gazebo autoRallyTrackGazeboSim.launch```
 
 ## What's Next
