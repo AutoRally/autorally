@@ -446,7 +446,20 @@ void MainWindow::updateImage1()
     m_saveOneImage = 0;
   }
   
-  pthread_mutex_unlock(&qnode.m_imageMutex);
+  lock_ret = pthread_mutex_unlock(&qnode.m_imageMutex);
+  if(lock_ret != 0)
+  {
+    switch(lock_ret) {
+      case EINVAL:
+        ROS_WARN("Mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+    }
+  }
 }
 
 void MainWindow::updateImage2()
@@ -529,7 +542,21 @@ void MainWindow::updateImage2()
     m_saveOneImage = 0;
   }
   
-  pthread_mutex_unlock(&qnode.m_imageMutex);
+  lock_ret = pthread_mutex_unlock(&qnode.m_imageMutex);
+  if(lock_ret != 0)
+  {
+    switch(lock_ret) {
+      case EINVAL:
+        ROS_WARN("Mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+    }
+    return;
+  }
 }
 
 template <class T>
