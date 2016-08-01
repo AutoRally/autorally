@@ -269,13 +269,31 @@ void QNode::imageCallback1(const sensor_msgs::ImageConstPtr& msg)
 {
   QImage img = formatImageForDisplay(msg);
 
-  if(!pthread_mutex_trylock(&m_imageMutex))
+  int lock_ret = pthread_mutex_trylock(&m_imageMutex);
+  if(lock_ret != 0)
   {
     if(m_firewireImage1.convertFromImage(img))
     {
       emit newImage1();
     }
-    pthread_mutex_unlock(&m_imageMutex);
+    int ret_val = pthread_mutex_unlock(&m_imageMutex);
+    if(ret_val != 0)
+    {
+      switch(ret_val) {
+        case EINVAL:
+          ROS_WARN("Mutex unlock error: The value specified for the argument is not correct");
+          break;
+        case EPERM:
+          ROS_WARN("Mutex unlock error: The mutex is not currently held by the caller");
+          break;
+        default:
+          ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+      }
+      return;
+    }
+  } else
+  {
+    ROS_WARN_STREAM("image mutex lock error:" << lock_ret);
   }
 }
 
@@ -283,13 +301,31 @@ void QNode::imageCallback2(const sensor_msgs::ImageConstPtr& msg)
 {
   QImage img = formatImageForDisplay(msg);
 
-  if(!pthread_mutex_trylock(&m_imageMutex))
+  int lock_ret = pthread_mutex_trylock(&m_imageMutex);
+  if(lock_ret != 0)
   {
     if(m_firewireImage2.convertFromImage(img))
     {
       emit newImage2();
     }
-    pthread_mutex_unlock(&m_imageMutex);
+    int ret_val = pthread_mutex_unlock(&m_imageMutex);
+    if(ret_val != 0)
+    {
+      switch(ret_val) {
+        case EINVAL:
+          ROS_WARN("Mutex unlock error: The value specified for the argument is not correct");
+          break;
+        case EPERM:
+          ROS_WARN("Mutex unlock error: The mutex is not currently held by the caller");
+          break;
+        default:
+          ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+      }
+      return;
+    }
+  } else
+  {
+    ROS_WARN_STREAM("image mutex lock error:" << lock_ret);
   }
 }
 
