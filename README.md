@@ -64,9 +64,8 @@ Get the autorally and imu_3dm_gx4 repositories in a [catkin workspace](http://wi
 
 To clone:
 
-```git clone https://github.com/AutoRally/autorally.git```
-
-```git clone https://github.com/AutoRally/imu_3dm_gx4.git```
+    git clone https://github.com/AutoRally/autorally.git
+    git clone https://github.com/AutoRally/imu_3dm_gx4.git
 
 ### 3. Install AutoRally ROS Dependencies
 
