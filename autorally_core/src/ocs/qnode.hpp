@@ -49,16 +49,18 @@
 #include <QtGui/QTableWidgetItem>
 #include <QtGui/QPixmap>
 
-#include <ros/ros.h>
-#include <ros/time.h>
-#include <image_transport/image_transport.h>
-#include <diagnostic_msgs/DiagnosticArray.h>
-#include <autorally_msgs/chassisState.h>
- #include <autorally_msgs/chassisCommand.h>
-#include <autorally_msgs/wheelSpeeds.h>
-#include <autorally_msgs/runstop.h>
-#include "ImageMaskEntry.hpp"
-#include "DiagnosticsEntry.hpp"
+#ifndef Q_MOC_RUN
+  #include <ros/ros.h>
+  #include <ros/time.h>
+  #include <image_transport/image_transport.h>
+  #include <diagnostic_msgs/DiagnosticArray.h>
+  #include <autorally_msgs/chassisState.h>
+  #include <autorally_msgs/chassisCommand.h>
+  #include <autorally_msgs/wheelSpeeds.h>
+  #include <autorally_msgs/runstop.h>
+  #include "ImageMaskEntry.hpp"
+  #include "DiagnosticsEntry.hpp"
+#endif
 
 /**
  *  @class QNode qnode.hpp "ocs/qnode.hpp"
