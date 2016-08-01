@@ -61,6 +61,7 @@
   #include "ImageMaskEntry.hpp"
   #include "DiagnosticsEntry.hpp"
 #endif
+
 /**
  *  @class QNode qnode.hpp "ocs/qnode.hpp"
  *  @brief ROS backend for OCS

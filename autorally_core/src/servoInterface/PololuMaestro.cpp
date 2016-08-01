@@ -113,7 +113,7 @@ void PololuMaestro::getErrors()
 {
   unsigned char command = 0xA1;
   unsigned char reply[2];
-  for(int i = 0; i<20; i++)
+  for(int i = 0; i<2; i++)
   {
     reply[i] = 0;
   }
