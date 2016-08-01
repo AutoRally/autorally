@@ -58,7 +58,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
    ```sudo ldconfig```
    
-### 2. Clone Repositories
+### 2. Clone or Fork Repositories
 
 Clone the autorally and imu_3dm_gx4 repositories into a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work.
 
