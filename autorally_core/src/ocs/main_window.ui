@@ -22,15 +22,24 @@
     <height>16777215</height>
    </size>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
-   <string>Auto-Rally OCS</string>
+   <string>AutoRally OCS</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>:/doc/car_logo.png</normaloff>:/doc/car_logo.png</iconset>
+   <iconset resource="resources/images.qrc">
+    <normaloff>:/images/autorally.png</normaloff>:/images/autorally.png</iconset>
   </property>
   <property name="locale">
-   <locale language="English" country="Australia"/>
+   <locale language="English" country="UnitedStates"/>
+  </property>
+  <property name="iconSize">
+   <size>
+    <width>85</width>
+    <height>49</height>
+   </size>
   </property>
   <widget class="QWidget" name="tabWidget">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -169,6 +178,12 @@
              </property>
              <property name="selectionMode">
               <enum>QAbstractItemView::NoSelection</enum>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>3</width>
+               <height>0</height>
+              </size>
              </property>
              <property name="sortingEnabled">
               <bool>true</bool>

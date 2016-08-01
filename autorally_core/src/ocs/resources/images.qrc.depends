@@ -3,6 +3,6 @@
         <file>images/icon.png</file>
     </qresource>
     <qresource prefix="/" >
-        <file>images/car_logo.png</file>
+        <file>images/autorally.png</file>
     </qresource>
 </RCC>

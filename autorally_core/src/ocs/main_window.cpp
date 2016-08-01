@@ -51,7 +51,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt()));
 
   ReadSettings();
-	setWindowIcon(QIcon(":/doc/autorally.png"));
 
   QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
