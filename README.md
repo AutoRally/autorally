@@ -23,9 +23,9 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
 ### Contents
 1. [Install Prerequisites](#1-install-prerequisites)
-2. [Clone repository](#2-clone-or-fork-repository)
+2. [Clone repository](#2-clone-or-fork-repositories)
 3. [Install AutoRally ROS Dependencies](#3-install-autoRally-ros-dependencies)
-4. [Compilation/Running](#4-compilationrunning)
+4. [Compilation/Running](#4-compilation-running)
 5. [Generate Documentation](#5-generate-documentation)
 6. [Test Setup in Simulation](#6-test-setup-in-simulation)
 
