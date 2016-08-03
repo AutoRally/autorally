@@ -48,10 +48,15 @@
     <remap from="image_rect" to="$(arg side)_camera/image_color_rect" />
   </node>
   <node pkg="nodelet" type="nodelet" name="$(arg side)_ImageRepublisher" args="load autorally_core/ImageRepublisher camera_nodelet_manager" output="screen" machine="autorally-master" >
-    <param name="fps" value="24" />
+    <param name="fps" value="10" />
     <param name="resizeHeight" value="480" />
     <remap from="camera/image_raw" to="$(arg side)_camera/image_color" />
     <remap from="camera/image_display" to="$(arg side)_camera/image_display" />
   </node>
+  
+  <include file="$(find autorally_core)/launch/camera_auto_balance.launch">
+    <arg name="serial" value="$(arg serial)" />
+    <arg name="side" value="$(arg side)" />
+  </include>
   
 </launch>

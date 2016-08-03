@@ -11,6 +11,15 @@ case $key in
 esac
 done
 
+# The following function was pulled from
+# http://stackoverflow.com/a/8574392
+containsElement () {
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+
+# Get list of devices connected to computer
 if [[ $MASTER_HOSTNAME == "localhost" ]]
     then
         devList=$(ls /dev/)
@@ -40,33 +49,46 @@ fi
 
 # Setup cameras
 
-# Right Camera
-export AR_RIGHTCAM_CONNECTED=true
-if [[ $devList == *"arCamera_GUID"* ]]
-    then
-        export AR_RIGHTCAM="GUID"
-#elif [[ $devList == *"arCamera_GUID"* ]]
-#    then
-#        export AR_RIGHTCAM="GUID"
-else
-    export AR_RIGHTCAM_CONNECTED=false
-fi
-if [[ $DEBUG == true ]]; then
-    echo "AR_RIGHTCAM set to ${AR_RIGHTCAM}"
-fi
+## Add camera serial numbers to these two arrays to add them to the system
+rightSerials=("serial1" "serial2")
+leftSerials=("serial1" "serial2")
 
-# Left Camera
-export AR_LEFTCAM_CONNECTED=true
-if [[ $devList == *"arCamera_GUID"* ]]
-    then
-        export AR_LEFTCAM="GUID"
-#elif [[ $devList == *"arCamera_GUID"* ]]
-#    then
-#        export AR_LEFTCAM="GUID"
-else
-    export AR_LEFTCAM_CONNECTED=false
-fi
+export AR_RIGHTCAM_CONNECTED=false
+export AR_LEFTCAM_CONNECTED=false
+
+## For each Flea3 camera attached
+while read line
+do
+    ## Parse bus number and device number from lsusb results
+    BUS=$(echo $line | grep -o -E 'Bus [0-9]*' | grep -o -E '[0-9]*')
+    DEVICE=$(echo $line | grep -o -E 'Device [0-9]*' | grep -o -E '[0-9]*')
+    
+    ## Query device for hexadecimal serial number
+    SERIAL=$(udevadm info --query=property /dev/bus/usb/$BUS/$DEVICE | grep "ID_SERIAL_SHORT" | sed 's/ID_SERIAL_SHORT=//g')
+    
+    ## Covert hexadecimal serial number to decimal format
+    SERIAL=$((0x$SERIAL))
+
+    ## Check serial number against list of right camera serials
+    containsElement ${SERIAL} "${rightSerials[@]}"
+    if [ $? == 0 ]; then
+        export AR_RIGHTCAM=${SERIAL}
+        export AR_RIGHTCAM_CONNECTED=true
+    fi
+
+    ## Check serial number against list of left camera serials
+    containsElement ${SERIAL} "${leftSerials[@]}"
+    if [ $? == 0 ]; then
+        export AR_LEFTCAM=${SERIAL}
+        export AR_LEFTCAM_CONNECTED=true
+    fi
+
+done <<< "$(lsusb | grep '1e10:\(3300\|300a\)')" # Use lsusb to find all PointGrey Flea3 cameras plugged in right now
+
 if [[ $DEBUG == true ]]; then
-    echo "AR_LEFTCAM set to ${AR_LEFTCAM}"
+    echo "AR_RIGHTCAM           = ${AR_RIGHTCAM}"
+    echo "AR_RIGHTCAM_CONNECTED = ${AR_RIGHTCAM_CONNECTED}"
+    echo "AR_LEFTCAM            = ${AR_LEFTCAM}"
+    echo "AR_LEFTCAM_CONNECTED  = ${AR_LEFTCAM_CONNECTED}"
 fi
 

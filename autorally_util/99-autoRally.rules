@@ -17,12 +17,6 @@ SUBSYSTEM=="tty", ATTRS{serial}=="XBEE_ADAPTER_SERIAL", MODE="0666", SYMLINK+="a
 # Replace "XBEE_ADAPTER_SERIAL" with the serial number of the USB-to-serial adapter for the base station XBee
 SUBSYSTEM=="tty", ATTRS{serial}=="XBEE_ADAPTER_SERIAL", MODE="0666", SYMLINK+="arXbeeCoordinator"
 
-# Cameras
-# For each camera, replace "CAMERAGUID" with the camera's GUID shown in FlyCap
-# For each camera, replace "CAMERA_SERIAL" with the camera's serial number shown in FlyCap
-SUBSYSTEM=="usb", ATTRS{idVendor}=="1e10", ATTRS{serial}=="CAMERA_SERIAL", MODE="0666", SYMLINK+="arCamera_CAMERAGUID", GROUP="plugdev"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="1e10", ATTRS{serial}=="CAMERA_SERIAL", MODE="0666", SYMLINK+="arCamera_CAMERAGUID", GROUP="plugdev"
-
 # Arduino Due in the chassis
 SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.org)", ATTRS{idProduct}=="003d", ATTRS{product}=="Arduino Due Prog. Port", MODE="0666", SYMLINK+="arChassis"
 
