@@ -1,0 +1,24 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+  <arg name="side" default="right" />
+  <arg name="serial" default="0" />
+
+
+
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_CameraAutoBalance" args="load autorally_core/CameraAutoBalance camera_nodelet_manager" output="screen" machine="autorally-master" >
+  <param name="roi_x_top_left" value="0" type="int" />
+  <param name="roi_y_top_left" value="400" type="int" />
+  <param name="roi_x_bottom_right" value="1280" type="int" />
+  <param name="roi_y_bottom_right" value="750" type="int" />
+  <param name="show_roi_and_hist" value="false" type="bool" />
+  <param name="minShutter" value="0.016" type="double" />
+  <param name="maxShutter" value="8" type="double" />
+  <param name="kShutter" value="1e-3" type="double" />
+  <param name="kGain" value="1e-3" type="double" />
+  <param name="calibrationStep" value="1" type="int" />
+  <param name="msvGrayReference" value="100" type="double" />
+  <param name="cameraSerialNumber" value="$(arg serial)" type="int" />
+    <remap from="camera/image_color" to="$(arg side)_camera/image_color" />
+  </node>
+
+</launch>

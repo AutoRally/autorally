@@ -13,11 +13,15 @@ find_package(catkin REQUIRED COMPONENTS
   nodelet
   autorally_msgs
   tf
+  dynamic_reconfigure
+  cv_bridge
 )
 
 find_package(cmake_modules REQUIRED)
 
 catkin_python_setup()
+
+generate_dynamic_reconfigure_options(cfg/camera_auto_balance_params.cfg)
 
 catkin_package(
     DEPENDS libqt4-dev lm-sensors Boost
@@ -45,13 +49,14 @@ add_subdirectory(src/xbee)
 add_subdirectory(src/ImageRepublisher)
 add_subdirectory(src/StateEstimator)
 add_subdirectory(src/autorally_chassis)
+add_subdirectory(src/CameraAutoBalance)
 
-install(TARGETS
- 
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#install(TARGETS
+# 
+#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
 
 install(PROGRAMS
   src/systemStatus/systemStatus.py
