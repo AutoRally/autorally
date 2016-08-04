@@ -25,7 +25,7 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-  packages=['systemStatus', 'ChronyStatus'],
+  packages=['systemStatus', 'chronyStatus'],
   package_dir={'': 'src/'},
   #data_files=['src/systemStatus/systemStatus.py'],
   #scripts=['src/systemStatus/systemStatus.py'],
