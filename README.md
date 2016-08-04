@@ -80,7 +80,7 @@ To compile and install run `catkin_make` from the catkin workspace folder.
 
 Due to the additional requirement of ROS's distributed launch system, you must run
 
-`source autorally/autorally_util/setupEnvLocal.sh`
+`source src/autorally/autorally_util/setupEnvLocal.sh`
 
 before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki) for more information about how to set this system up for distributed launches on your vehicle platform.
 
