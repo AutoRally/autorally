@@ -23,10 +23,11 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
 ### Contents
 1. [Install Prerequisites](#1-install-prerequisites)
-2. [Clone repository](#2-clone-repository)
-3. [Compilation/Running](#3-compilationrunning)
-4. [Generate Documentation](#4-generate-documentation)
-5. [Test Setup in Simulation](#5-test-setup-in-simulation)
+2. [Clone repository](#2-clone-or-fork-repositories)
+3. [Install AutoRally ROS Dependencies](#3-install-autorally-ros-dependencies)
+4. [Compilation/Running](#4-compilation-running)
+5. [Generate Documentation](#5-generate-documentation)
+6. [Test Setup in Simulation](#6-test-setup-in-simulation)
 
 ### 1. Install Prerequisites
 1. __Install [Ubuntu 14.04 64-bit](http://www.ubuntu.com)__
@@ -73,25 +74,25 @@ Within the catkin workspace folder, run this command to install the packages thi
 
 ```rosdep install --from-path src --ignore-src -y```
 
-### 3. Compilation & Running
+### 4. Compilation & Running
 
 To compile and install run `catkin_make` from the catkin workspace folder.
 
 Due to the additional requirement of ROS's distributed launch system, you must run
 
-`source autorally/autorally_util/setupEnvLocal.sh`
+`source src/autorally/autorally_util/setupEnvLocal.sh`
 
 before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki) for more information about how to set this system up for distributed launches on your vehicle platform.
 
 _Note:_ If you are unfamiliar with catkin, please know that you must run `source <catkin_ws>/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
 
-### 4. Generate Documentation
+### 5. Generate Documentation
 
 You can generate / update code documentation by running `doxygen` in `autorally/`.
 
 To view code documentation open `autorally/doc/html/index.html` in a web browser.
 
-### 5. Test Setup in Simulation
+### 6. Test Setup in Simulation
 
 To test that your setup process was successful, run the AutoRally simulator with the following command. You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the joystick node is false. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
 
