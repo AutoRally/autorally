@@ -21,7 +21,7 @@
 
 <library path="lib/libImageRepublisher">
   <class name="autorally_core/ImageRepublisher" type="autorally_core::ImageRepublisher" base_class_type="nodelet::Nodelet">
-    <desription>
+    <description>
     Image republisher for OCS display
     </description>
   </class>
