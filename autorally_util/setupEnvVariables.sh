@@ -59,6 +59,11 @@ export AR_LEFTCAM_CONNECTED=false
 ## For each Flea3 camera attached
 while read line
 do
+    ## if the line is empty, there are no cameras connected, so exit the loop
+    if [ -z "$line" ]
+      then
+        break
+    fi
     ## Parse bus number and device number from lsusb results
     BUS=$(echo $line | grep -o -E 'Bus [0-9]*' | grep -o -E '[0-9]*')
     DEVICE=$(echo $line | grep -o -E 'Device [0-9]*' | grep -o -E '[0-9]*')
