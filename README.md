@@ -88,22 +88,61 @@ _Note:_ If you are unfamiliar with catkin, please know that you must run `source
 
 ### 5. Generate Documentation
 
-You can generate / update code documentation by running `doxygen` in `autorally/`.
+You can generate or update code documentation by running `doxygen` in `autorally/`.
 
 To view code documentation open `autorally/doc/html/index.html` in a web browser.
 
-### 6. Test Setup in Simulation
+### 6. Start the AutoRally Simulation to Test Configuration
 
-To test that your setup process was successful, run the AutoRally simulator with the following command. You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the joystick node is false. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
-
-If you do not have a gamepad and want to control the platform autonomously in simulation, comment out the joystick node launch line in the simulation launch file so that it doesn't publish a `runstop` message that is always false.
- 
 ```roslaunch autorally_gazebo autoRallyTrackGazeboSim.launch```
+
+You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the `joystick` node is **false**. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
+
+Verify runstop motion is enabled by looking at the `runstopMotionEnabled` paramter in the `/chassisState` topic.
+
+If you aren't using a gamepad, you will have to configure another source of runstop information for the platform to move:
+
+- Comment out line 93 of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
+
+- ```rosrun rqt_publisher rqt_publisher```
+
+and configure rqt_publisher to publish a message to topic `/runstop` of type `autorally_msgs/runstop` at 1 Hz with `sender` set to `rqt_publisher` and  `motionEnabled` set to **true**.
+
+- Verify that `runstopMotionEnabled` is *true* in `/chassisState` topic.
+
+### 7. Autonomous Driving in Simulation
+
+At the end of this section the robot will be driving autonomously in simulation using controllers available in `autorally_control`.
+
+The robot should be positioned in the same spot as when the simulation starts and runstop motion should be enabled (set to true).
+
+#### Start state estimator:
+
+In `autorally_core/launch/state_estimator.launch` change `InvertY` and `InvertZ` to **false**, then:
+    
+    rosparam set /gps_imu/FixedInitialPose true
+    roslaunch autorally_core state_estimator.launch
+
+#### Start waypoint follower:
+
+    roslaunch autorally_control waypointFollower.launch
+
+#### Start constant speed controller:
+
+    roslaunch autorally_control constantSpeedController.launch
+    rosrun rqt_publisher rqt_publisher
+
+Configure a publisher on topic `constantSpeedController/speedCommand` of type `std_msgs/Float64` at rate 10 with value of 3 (you can adjust he value once everything is running). The value is the target velocity in m/s, and **as soon as you do this the platform should move if motion is enabled**.
+
+If the robot turns and hits the barrier it's probably because the state estimator has not converged, so its orientation estimate is incorrect. Just select the track barriers and move them up to allow the robot to continue driving, and the estimator should converge and the vehicle will return to within the barriers.
 
 ## What's Next
 
-Check out the [wiki](https://github.com/AutoRally/autorally/wiki) for:
-* Instructions to configure a physical AutoRally platform
-* Tutorials for released controllers (waypoint follower, constant speed controller)
-* Tutorial to use your own controller with the AutoRally platform
-* Information about how to run the included state estimator
+More detailed explanations of the controllers and state estimator can be found on the [wiki](https://github.com/AutoRally/autorally/wiki):
+* [State estimator](https://github.com/AutoRally/autorally/wiki/State%20Estimator)
+* [Waypoint follower](https://github.com/AutoRally/autorally/wiki/Waypoint%20Following)
+* [Constant speed controller](https://github.com/AutoRally/autorally/wiki/Constant%20Speed)
+
+[Controlling the AutoRally platform](https://github.com/AutoRally/autorally/wiki/Controlling%20the%20AutoRally%20Platform) is a tutorial for how your own controller can control the AutoRally platform (in simulation or on hardware).
+
+If you are configuring a physical AutoRally platform, the next step is to configure the compute box, all of the peripherals, and the launch system. Those instructions are found in the [PLatofmr Configuration Instructions](https://github.com/AutoRally/autorally/wiki/Platform%20Configuration%20Instructions).
