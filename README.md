@@ -61,12 +61,11 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    
 ### 2. Clone or Fork Repositories
 
-Get the autorally and imu_3dm_gx4 repositories in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking if you will be working with the code.
+Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking first if you will be working with the code.
 
-To clone:
+To clone straight from the AutoRally:
 
     git clone https://github.com/AutoRally/autorally.git
-    git clone https://github.com/AutoRally/imu_3dm_gx4.git
 
 ### 3. Install AutoRally ROS Dependencies
 
@@ -108,13 +107,13 @@ If you aren't using a gamepad, you will have to configure another source of runs
 
 and configure rqt_publisher to publish a message to topic `/runstop` of type `autorally_msgs/runstop` at 1 Hz with `sender` set to `rqt_publisher` and  `motionEnabled` set to **true**.
 
-- Verify that `runstopMotionEnabled` is *true* in `/chassisState` topic.
+- Verify that `runstopMotionEnabled` is **true** in `/chassisState` topic.
 
 ### 7. Autonomous Driving in Simulation
 
 At the end of this section the robot will be driving autonomously in simulation using controllers available in `autorally_control`.
 
-The robot should be positioned in the same spot as when the simulation starts and runstop motion should be enabled (set to true).
+Position the robot in the same spot as when the simulation starts and make sure runstop motion should is enabled (set to **true**).
 
 #### Start state estimator:
 
@@ -127,7 +126,7 @@ In `autorally_core/launch/state_estimator.launch` change `InvertY` and `InvertZ`
 
     roslaunch autorally_control waypointFollower.launch
 
-#### Start constant speed controller:
+#### Start constant speed controller and tell it what speed to drive:
 
     roslaunch autorally_control constantSpeedController.launch
     rosrun rqt_publisher rqt_publisher
@@ -145,4 +144,4 @@ More detailed explanations of the controllers and state estimator can be found o
 
 [Controlling the AutoRally platform](https://github.com/AutoRally/autorally/wiki/Controlling%20the%20AutoRally%20Platform) is a tutorial for how your own controller can control the AutoRally platform (in simulation or on hardware).
 
-If you are configuring a physical AutoRally platform, the next step is to configure the compute box, all of the peripherals, and the launch system. Those instructions are found in the [PLatofmr Configuration Instructions](https://github.com/AutoRally/autorally/wiki/Platform%20Configuration%20Instructions).
+If you are configuring a physical AutoRally platform, the next step is to configure the compute box, all of the peripherals, and the launch system. Those instructions are found in the [Platform Configuration Instructions](https://github.com/AutoRally/autorally/wiki/Platform%20Configuration%20Instructions).
