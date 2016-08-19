@@ -25,7 +25,7 @@ limitations under the License.
 
   <group ns="$(arg namespace)">
     <!-- robot_description is used by nodes that publish to joint_states. -->
-    <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro"/>
+    <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf1.xacro"/>
     <!-- Read joint positions from joint_states, then publish the vehicle's
          state to tf. -->
     <node name="autoRally_state_publisher" pkg="robot_state_publisher"

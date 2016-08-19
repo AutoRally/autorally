@@ -23,10 +23,11 @@ left_front_wheel:
   axle_controller_name: left_front_axle_ctrlr
   diameter: 0.19
 
-right_front_wheel:
+right_front_wheel:steer:
   steering_link_name: right_front_wheel
   steering_controller_name: right_steering_ctrlr
-  axle_controller_name: right_front_axle_ctrlr
+  axle_controller_name: right_front_axle_ctrlrroslaunch auto
+
   diameter: 0.19
 
 left_rear_wheel:

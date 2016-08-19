@@ -361,7 +361,7 @@ limitations under the License.
               rpy="0 0 0"/>
       
       <geometry>
-        <mesh filename="package://autorally_description/urdf/autoRallyPlatformChassis.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/autoRallyChassis.stl" scale="0.01 0.01 0.01" />
       </geometry>
       <material name="chassis_mat"/>
     </visual>
@@ -371,7 +371,7 @@ limitations under the License.
               rpy="0 0 0"/>
       
       <geometry>
-        <mesh filename="package://autorally_description/urdf/autoRallyPlatformChassis.stl" scale="1.01 1.01 1.01" />
+        <mesh filename="package://autorally_description/urdf/autoRallyChassis.stl" scale="1.01 1.01 1.01" />
       </geometry>
     </collision>
 

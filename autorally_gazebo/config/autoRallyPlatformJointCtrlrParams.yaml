@@ -67,7 +67,7 @@ right_rear_axle_ctrlr:
 # Ultra Shock shock absorber, is 36.2416 Ns/m
 # (i.e. sqrt(3 * shock_spring_constant)).
 # sqrt(3 * needs to be computed)) = 
-# sqrt(3 * needs to eb computed)) = 
+# sqrt(3 * needs to be computed)) = 
 
 left_front_shock_ctrlr:
   joint: left_front_shock
@@ -77,6 +77,7 @@ right_front_shock_ctrlr:
   joint: right_front_shock
   type: effort_controllers/JointPositionController
   pid: {p: 3152.28303, i: 0.0, d: 20}
+
 left_rear_shock_ctrlr:
   joint: left_rear_shock
   type: effort_controllers/JointPositionController

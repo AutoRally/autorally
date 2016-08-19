@@ -506,7 +506,7 @@ class AutoRallyCtrlr(object):
       self._last_steer_ang = theta
       self._theta_left = \
           _get_steer_ang(math.atan(self._inv_wheelbase *
-                                     (center_y - self._joint_dist_div_2)))
+                                     (center_y  - self._joint_dist_div_2)))
       self._theta_right = \
           _get_steer_ang(math.atan(self._inv_wheelbase *
                                    (center_y + self._joint_dist_div_2)))
