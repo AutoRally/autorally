@@ -112,11 +112,13 @@ namespace autorally_core
     m_nh.param<bool>("InvertY", m_inverty, false);
     m_nh.param<bool>("InvertZ", m_invertz, false);
     m_nh.param<double>("Imudt", m_imuDt, 1.0/200.0);
+
     double gpsx, gpsy, gpsz;
     m_nh.param<double>("GPSX",  gpsx, 0);
     m_nh.param<double>("GPSY",  gpsy, 0);
     m_nh.param<double>("GPSZ",  gpsz, 0);
-    m_imuPgps.Create(Rot3(), Point3(gpsx, gpsy, gpsz));
+    m_imuPgps = Pose3(Rot3(), Point3(gpsx, gpsy, gpsz));
+    m_imuPgps.print("IMU->GPS");
 
     bool fixedInitialPose;
     double initialRoll, intialPitch, initialYaw;
