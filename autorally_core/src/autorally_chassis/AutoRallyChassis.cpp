@@ -335,6 +335,7 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
     {
       chassisState->runstopMotionEnabled = false;
       chassisState->throttleCommander = "runstop";
+      chassisState->throttle = 0.0;
     }
   }
 
@@ -375,7 +376,6 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
 
   //send actuator commands down to chassis, sets to calibrated neutral if no valid commander
   sendCommandToChassis(chassisState);
-
 
   chassisEnableMutex_.lock();
   chassisState->throttleRelayEnabled = throttleRelayEnabled_;
