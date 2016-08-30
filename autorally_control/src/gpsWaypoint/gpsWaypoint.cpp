@@ -216,7 +216,7 @@ namespace autorally_control
   void GpsWaypoint::PublishMarkers(double x, double y, double yaw, double xwp, double ywp)
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "LocalFrame";
+    marker.header.frame_id = "odom";
     marker.header.stamp = ros::Time();
     marker.ns = "gps";
     marker.id = 0;
@@ -242,7 +242,7 @@ namespace autorally_control
 
     std::list<geometry_msgs::Point>::const_iterator iter;
     iter = m_wpts.begin();
-    marker.header.frame_id = "LocalFrame";
+    marker.header.frame_id = "odom";
     marker.header.stamp = ros::Time();
     marker.ns = "gps";
     marker.id = 1;
@@ -271,7 +271,7 @@ namespace autorally_control
     marker.id = 2;
     std::list<geometry_msgs::Point>::const_iterator iter;
     for (iter = m_wpts.begin(); iter != m_wpts.end(); ++iter) {
-      marker.header.frame_id = "LocalFrame";
+      marker.header.frame_id = "odom";
       marker.header.stamp = ros::Time();
       marker.ns = "gps";
       marker.id ++;

@@ -46,8 +46,14 @@
   <node name="spawn_jump3" pkg="gazebo_ros" type="spawn_model"
         args="-file $(find autorally_description)/urdf/jump18deg.urdf -urdf -model jump18deg
               -gazebo_namespace /$(arg namespace)/gazebo
-              -x 0 -y -8 -z 0
+              -x 4.0 -y -12 -z 0
               -R 0 -P 0 -Y 0"/>
+  <node name="spawn_jump5" pkg="gazebo_ros" type="spawn_model"
+        args="-file $(find autorally_description)/urdf/jump18deg.urdf -urdf -model jump18deg2
+              -gazebo_namespace /$(arg namespace)/gazebo
+              -x -4.0 -y 12 -z 0
+              -R 0 -P 0 -Y 3.14159"/>
+
   <node name="spawn_jump1" pkg="gazebo_ros" type="spawn_model"
         args="-file $(find autorally_description)/urdf/jump22deg.urdf -urdf -model jump22deg
               -gazebo_namespace /$(arg namespace)/gazebo
@@ -63,4 +69,9 @@
               -gazebo_namespace /$(arg namespace)/gazebo
               -x 0 -y 4 -z 0
               -R 0 -P 0 -Y 0"/>
+  <node name="spawn_track" pkg="gazebo_ros" type="spawn_model"
+        args="-file $(find autorally_description)/urdf/track_20_25.urdf -urdf -model track
+              -gazebo_namespace /$(arg namespace)/gazebo
+              -x 0 -y 0 -z 0.0762
+              -R 0 -P 0 -Y 0.0"/>
 </launch>

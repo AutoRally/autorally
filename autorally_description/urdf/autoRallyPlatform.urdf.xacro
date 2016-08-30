@@ -156,7 +156,7 @@ limitations under the License.
       <axis xyz="0 0 -1"/>
       <limit lower="${-front_wheel_travel / 2}" upper="${front_wheel_travel / 2}"
              effort="${front_shock_eff_limit}" velocity="${shock_vel_limit}"/>
-      <dynamics damping="88" friction="0.0001"
+      <dynamics damping="100" friction="0.0001"
                 spring_stiffness="3152" spring_reference="0.08"/>
     </joint>
     <transmission name="${lr_prefix}_${fr_prefix}_shock_trans">
@@ -186,7 +186,7 @@ limitations under the License.
       <axis xyz="0 0 -1"/>
       <limit lower="${-rear_wheel_travel / 2}" upper="${rear_wheel_travel / 2}"
              effort="${rear_shock_eff_limit}" velocity="${shock_vel_limit}"/>
-      <dynamics damping="0" friction="0.0"/>
+      <dynamics damping="100" friction="0.0"/>
     </joint>
     <transmission name="${lr_prefix}_${fr_prefix}_shock_trans">
       <type>transmission_interface/SimpleTransmission</type>
@@ -417,7 +417,7 @@ limitations under the License.
   </link>
   
   <joint name="imu_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="3.14159 0 0"/>
     <parent link="base_link"/>
     <child link="imu_link"/>
   </joint>
@@ -629,7 +629,7 @@ limitations under the License.
       <bodyName>imu_link</bodyName>
       <frameId>imu_link</frameId>
       <topicName>imu</topicName>
-      <rpyOffset>0 0 0</rpyOffset>
+      <rpyOffset>3.14159 0 0</rpyOffset>
       <xyzOffset>0 0 0</xyzOffset>
       <gaussianNoise>0.00000001</gaussianNoise>
       <accelDrift>0.00000001 0.00000001 0.00000001</accelDrift>

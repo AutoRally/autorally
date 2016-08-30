@@ -48,6 +48,5 @@
       <param name="GPSY" value="0"/>
       <param name="GPSZ" value="-0.06"/>
       
-      
   </node>
 </launch>
