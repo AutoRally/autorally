@@ -4,7 +4,6 @@
 
 
   <node name="gps_imu" pkg="autorally_core" type="imuGpsEstimator" output="screen" machine="autorally-master">
-
     <remap from="/gps_imu/gps" to="/gpsRoverStatus"/>
     <remap from="/gps_imu/imu" to="/imu/imu"/>
     <remap from="/gps_imu/pose" to="/pose_estimate"/>
@@ -45,7 +44,5 @@
     <param name="InvertX" value="false"/>
     <param name="InvertY" value="true"/>
     <param name="InvertZ" value="true"/>
-
->>>>>>> Stashed changes
   </node>
 </launch>
