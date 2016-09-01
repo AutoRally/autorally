@@ -64,6 +64,8 @@
 using symbol_shorthand::X;
 using symbol_shorthand::V;
 using symbol_shorthand::B;
+// Gps pose
+using symbol_shorthand::G;
 
 namespace autorally_core
 {
@@ -111,7 +113,12 @@ namespace autorally_core
     m_nh.param<bool>("InvertZ", m_invertz, false);
     m_nh.param<double>("Imudt", m_imuDt, 1.0/200.0);
 
-
+    double gpsx, gpsy, gpsz;
+    m_nh.param<double>("GPSX",  gpsx, 0);
+    m_nh.param<double>("GPSY",  gpsy, 0);
+    m_nh.param<double>("GPSZ",  gpsz, 0);
+    m_imuPgps = Pose3(Rot3(), Point3(gpsx, gpsy, gpsz));
+    m_imuPgps.print("IMU->GPS");
 
     bool fixedInitialPose;
     double initialRoll, intialPitch, initialYaw;
@@ -316,10 +323,17 @@ namespace autorally_core
         m_previousBias = imuBias::ConstantBias(biases);
         PriorFactor<imuBias::ConstantBias> priorBias(B(0), imuBias::ConstantBias(biases), priorNoiseBias);
         newFactors.add(priorBias);
+
+        //Factor for imu->gps translation
+        BetweenFactor<Pose3> imuPgpsFactor(X(0), G(0), m_imuPgps,
+            noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
+        newFactors.add(imuPgpsFactor);
+
         // add prior values on pose, vel and bias
         newVariables.insert(X(0), x0);
         newVariables.insert(V(0), Vector3(0, 0, 0));
         newVariables.insert(B(0), imuBias::ConstantBias(biases));
+        newVariables.insert(G(0), x0.compose(m_imuPgps));
 
         m_isam->update(newFactors, newVariables);
         //Read IMU measurements up to the first GPS measurement
@@ -366,12 +380,17 @@ namespace autorally_core
 
         SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(m_gpsSigma, m_gpsSigma, 3.0 * m_gpsSigma));
 
-        GPSFactor gpsFactor(X(m_poseVelKey+1), Point3(E, N, U), gpsNoise);
+        GPSFactor gpsFactor(G(m_poseVelKey+1), Point3(E, N, U), gpsNoise);
         newFactors.add(gpsFactor);
+
+        BetweenFactor<Pose3> imuPgpsFactor(X(m_poseVelKey+1), G(m_poseVelKey+1), m_imuPgps,
+            noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
+        newFactors.add(imuPgpsFactor);
 
         newVariables.insert(X(m_poseVelKey+1), nextNavState.pose());
         newVariables.insert(V(m_poseVelKey+1), nextNavState.v());
         newVariables.insert(B(m_biasKey+1), m_previousBias);
+        newVariables.insert(G(m_poseVelKey+1), nextNavState.pose().compose(m_imuPgps));
 
         m_isam->update(newFactors, newVariables);
         m_prevPose = m_isam->calculateEstimate<Pose3>(X(m_poseVelKey+1));

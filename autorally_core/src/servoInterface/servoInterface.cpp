@@ -136,6 +136,7 @@ void ServoInterface::setServos(const ros::TimerEvent&)
         if(runstop.second.motionEnabled == 0)
         {
           chassisState->runstopMotionEnabled = false;
+          chassisState->throttle = 0.0;
           chassisState->throttleCommander = "runstop";
         }
       }
@@ -181,16 +182,15 @@ void ServoInterface::setServos(const ros::TimerEvent&)
   }
 
   //only set servos if a valid command value was found
-  if(!chassisState->throttleCommander.empty() && chassisState->runstopMotionEnabled == true)
+  if( (chassisState->runstopMotionEnabled == true && !chassisState->throttleCommander.empty()) ||
+       chassisState->runstopMotionEnabled == false)
   {
     setServo("throttle", chassisState->throttle);
-    chassisState->throttle = chassisState->throttle;
   }
 
   if(!chassisState->steeringCommander.empty())
   {
     setServo("steering", chassisState->steering);
-    chassisState->steering = chassisState->steering;
   } else
   {
     chassisState->steering = -10.0;

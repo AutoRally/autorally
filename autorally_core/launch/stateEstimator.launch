@@ -44,6 +44,9 @@
       <param name="InvertX" value="false"/>
       <param name="InvertY" value="true"/>
       <param name="InvertZ" value="true"/>
+      <param name="GPSX" value="-0.37"/>
+      <param name="GPSY" value="0"/>
+      <param name="GPSZ" value="-0.06"/>
       
       
   </node>
