@@ -131,7 +131,7 @@ void ServoInterface::setServos(const ros::TimerEvent&)
     chassisState->runstopMotionEnabled = true;
     for(auto& runstop : m_runstops)
     {
-      if(currentTime-runstop.second.header.stamp < m_runstopMaxAge)
+      if( (currentTime - runstop.second.header.stamp) < m_runstopMaxAge)
       {
         if(runstop.second.motionEnabled == 0)
         {
