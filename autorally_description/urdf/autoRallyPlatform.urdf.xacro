@@ -417,7 +417,7 @@ limitations under the License.
   </link>
   
   <joint name="imu_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="3.14159 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="imu_link"/>
   </joint>
@@ -629,7 +629,7 @@ limitations under the License.
       <bodyName>imu_link</bodyName>
       <frameId>imu_link</frameId>
       <topicName>imu</topicName>
-      <rpyOffset>3.14159 0 0</rpyOffset>
+      <rpyOffset>0 0 0</rpyOffset>
       <xyzOffset>0 0 0</xyzOffset>
       <gaussianNoise>0.00000001</gaussianNoise>
       <accelDrift>0.00000001 0.00000001 0.00000001</accelDrift>
