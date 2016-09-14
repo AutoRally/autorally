@@ -55,10 +55,25 @@ leftSerials=("serial1" "serial2")
 
 export AR_RIGHTCAM_CONNECTED=false
 export AR_LEFTCAM_CONNECTED=false
+export AR_RIGHTCAM=none
+export AR_LEFTCAM=none
+
+IFS=$'\n'
+
+## Get list of PointGrey Flea3 devices connected to computer
+if [[ $MASTER_HOSTNAME == "localhost" ]]
+    then
+         # Use lsusb to find all PointGrey Flea3 cameras plugged in right now
+        camList=( $(lsusb | grep '1e10:\(3300\|300a\)') )
+else
+        #camList=$(ssh $MASTER_HOSTNAME ls /dev/)
+	    camList=( $(ssh $MASTER_HOSTNAME lsusb | grep '1e10:\(3300\|300a\)') )
+fi
 
 ## For each Flea3 camera attached
-while read line
+for (( i=0; i<${#camList[@]}; i++))
 do
+    line=${camList[i]}
     ## if the line is empty, there are no cameras connected, so exit the loop
     if [ -z "$line" ]
       then
@@ -69,7 +84,12 @@ do
     DEVICE=$(echo $line | grep -o -E 'Device [0-9]*' | grep -o -E '[0-9]*')
     
     ## Query device for hexadecimal serial number
-    SERIAL=$(udevadm info --query=property /dev/bus/usb/$BUS/$DEVICE | grep "ID_SERIAL_SHORT" | sed 's/ID_SERIAL_SHORT=//g')
+    if [[ $MASTER_HOSTNAME == "localhost" ]]
+        then
+            SERIAL=$(udevadm info --query=property /dev/bus/usb/$BUS/$DEVICE | grep "ID_SERIAL_SHORT" | sed 's/ID_SERIAL_SHORT=//g')
+    else
+            SERIAL=$(ssh $MASTER_HOSTNAME udevadm info --query=property /dev/bus/usb/$BUS/$DEVICE | grep "ID_SERIAL_SHORT" | sed 's/ID_SERIAL_SHORT=//g')
+    fi
     
     ## Covert hexadecimal serial number to decimal format
     SERIAL=$((0x$SERIAL))
@@ -88,7 +108,7 @@ do
         export AR_LEFTCAM_CONNECTED=true
     fi
 
-done <<< "$(lsusb | grep '1e10:\(3300\|300a\)')" # Use lsusb to find all PointGrey Flea3 cameras plugged in right now
+done
 
 if [[ $DEBUG == true ]]; then
     echo "AR_RIGHTCAM           = ${AR_RIGHTCAM}"
