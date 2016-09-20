@@ -186,7 +186,7 @@ limitations under the License.
       <axis xyz="0 0 -1"/>
       <limit lower="${-rear_wheel_travel / 2}" upper="${rear_wheel_travel / 2}"
              effort="${rear_shock_eff_limit}" velocity="${shock_vel_limit}"/>
-      <dynamics damping="0" friction="0.0"/>
+      <dynamics damping="88" friction="0.0"/>
     </joint>
     <transmission name="${lr_prefix}_${fr_prefix}_shock_trans">
       <type>transmission_interface/SimpleTransmission</type>

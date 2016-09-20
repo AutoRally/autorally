@@ -32,6 +32,7 @@
 
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />
     <remap from="set_camera_info" to="$(arg side)_camera/set_camera_info"/>
+    <remap from="image" to="$(arg side)_camera/image_diagnostic" />
   </node>
   <node pkg="nodelet" type="nodelet" name="$(arg side)_image_proc_debayer" args="load image_proc/debayer camera_nodelet_manager">
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />
