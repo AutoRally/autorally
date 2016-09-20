@@ -16,7 +16,7 @@
 -->
 <package>
   <name>autorally_util</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>Utility files for configuration and setup of autorally software.</description>
   <maintainer email="bgoldfain3@gatech.edu">Brian Goldfain</maintainer>
 
