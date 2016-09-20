@@ -16,7 +16,7 @@
 -->
 <package>
   <name>autorally_control</name>
-  <version>0.1.0</version>
+  <version>0.2.2</version>
   <description>All control software created for the autorally project resides here</description>
 
   <maintainer email="bgoldfain3@gatech.edu">Brian Goldfain</maintainer>
