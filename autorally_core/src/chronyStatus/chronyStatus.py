@@ -49,7 +49,7 @@ def checkChronyVersion():
     versionText = check_output("chronyc -v", shell=True);
     lines = versionText.split(' ')
     if lines[2] == 'version':
-      return float(lines[3])
+      return lines[3]
 
   except subprocess.CalledProcessError as e:
     rospy.logerr('chronyStatus: subprocess error:' + e.output)
@@ -109,21 +109,21 @@ if __name__ == '__main__':
   rate = rospy.Rate(0.2) # query and publish chrony information once every 5 seconds
   
   chronyVersion = checkChronyVersion()
-  chronyMinVersion = 1.29
+  #chronyMinVersion = 1.29
   
   #publish error and exit if chronyMinVersion is not satisfied
-  if chronyVersion < chronyMinVersion:
-    rospy.logerr('ChronyStatus requires chrony version ' + str(chronyMinVersion) + \
-                 ' or greater, version ' + str(chronyVersion) + ' detected, exiting')
+  #if chronyVersion < chronyMinVersion:
+  #  rospy.logerr('ChronyStatus requires chrony version ' + str(chronyMinVersion) + \
+  #               ' or greater, version ' + str(chronyVersion) + ' detected, exiting')
 
-  else:
-    while not rospy.is_shutdown():
+  #else:
+  while not rospy.is_shutdown():
 
-      status.values = []
-      status.values.append(KeyValue(key='chrony version', value=str(chronyVersion)) )
+    status.values = []
+    status.values.append(KeyValue(key='chrony version', value=chronyVersion) )
 
-      getTracking(status)
-      getSources(status)
+    getTracking(status)
+    getSources(status)
 
-      pub.publish(array)
-      rate.sleep()
+    pub.publish(array)
+    rate.sleep()

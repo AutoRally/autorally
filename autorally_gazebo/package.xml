@@ -16,7 +16,7 @@
 -->
 <package>
   <name>autorally_gazebo</name>
-  <version>0.1.0</version>
+  <version>0.2.3</version>
   <description>
     autorally_gazebo is used with Gazebo to simulate the AutoRally
     platform. This package was adapted from ackermann_vehicle_gazebo.
