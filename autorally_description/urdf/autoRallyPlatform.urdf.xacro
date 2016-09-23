@@ -325,7 +325,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformFrontWheel.stl"
+                 wheel_model="package://autorally_description/urdf/autoRallyPlatformFrontWheelTextured.dae"
                  cant="0.05"/>
   </xacro:macro>
 
@@ -340,7 +340,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformRearWheel.stl"
+                 wheel_model="package://autorally_description/urdf/autoRallyPlatformRearWheelTextured.dae"
                  cant="-0.03"/>
   </xacro:macro>
 
