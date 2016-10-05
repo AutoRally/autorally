@@ -16,7 +16,7 @@
 -->
 <package>
   <name>autorally_description</name>
-  <version>0.1.0</version>
+  <version>0.2.3</version>
   <description>
     autorally_description contains the description (3D model,
     kinematics, mass, etc.) of the AutoRally platform and other models
