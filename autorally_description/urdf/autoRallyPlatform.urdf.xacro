@@ -366,9 +366,8 @@ limitations under the License.
               rpy="0 0 0"/>
       
       <geometry>
-        <mesh filename="package://autorally_description/urdf/autoRallyPlatform.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
-      <material name="chassis_mat"/>
     </visual>
 
     <collision>
@@ -376,7 +375,7 @@ limitations under the License.
               rpy="0 0 0"/>
       
       <geometry>
-        <mesh filename="package://autorally_description/urdf/autoRallyPlatform.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
     </collision>
 
@@ -390,7 +389,6 @@ limitations under the License.
     </inertial>
   </link>
   <gazebo reference="chassis">
-    <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
   </gazebo>

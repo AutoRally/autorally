@@ -37,7 +37,7 @@ limitations under the License.
 
 <launch>
   <arg name="namespace" default="autorally_platform"/>
-  <arg name="world_name" default="worlds/empty_sky.world"/>
+  <arg name="world_name" default="worlds/empty_sky_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- parameter for other programs to use to know if we are in simulation ro real world-->
