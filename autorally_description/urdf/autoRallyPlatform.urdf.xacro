@@ -325,7 +325,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformFrontWheel.stl"
+                 wheel_model="package://autorally_description/urdf/autoRallyPlatformFrontWheelTextured.dae"
                  cant="0.05"/>
   </xacro:macro>
 
@@ -340,7 +340,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformRearWheel.stl"
+                 wheel_model="package://autorally_description/urdf/autoRallyPlatformRearWheelTextured.dae"
                  cant="-0.03"/>
   </xacro:macro>
 
@@ -366,9 +366,8 @@ limitations under the License.
               rpy="0 0 0"/>
       
       <geometry>
-        <mesh filename="package://autorally_description/urdf/autoRallyPlatform.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
-      <material name="chassis_mat"/>
     </visual>
 
     <collision>
@@ -376,7 +375,7 @@ limitations under the License.
               rpy="0 0 0"/>
       
       <geometry>
-        <mesh filename="package://autorally_description/urdf/autoRallyPlatform.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
     </collision>
 
@@ -390,7 +389,6 @@ limitations under the License.
     </inertial>
   </link>
   <gazebo reference="chassis">
-    <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
   </gazebo>
