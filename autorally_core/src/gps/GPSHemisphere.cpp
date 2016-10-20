@@ -289,6 +289,7 @@ void GPSHemisphere::rtcmDataCallback()
         {
           ROS_ERROR_STREAM("GPSHemisphere failed RTCM3.0 type lexical cast:" << type);
           m_portB.diag_warn("GPSHemisphere failed RTCM3.0 type lexical cast");
+          return;
         }
         
         m_portB.m_data.erase(0,len);
@@ -367,7 +368,11 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       m_portA.diag(msgType + " HDOP:", tokens[8].c_str());
       
       m_navSatFix.altitude = processAltitude(tokens[9], tokens[10], tokens[11], tokens[12]);
-
+      if(fabs(m_navSatFix.altitude) < 0.001)
+      {
+        return;
+      }
+      
       //quality token
       if(tokens[6] != "0" && tokens[6] != "1")
       {
@@ -402,6 +407,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     {
       ROS_ERROR_STREAM("GPSHemisphere failed GPS message age lexical cast");
       m_portB.diag_warn("GPSHemisphere failed GPS message age lexical cast");
+      return;
     }
 
     m_statusPub.publish(m_navSatFix);
@@ -472,6 +478,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       {
         m_portA.diag_error("GPSHemisphere::GPGNS bad altitude lexical cast");
         ROS_ERROR("GPSHemisphere::GPGNS bad altitude lexical cast");
+        return;
       } 
       
       if((tokens[6][0] == 'D' ||
@@ -528,6 +535,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     {
       ROS_ERROR_STREAM("GPSHemisphere failed GPS message age lexical cast");
       m_portB.diag_warn("GPSHemisphere failed GPS message age lexical cast");
+      return;
     }
 
     m_statusPub.publish(m_navSatFix);
@@ -662,6 +670,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
         m_portA.diag_error("GPSHemisphere: process of GSA msg cause bad lexical cast for:"
                            + msgType);
         ROS_ERROR_STREAM("GPSHemisphere::process " << msgType << " caused bad lexical cast failed");
+        return;
       }
     }
 
@@ -720,6 +729,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       {
         m_portA.diag_error("GPSHemisphere: process GPGST bad lexical cast");
         ROS_ERROR("GPSHemisphere: process GPGST bad lexical cast");
+        return;
       }
     }
   } else if(msgType == "GPVTG") //course over ground/ground speed
@@ -800,6 +810,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     {
       m_portA.diag_error("GPSHemisphere: process GSV failed");
       ROS_ERROR_STREAM("GPSHemisphere: process " << msgType << " failed");
+      return;
     }
 
   } else if(msgType == "GPGNS" ||
@@ -914,8 +925,8 @@ double GPSHemisphere::processLatitude(const std::string& lat,
   {
     m_portA.diag_error("GPSHemisphere::processLatitude bad lexical cast");
     ROS_ERROR("GPSHemisphere::processLatitude bad lexical cast");
+    return 0.0;
   }
-  return 0.0;
 }
 double GPSHemisphere::processLongitude(const std::string& lon,
                                       const std::string& lonInd)
@@ -937,9 +948,8 @@ double GPSHemisphere::processLongitude(const std::string& lon,
   {
     m_portA.diag_error("GPSHemisphere::processLongitude bad lexical cast");
     ROS_ERROR("GPSHemisphere::processLongitude bad lexical cast");
+    return 0.0;
   }
-  return 0.0;
-
 }
 double GPSHemisphere::processAltitude(const std::string& antAlt,
                                       const std::string& antAltUnits,
@@ -985,6 +995,7 @@ void GPSHemisphere::processUTC(const std::string& utc, const std::string& source
     {
       m_portA.diag_error("GPSHemisphere::processUTC bad lexical cast");
       ROS_ERROR("GPSHemisphere::processUTC bad lexical cast");
+      return;
     }
   }
 }
