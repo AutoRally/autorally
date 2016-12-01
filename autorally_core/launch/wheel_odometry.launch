@@ -1,5 +1,5 @@
 <launch>
-  <node name="WheelOdometry" pkg="autorally_private_control" type="WheelOdometry" output="screen"/>
+  <node name="WheelOdometry" pkg="autorally_core" type="WheelOdometry" output="screen"/>
     <param name="vehicle_wheelbase" value="0.57785" />
     <param name="vehicle_width" value="0.3175" />
     <param name="using_sim" value="false" />
