@@ -117,10 +117,10 @@ Position the robot in the same spot as when the simulation starts and make sure 
 
 #### Start state estimator:
 
-In `autorally_core/launch/stateEstimator.launch` change `InvertY` and `InvertZ` to **false**, then:
+In `autorally_core/launch/state_estimator.launch` change `InvertY` and `InvertZ` to **false**, then:
     
     rosparam set /gps_imu/FixedInitialPose true
-    roslaunch autorally_core stateEstimator.launch
+    roslaunch autorally_core state_estimator.launch
 
 #### Start waypoint follower:
 
