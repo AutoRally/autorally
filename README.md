@@ -91,6 +91,7 @@ You can generate or update code documentation by running `doxygen` in `autorally
 
 To view code documentation open `autorally/doc/html/index.html` in a web browser.
 
+
 ### 6. Start the AutoRally Simulation to Test Configuration
 
 ```roslaunch autorally_gazebo autoRallyTrackGazeboSim.launch```
