@@ -127,6 +127,7 @@ namespace autorally_core
     Vector3 m_prevVel;
     Pose3 m_prevPose;
     Pose3 m_bodyPSensor, m_carENUPcarNED;
+    Pose3 m_imuPgps;
 
     LocalCartesian m_enu;   /// Object to put lat/lon coordinates into local cartesian
     bool m_gotFirstFix;
@@ -135,6 +136,7 @@ namespace autorally_core
     SharedDiagonal priorNoisePose;
     SharedDiagonal priorNoiseVel;
     SharedDiagonal priorNoiseBias;
+    SharedDiagonal priorNoiseimuPgps;
 
     Vector3 sigma_acc_bias_c;
     Vector3 sigma_gyro_bias_c;

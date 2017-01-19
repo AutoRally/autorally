@@ -28,7 +28,7 @@
  * @author Brian Goldfain <bgoldfai@gmail.com>
  * @date July 10, 2016
  * @copyright 2016 Georgia Institute of Technology
- * @brief Interface for and AutoRally chassis
+ * @brief Interface for an AutoRally chassis
  *
  * @details This file contains the AutoRallyChassis class definition
  ***********************************************/

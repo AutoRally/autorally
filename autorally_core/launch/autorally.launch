@@ -11,7 +11,7 @@
   <group if="$(optenv AR_CHASSIS_NEW true)">
     <include file="$(find autorally_core)/launch/autorally_chassis.launch" />
   </group>
-  <group unless="$(optenv AR_CHASSIS_NEW false)">
+  <group unless="$(optenv AR_CHASSIS_NEW true)">
     <include file="$(find autorally_core)/launch/arduinoOnboard.launch" />
     <include file="$(find autorally_core)/launch/servoInterface.launch" />
   </group>
