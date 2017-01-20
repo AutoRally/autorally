@@ -5,6 +5,8 @@
 
   <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" />
 
+  <include file="$(find autorally_core)/launch/camera_trigger.launch"/>
+
   <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_LEFTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
     <arg name="serial" value="$(optenv AR_LEFTCAM 'none')" />

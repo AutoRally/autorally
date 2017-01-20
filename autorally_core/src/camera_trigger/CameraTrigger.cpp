@@ -62,13 +62,14 @@ void CameraTrigger::onInit()
       NODELET_ERROR("CameraTrigger: Could not get all CameraTrigger parameters");
   }
 
+	m_port.registerDataCallback(boost::bind(&CameraTrigger::triggerDataCallback, this));
+
   //set up dynamic_reconfigure server
   dynamic_reconfigure::Server<camera_trigger_paramsConfig>::CallbackType cb;
   cb = boost::bind(&CameraTrigger::configCallback, this, _1, _2);
   m_dynReconfigServer.setCallback(cb);
 
 	m_port.init(m_nhPvt, getName(), "", "CameraTrigger", port, true);
-	m_port.registerDataCallback(boost::bind(&CameraTrigger::triggerDataCallback, this));
 }
 
 void CameraTrigger::triggerDataCallback()
@@ -86,19 +87,13 @@ void CameraTrigger::triggerDataCallback()
       if(*it == "pps")
       {
         if(++it == tok.end()) break;
-        if(*it == "0")
-        {
-          m_port.diag_ok("PPS input good");
-        }
-        else if(*it == "1")
-        {
-          m_port.diag_warn("no PPS");
-        }
-        else
-        {
-          m_port.diag_error("unknown PPS status from trigger:" + *it);
-        }
+        m_port.diag("PPS count", *it);
         m_port.tick("pps info");
+      } else if(*it == "fps")
+      {
+        if(++it == tok.end()) break;
+        m_port.diag("Actual triggering FPS", *it);
+        m_port.tick("fps info");
       } else
       {
         NODELET_ERROR("CameraTrigger: Bad token %s", it->c_str());
@@ -111,7 +106,7 @@ void CameraTrigger::triggerDataCallback()
       }
     }
   }
-  m_port.diag("Triggering FPS", std::to_string(m_triggerFPS));
+  m_port.diag("Requested triggering FPS", std::to_string(m_triggerFPS));
 }
 
 bool CameraTrigger::findMessage(std::string& msg)
@@ -147,7 +142,7 @@ void CameraTrigger::configCallback(const camera_trigger_paramsConfig &config, ui
 {
   m_triggerFPS = config.camera_trigger_frequency;  
   //NODELET_ERROR_STREAM("Triggering FPS " << m_triggerFPS);  
-  m_port.diag("Triggering FPS", std::to_string(m_triggerFPS));
+  //m_port.diag("Requested triggering FPS", std::to_string(m_triggerFPS));
 
   //send new FPS to arduino
   m_port.lock();

@@ -42,7 +42,6 @@
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
 #include <dynamic_reconfigure/server.h>
-//#include <std_msgs/Float64.h>
 
 #include <autorally_core/SerialInterfaceThreaded.h>
 #include <autorally_msgs/wheelSpeeds.h>
@@ -50,7 +49,6 @@
 #include <autorally_core/camera_trigger_paramsConfig.h>
 
 #include <boost/tokenizer.hpp>
-//#include <boost/circular_buffer.hpp>
 
 #include <stdio.h>
 #include <string>
@@ -61,17 +59,15 @@ namespace autorally_core
 /**
  *  @class CameraTrigger CameraTrigger.h
  *  "CameraTrigger/CameraTrigger.h"
- *  @brief Interacts with the onboard Arduino card
+ *  @brief Interacts with the microcontroller used to trigger the cameras
  *
- *  The Arduino card publishes data on startup. This class
- *  publishes that data as an arduinoData message.
  */
 class CameraTrigger : public nodelet::Nodelet
 {
 
  public:
   /**
-   * @brief Constructor requires all configuration needed to connect to arduino
+   * @brief Constructor for interface to camera triggering microcontroller
    *
    */
   CameraTrigger();
@@ -80,18 +76,31 @@ class CameraTrigger : public nodelet::Nodelet
   void onInit();
 
  private:
+   ///< Dynamic Reconfigure server used for changing the triggering rate on the fly
   dynamic_reconfigure::Server<camera_trigger_paramsConfig> m_dynReconfigServer;
   SerialInterfaceThreaded m_port; ///<Serial port for arduino data
-  int m_triggerFPS; ///< Frame rate for the camera external trigger
+  int m_triggerFPS; ///< Frame rate for the cameras to be triggered
 
+   ///< tokenizer used to parse data received from microcontroller
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
   
-    /**
+  /**
    * @brief Process incoming data stream to pull out complete message strings
    * @return bool if a complete message string was found and processed
    */
   void triggerDataCallback();
+  
+  /**
+   * @brief Process incoming data stream to pull out complete message strings
+   * @return bool if a complete message string was found and processed
+   */  
   bool findMessage(std::string& msg);
+
+  /**
+   * @brief Callback triggered when a new message is received from dynamic reconfigure srever
+   * @param config the new desired triggering rate
+   * @param level unused but required
+   */
   void configCallback(const camera_trigger_paramsConfig &config, uint32_t level);
  
 };
