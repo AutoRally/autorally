@@ -28,8 +28,9 @@ SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.org)", ATTRS{idProd
 SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.cc)", ATTRS{idProduct}=="0043", SYMLINK+="arRunStop"
 SUBSYSTEMS=="usb", ATTRS{manufacturer}=="Arduino (www.arduino.cc)", ATTRS{product}=="Arduino Uno", MODE="0666", SYMLINK+="arRunStop"
 
-# Arduino Micro
+# Arduino Micro (for some reason Srl changes to LLC when a program is uploaded from Arduino IDE 1.8, so we need both entries)
 SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino Srl", ATTRS{idProduct}=="8037", ATTRS{product}=="Arduino Micro", SYMLINK+="arComputeBoxArduino"
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino LLC", ATTRS{idProduct}=="8037", ATTRS{product}=="Arduino Micro", SYMLINK+="arComputeBoxArduino"
 
 # IMU
 DRIVERS=="usb", ATTRS{manufacturer}=="Lord Microstrain", ATTRS{product}=="Lord Inertial Sensor", MODE="0666", SYMLINK+="arLordIMU"

@@ -740,14 +740,14 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     //Token 4 = UTC year
     //Token 5 = Local zone hours
     //Token 6 = Local zone minutes
-  } else if(msgType == "$PSAT")
+  } else if(msgType == "PSAT")
   {
     if(tokens.size() < 2)
     {
       ROS_WARN("GPSHemisphere: wrong token count 9 in: %s", msg.c_str());
       return;
     }
-    m_portA.tick("$PSAT");
+    m_portA.tick("PSAT");
     if(tokens[1] == "RTKSTAT")
     {
     } else if(tokens[1] == "RTKPROG")
