@@ -30,7 +30,7 @@ void setup()
   pinMode(triggerPin, OUTPUT);
   configureTriggerTimers();
   //attach all interrupt for incoming pps
-  attachInterrupt(2, int0, RISING);
+  attachInterrupt(digitalPinToInterrupt(triggerPin), int0, RISING);
    
   time = 0;
   pps = 0;
