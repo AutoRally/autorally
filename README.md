@@ -63,9 +63,13 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
 Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking first if you will be working with the code.
 
-To clone straight from the AutoRally:
+To clone straight from the AutoRally repo:
 
     git clone https://github.com/AutoRally/autorally.git
+
+Also clone the IMU code into the same catkin workspace:
+
+    git clone https://github.com/AutoRally/imu_3dm_gx4.git
 
 ### 3. Install AutoRally ROS Dependencies
 
