@@ -53,6 +53,8 @@
 
 #include <autorally_core/SerialInterfaceThreaded.h>
 
+#define PI 3.141592653589793238462;
+
 namespace autorally_core
 {
 
@@ -165,6 +167,7 @@ class AutoRallyChassis : public nodelet::Nodelet
   double mostRecentRcSteering_; ///< Most recent RC steering command received from the chassis
   double mostRecentRcThrottle_; ///< Most recent RC throttle command received from the chassis
   double mostRecentRcFrontBrake_; ///< Most recent RC front brake command received from the chassis
+  double wheelDiameter_; ///<Diameter of wheels on vehicle in m
 
   /**
    * @brief Callback for receiving control messages
