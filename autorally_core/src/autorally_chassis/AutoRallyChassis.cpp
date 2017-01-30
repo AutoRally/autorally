@@ -71,6 +71,7 @@ void AutoRallyChassis::onInit()
 
   if(!nhPvt.getParam("commandRate", commandRate) ||
      !nhPvt.getParam("commandMaxAge", chassisCommandMaxAge) ||
+     !nhPvt.getParam("wheelDiameter", wheelDiameter_) ||
      !nhPvt.getParam("runstopMaxAge", runstopMaxAge))
   {
     NODELET_ERROR_STREAM(getName() << " could not get all startup params");
@@ -177,10 +178,12 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
         autorally_msgs::wheelSpeedsPtr wheelSpeeds(new autorally_msgs::wheelSpeeds);
         try
         {
-          wheelSpeeds->lfSpeed = std::stod(data[0]);
-          wheelSpeeds->rfSpeed = std::stod(data[1]);
-          wheelSpeeds->lbSpeed = std::stod(data[2]);
-          wheelSpeeds->rbSpeed = std::stod(data[3]);
+          // Convert from rotations per second to m/s
+          wheelSpeeds->lfSpeed = std::stod(data[0])*wheelDiameter_*PI;
+          wheelSpeeds->rfSpeed = std::stod(data[1])*wheelDiameter_*PI;
+          wheelSpeeds->lbSpeed = std::stod(data[2])*wheelDiameter_*PI;
+          wheelSpeeds->rbSpeed = std::stod(data[3])*wheelDiameter_*PI;
+
           if(wheelSpeedsPub_ && !ros::isShuttingDown())
           {
             wheelSpeeds->header.stamp = ros::Time::now();

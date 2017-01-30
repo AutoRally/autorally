@@ -37,7 +37,7 @@
       <!-- To use in sumulation set "rosparam set /gps_imu/FixedInitialPose true" -->
       <!-- and <param name="InvertY" value="false"/> -->
       <!-- and <param name="InvertZ" value="false"/> -->
-      <param name="FixedInitialPose" value="true"/>
+      <param name="FixedInitialPose" value="false"/>
       <param name="initialRoll" value="0"/>
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>

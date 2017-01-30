@@ -63,9 +63,13 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
 Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking first if you will be working with the code.
 
-To clone straight from the AutoRally:
+To clone straight from the AutoRally repo:
 
     git clone https://github.com/AutoRally/autorally.git
+
+Also clone the IMU code into the same catkin workspace:
+
+    git clone https://github.com/AutoRally/imu_3dm_gx4.git
 
 ### 3. Install AutoRally ROS Dependencies
 
@@ -83,13 +87,14 @@ Due to the additional requirement of ROS's distributed launch system, you must r
 
 before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki) for more information about how to set this system up for distributed launches on your vehicle platform.
 
-_Note:_ If you are unfamiliar with catkin, please know that you must run `source <catkin_ws>/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
+_Note:_ If you are unfamiliar with catkin, please know that you must run `source catkin_ws/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
 
 ### 5. Generate Documentation
 
 You can generate or update code documentation by running `doxygen` in `autorally/`.
 
 To view code documentation open `autorally/doc/html/index.html` in a web browser.
+
 
 ### 6. Start the AutoRally Simulation to Test Configuration
 
