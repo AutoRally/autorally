@@ -240,8 +240,9 @@ namespace autorally_core
      noiseModelBetweenbias_sigma = (Vector(6) << sigma_acc_bias_c, sigma_gyro_bias_c).finished();
      noiseModelBetweenbias = noiseModel::Diagonal::Sigmas((noiseModelBetweenbias_sigma));
 
-     m_gpsSub = m_nh.subscribe("gps", 300, &StateEstimator::GpsCb, this);
-     m_imuSub = m_nh.subscribe("imu", 600, &StateEstimator::ImuCb, this);
+     m_gpsSub = m_nh.subscribe("gps", 300, &StateEstimator::GpsCallback, this);
+     m_imuSub = m_nh.subscribe("imu", 600, &StateEstimator::ImuCallback, this);
+     m_odomSub = m_nh.subscribe("wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
 
      boost::thread optimizer(&StateEstimator::GpsHelper,this);
 
@@ -250,7 +251,7 @@ namespace autorally_core
   StateEstimator::~StateEstimator()
   {}
 
-  void StateEstimator::GpsCb(sensor_msgs::NavSatFixConstPtr fix)
+  void StateEstimator::GpsCallback(sensor_msgs::NavSatFixConstPtr fix)
   {
     if (!m_gpsOptQ.pushNonBlocking(fix))
     {
@@ -430,7 +431,7 @@ namespace autorally_core
     }
   }
 
-  void StateEstimator::ImuCb(sensor_msgs::ImuConstPtr imu)
+  void StateEstimator::ImuCallback(sensor_msgs::ImuConstPtr imu)
   {
     double dt;
     if (m_lastImuT == 0) dt = 0.005;
@@ -533,6 +534,10 @@ namespace autorally_core
     delays.z = imu->header.stamp.toSec() - optimizedTime;
     m_timePub.publish(delays);
     return;
+  }
+
+  void StateEstimator::WheelOdomCallback(nav_msgs::OdometryPtr odom)
+  {
   }
 
   void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)

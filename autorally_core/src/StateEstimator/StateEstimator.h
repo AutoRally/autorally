@@ -82,7 +82,7 @@ namespace autorally_core
     StateEstimator();
     ~StateEstimator();
     ros::NodeHandle m_nh;
-    ros::Subscriber m_gpsSub, m_imuSub;
+    ros::Subscriber m_gpsSub, m_imuSub, m_odomSub;
     ros::Publisher  m_posePub;
     ros::Publisher  m_biasAccPub, m_biasGyroPub;
 //    ros::Publisher  m_anglePub, m_imuAnglePub;
@@ -145,9 +145,10 @@ namespace autorally_core
 
     ISAM2 *m_isam;
 
-    void GpsCb(sensor_msgs::NavSatFixConstPtr fix);
-    void ImuCb(sensor_msgs::ImuConstPtr imu);
-    void FilterCb(imu_3dm_gx4::FilterOutputConstPtr fix);
+    void GpsCallback(sensor_msgs::NavSatFixConstPtr fix);
+    void ImuCallback(sensor_msgs::ImuConstPtr imu);
+    void WheelOdomCallback(nav_msgs::OdometryPtr odom);
+    //void FilterCb(imu_3dm_gx4::FilterOutputConstPtr fix);
     void GpsHelper();
     void diagnosticStatus(const ros::TimerEvent& time);
 
