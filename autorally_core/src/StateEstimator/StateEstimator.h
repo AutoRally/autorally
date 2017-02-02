@@ -1,4 +1,3 @@
-
 /*
 * Software License Agreement (BSD License)
 * Copyright (c) 2013, Georgia Institute of Technology
@@ -25,16 +24,16 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /**********************************************
- * @file JumpControl.h
+ * @file StateEstimator.h
  * @author Brian Goldfain <bgoldfai@gmail.com>
- * @date November 13, 2013
- * @copyright 2012 Georgia Institute of Technology
- * @brief JumpControl class definition
+ * @date May 1, 2017
+ * @copyright 2017 Georgia Institute of Technology
+ * @brief StateEstimator class definition
  *
  ***********************************************/
 
-#ifndef IMU_GPS_H_
-#define IMU_GPS_H_
+#ifndef StateEstimator_H_
+#define StateEstimator_H_
 
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/slam/PriorFactor.h>
@@ -77,11 +76,11 @@ using namespace GeographicLib;
 
 namespace autorally_core
 {
-  class Imu_Gps : public Diagnostics
+  class StateEstimator : public Diagnostics
   {
   public:
-    Imu_Gps();
-    ~Imu_Gps();
+    StateEstimator();
+    ~StateEstimator();
     ros::NodeHandle m_nh;
     ros::Subscriber m_gpsSub, m_imuSub;
     ros::Publisher  m_posePub;
@@ -156,4 +155,4 @@ namespace autorally_core
   };
 };
 
-#endif /* IMU_GPS_H_ */
+#endif /* StateEstimator_H_ */

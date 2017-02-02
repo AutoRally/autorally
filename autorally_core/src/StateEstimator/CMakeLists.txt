@@ -8,10 +8,10 @@ if(GTSAM_FOUND)
   find_package(TBB)
   include_directories(include ${catkin_INCLUDE_DIRS} "/usr/local/include")
 
-  add_executable(imuGpsEstimator IMU_GPS.cpp)
-  target_link_libraries(imuGpsEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/local/lib/libGeographic.so ${TBB_LIBRARIES} Diagnostics)
+  add_executable(stateEstimator StateEstimator.cpp)
+  target_link_libraries(stateEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/local/lib/libGeographic.so ${TBB_LIBRARIES} Diagnostics)
 
-  install(TARGETS imuGpsEstimator
+  install(TARGETS stateEstimator
           ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
           LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
           RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

@@ -24,15 +24,14 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /**********************************************
- * @file gpsWaypoint.cpp
+ * @file StateEstimator.cpp
  * @author Paul Drews <pdrews3@gatech.edu>
- * @date January 29, 2012
- * @copyright 2012 Georgia Institute of Technology
- * @brief ROS node to allow following gps waypoints
+ * @date May 1, 2017
+ * @copyright 2017 Georgia Institute of Technology
+ * @brief ROS node to fuse information sources and create an accurate state estimation
  *
- * @details Waypoints are read in from a configuration file.
- * The waypoints are assumed to be a loop.  Once each waypoint is reached,
- * the controller will push it to the back of the list and move to the next.
+ * @details Subscribes to the GPS, IMU, and wheel odometry topics, claculates
+ * an estimate of the car's current state using GTSAM, and publishes that data.
  ***********************************************/
 
 
@@ -49,7 +48,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp>
 #include <vector>
-#include "IMU_GPS.h"
+#include "StateEstimator.h"
 
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/slam/PriorFactor.h>
@@ -70,8 +69,8 @@ using symbol_shorthand::G;
 namespace autorally_core
 {
 
-  Imu_Gps::Imu_Gps() :
-    Diagnostics("ImuGpsEstimator", "", ""),
+  StateEstimator::StateEstimator() :
+    Diagnostics("StateEstimator", "", ""),
     m_nh("~"),
     m_biasKey(0),
     m_poseVelKey(0),
@@ -241,17 +240,17 @@ namespace autorally_core
      noiseModelBetweenbias_sigma = (Vector(6) << sigma_acc_bias_c, sigma_gyro_bias_c).finished();
      noiseModelBetweenbias = noiseModel::Diagonal::Sigmas((noiseModelBetweenbias_sigma));
 
-     m_gpsSub = m_nh.subscribe("gps", 300, &Imu_Gps::GpsCb, this);
-     m_imuSub = m_nh.subscribe("imu", 600, &Imu_Gps::ImuCb, this);
+     m_gpsSub = m_nh.subscribe("gps", 300, &StateEstimator::GpsCb, this);
+     m_imuSub = m_nh.subscribe("imu", 600, &StateEstimator::ImuCb, this);
 
-     boost::thread optimizer(&Imu_Gps::GpsHelper,this);
+     boost::thread optimizer(&StateEstimator::GpsHelper,this);
 
   }
 
-  Imu_Gps::~Imu_Gps()
+  StateEstimator::~StateEstimator()
   {}
 
-  void Imu_Gps::GpsCb(sensor_msgs::NavSatFixConstPtr fix)
+  void StateEstimator::GpsCb(sensor_msgs::NavSatFixConstPtr fix)
   {
     if (!m_gpsOptQ.pushNonBlocking(fix))
     {
@@ -262,7 +261,7 @@ namespace autorally_core
     return;
   }
 
-  void Imu_Gps::GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro)
+  void StateEstimator::GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro)
   {
     double accx, accy, accz;
     if (m_invertx) accx = -imu->linear_acceleration.x;
@@ -284,7 +283,7 @@ namespace autorally_core
     gyro = Vector3(gx, gy, gz);
   }
 
-  void Imu_Gps::GpsHelper()
+  void StateEstimator::GpsHelper()
   {
     // Kick off the thread, and wait for our GPS measurements to come streaming in
     while (ros::ok())
@@ -431,7 +430,7 @@ namespace autorally_core
     }
   }
 
-  void Imu_Gps::ImuCb(sensor_msgs::ImuConstPtr imu)
+  void StateEstimator::ImuCb(sensor_msgs::ImuConstPtr imu)
   {
     double dt;
     if (m_lastImuT == 0) dt = 0.005;
@@ -536,7 +535,7 @@ namespace autorally_core
     return;
   }
 
-  void Imu_Gps::diagnosticStatus(const ros::TimerEvent& /*time*/)
+  void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)
   {
     //Don't do anything
     //diag_info("Test");
@@ -548,6 +547,6 @@ int main (int argc, char** argv)
 {
   ros::init(argc, argv, "stateEstimator");
   //ros::NodeHandle n;
-  autorally_core::Imu_Gps wpt;
+  autorally_core::StateEstimator wpt;
   ros::spin();
 }
