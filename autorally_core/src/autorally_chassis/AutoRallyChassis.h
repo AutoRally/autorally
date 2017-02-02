@@ -169,6 +169,7 @@ class AutoRallyChassis : public nodelet::Nodelet
   double mostRecentRcThrottle_; ///< Most recent RC throttle command received from the chassis
   double mostRecentRcFrontBrake_; ///< Most recent RC front brake command received from the chassis
   double wheelDiameter_; ///<Diameter of wheels on vehicle in m
+  int escDataFailCounter_;  
 
   std::map<std::string, std::pair<bool, int> > invalidActuatorPulses_;
 

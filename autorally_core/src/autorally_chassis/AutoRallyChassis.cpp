@@ -68,8 +68,9 @@ void AutoRallyChassis::onInit()
   double commandRate = 0.0;
   double chassisCommandMaxAge = 0.0;
   double runstopMaxAge = 0.0;
+  escDataFailCounter_ = 0;
 
-  //need entry for each actuator read from RC receiver to keep track of pulse statistics
+  //need entry for each escDataFailCounter_actuator read from RC receiver to keep track of pulse statistics
   invalidActuatorPulses_["throttle"] = std::pair<bool, int>(false, 0);
   invalidActuatorPulses_["steering"] = std::pair<bool, int>(false, 0);
 
@@ -117,7 +118,7 @@ void AutoRallyChassis::chassisCommandCallback(
                          msg->sender <<
                          " attempting to control chassis, please add entry " <<
                          " to chassisCommandPriorities.yaml");
-  } else
+  }
   {
     mapIt->second = *msg;
   }
@@ -152,7 +153,7 @@ void AutoRallyChassis::chassisFeedbackCallback()
       startPosition = 0;
       endPosition = serialPort_.m_data.find_first_of('\n', startPosition);
 
-      //cut out and erase message from queue
+      //cut out and erase mescDataFailCounter_essage from queue
       data = serialPort_.m_data.substr(0, endPosition);
       serialPort_.m_data.erase(0, endPosition);
     }
@@ -266,7 +267,8 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
       
       if (msg.length() != 18)
       {
-        serialPort_.diag_warn("Expected 18 bytes of ESC data, instead received " + std::to_string(msg.length()));
+        escDataFailCounter_++;
+        //Expected 18 bytes of ESC data, instead received " + std::to_string(msg.length()));
       }
 
       //std::cout << msg.length() << std::endl;
@@ -281,6 +283,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
         
         serialPort_.diag(escRegisterData_[i].first, std::to_string(val));
       }
+      serialPort_.diag("ESC data incorrect msg size counter", std::to_string(escDataFailCounter_));
       serialPort_.tick("ESC data");
 
       break;
