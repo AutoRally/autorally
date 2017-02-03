@@ -44,8 +44,8 @@
 #include <vector>
 
 /**
- * This GPS Interface program currently using the hemisphere
- * GPS R320 pr P303 Receivers.
+ * This NMEA GPS Interface program currently for the hemisphere
+ * GPS R320, P303, and P307 Receivers.
  */
 int main(int argc, char **argv)
 {
@@ -141,8 +141,8 @@ GPSHemisphere::GPSHemisphere(ros::NodeHandle &nh):
        * if a message is received from serial before the associated publisher
        * is connected, an exception occurs and the node crashes.
        */
-      m_portA.init(nh, nodeName, "primaryPort", "Hemisphere p303", portPathA, true);
-      m_portB.init(nh, nodeName, "correctionPort", "Hemisphere p303", portPathB, false);
+      m_portA.init(nh, nodeName, "primaryPort", "Hemisphere", portPathA, true);
+      m_portB.init(nh, nodeName, "correctionPort", "Hemisphere", portPathB, false);
       
       m_statusPub = nh.advertise<sensor_msgs::NavSatFix>("gpsRoverStatus", 5);
 
@@ -706,6 +706,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       //Token 3 = Standard deviation of semi-major axis of error ellipse, meters
       //Token 4 = Standard deviation of semi-minor axis of error ellipse, meters
       //Token 5 = Error in semi major axis origination, in decimal degrees, true north
+
 
       //Std dev of latitude error, in meters
       try
