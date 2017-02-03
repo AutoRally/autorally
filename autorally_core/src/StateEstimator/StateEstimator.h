@@ -109,6 +109,7 @@ namespace autorally_core
 
     BlockingQueue<sensor_msgs::NavSatFixConstPtr> m_gpsOptQ;
     BlockingQueue<sensor_msgs::ImuConstPtr> m_ImuOptQ;
+    BlockingQueue<nav_msgs::OdometryPtr> m_odomOptQ;
     boost::mutex m_optimizedStateMutex;
     NavState m_optimizedState;
     double m_optimizedTime;

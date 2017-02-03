@@ -81,6 +81,7 @@ namespace autorally_core
     m_maxQSize(0),
     m_gpsOptQ(40),
     m_ImuOptQ(400),
+    m_odomOptQ(100),
     m_gotFirstFix(false)
   {
     double accSigma, gyroSigma;
@@ -190,7 +191,6 @@ namespace autorally_core
 //    std::cout << "Rotation yaw: " << initRot.yaw() << " pitch: " << initRot.pitch() << " roll: " << initRot.roll() << std::endl;
 
     m_bodyPSensor = Pose3(Rot3::RzRyRx(m_sensorXAngle, m_sensorYAngle, m_sensorZAngle),
-    //m_bodyPSensor = Pose3(Rot3::RzRyRx(0, 0, 0),
         Point3(m_sensorX, m_sensorY, m_sensorZ));
     m_carENUPcarNED = Pose3(Rot3::RzRyRx(m_carXAngle, m_carYAngle, m_carZAngle), Point3());
 
@@ -198,11 +198,8 @@ namespace autorally_core
     m_carENUPcarNED.print("CarBodyPose\n");
 
     m_posePub = m_nh.advertise<nav_msgs::Odometry>("pose", 1);
-//    m_gpsPosePub = m_nh.advertise<nav_msgs::Odometry>("pose_gps", 1);
     m_biasAccPub = m_nh.advertise<geometry_msgs::Point>("bias_acc", 1);
     m_biasGyroPub = m_nh.advertise<geometry_msgs::Point>("bias_gyro", 1);
-//    m_anglePub = m_nh.advertise<geometry_msgs::Point>("angle_est", 1);
-//    m_imuAnglePub = m_nh.advertise<geometry_msgs::Point>("angle_imu", 1);
     m_timePub = m_nh.advertise<geometry_msgs::Point>("time_delays", 1);
 
 
@@ -254,12 +251,9 @@ namespace autorally_core
   void StateEstimator::GpsCallback(sensor_msgs::NavSatFixConstPtr fix)
   {
     if (!m_gpsOptQ.pushNonBlocking(fix))
-    {
       ROS_WARN("Dropping a GPS measurement due to full queue!!");
-    }
-//    m_gpsPtr = fix;
-//    m_curGpsNumber ++;
-    return;
+
+    // m_curGpsNumber ++;
   }
 
   void StateEstimator::GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro)
@@ -538,6 +532,10 @@ namespace autorally_core
 
   void StateEstimator::WheelOdomCallback(nav_msgs::OdometryPtr odom)
   {
+      if (!m_odomOptQ.pushNonBlocking(odom))
+        ROS_WARN("Dropping a wheel odometry measurement due to full queue!!");
+      else // TODO cut this out
+          ROS_INFO("Adding wheel odometry message to queue.");
   }
 
   void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)
