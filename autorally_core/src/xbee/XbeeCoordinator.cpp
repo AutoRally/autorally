@@ -56,18 +56,19 @@ void XbeeCoordinator::processXbeeMessage(const std::string& sender,
   {
     m_robotInfos[sender].lastHeartbeat = ros::Time::now();
     m_robotInfos[sender].name = data.substr(2);
+    m_xbee.m_port.diag_ok("Xbee node: " + m_robotInfos[sender].name);
   } else if(msg == "AK")
   {
     ROS_ERROR("XbeeCoordinator: Received AK message, there may be another\
               coordinator with address %s", sender.c_str());
   } else if (msg == "OD")
   {
-    if(data.length() == 62)
-    {
-      processXbeeOdom(data, sender);
-    }
-    else
-      ROS_ERROR("XbeeNode: Received incorrect length(%d) odom message \"%s\"", (int)data.length(),data.c_str());
+    //if(data.length() == 62)
+    //{
+    //  processXbeeOdom(data, sender);
+    //}
+    //else
+    //  ROS_ERROR("XbeeNode: Received incorrect length(%d) odom message \"%s\"", (int)data.length(),data.c_str());
   } else
   {
     ROS_ERROR("XbeeCoordinator: Received unknown message %s", msg.c_str());
@@ -84,22 +85,21 @@ void XbeeCoordinator::runstopCallback(const autorally_msgs::runstopConstPtr& msg
   m_xbee.sendTransmitPacket(sendData);
   //ROS_INFO(sendData.c_str());  
 
-  ros::Time now = ros::Time::now();
-  std::map<std::string, RobotState>::const_iterator mapIt;
+  //ros::Time now = ros::Time::now();
+  //std::map<std::string, RobotState>::const_iterator mapIt;
   //if state has not been received from a node in > 2 seconds, send a
   //runstop = 0.0 to that node (overriding the broadcast runstop),
   //regardless of what overall system runstop is
-  for(mapIt = m_robotInfos.begin(); mapIt != m_robotInfos.end(); mapIt++)
-  {
+  //for(mapIt = m_robotInfos.begin(); mapIt != m_robotInfos.end(); mapIt++)
+  //{
     //if we received a hearbeat in the last 2 sec from xbee
-    if( (ros::Time::now()-mapIt->second.lastHeartbeat) < ros::Duration(2.0) )
-    {
-      m_xbee.m_port.diag(mapIt->first, mapIt->second.name);
+    //if( (ros::Time::now()-mapIt->second.lastHeartbeat) < ros::Duration(2.0) )
+    //{
       //ROS_WARN("No recent heartbeat from %s", mapIt->first.c_str());
       //sendData = "RS " + msg->sender + " 0.00";
       //m_xbee.sendTransmitPacket(sendData, mapIt->second.address);
-    }
-  }
+    //}
+  //}
 
 }
 
