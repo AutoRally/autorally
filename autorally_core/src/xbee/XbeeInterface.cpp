@@ -43,10 +43,17 @@ Explicit Rx Indicator (AO=1) 0x91
 #include <numeric>
 
 XbeeInterface::XbeeInterface(ros::NodeHandle &nh, const std::string& port):
-	m_nh(nh),
+  m_nh(nh),
   m_bytesReceived(0),
-  m_bytesTransmitted(0)
+  m_bytesTransmitted(0),
+  m_atResponseFailures(0)
 {
+  //Create function pointers to call based on what type of message is
+  m_apiFrameFunctions[(char)0x88] = &XbeeInterface::processATCommandResponse;
+  m_apiFrameFunctions[(char)0x97] = &XbeeInterface::processRemoteATCommandResponse;
+  m_apiFrameFunctions[(char)0x8B] = &XbeeInterface::processTransmitStatus;
+  m_apiFrameFunctions[(char)0x90] = &XbeeInterface::processReceivePacket;
+  
   std::string frameID;
   std::string diagInfo;
   std::string nName = ros::this_node::getName();
@@ -56,20 +63,7 @@ XbeeInterface::XbeeInterface(ros::NodeHandle &nh, const std::string& port):
     ROS_ERROR("Could not get all xbee parameters for %s", nName.c_str());
   }
 
-  //Create function pointers to call based on what type of message is
-  m_apiFrameFunctions[(char)0x88] = &XbeeInterface::processATCommandResponse;
-  m_apiFrameFunctions[(char)0x97] = &XbeeInterface::processRemoteATCommandResponse;
-  m_apiFrameFunctions[(char)0x8B] = &XbeeInterface::processTransmitStatus;
-  m_apiFrameFunctions[(char)0x90] = &XbeeInterface::processReceivePacket;
-
   m_frameID = hexToString(&frameID[0])[0];
-
-	m_diagTimer = nh.createTimer(ros::Duration(1.0),
-	                             &XbeeInterface::diagUpdate,
-	                             this);
-  m_diagInfoTimer = nh.createTimer(ros::Duration(4.0),
-                                   &XbeeInterface::diagInfoRequest,
-	                                 this);
   
   //create vector of all periodically update diagnostic info
   size_t space;
@@ -84,12 +78,18 @@ XbeeInterface::XbeeInterface(ros::NodeHandle &nh, const std::string& port):
   m_port.registerDataCallback(
                     boost::bind(&XbeeInterface::xbeeDataCallback, this));
 
-
   if(!m_port.connected())
   {
     ROS_ERROR("The serial port isn't open, stuff might not work");
     m_port.diag_error("The serial port isn't open, stuff might not work");
   }
+  
+  m_diagTimer = nh.createTimer(ros::Duration(1.0),
+	                             &XbeeInterface::diagUpdate,
+	                             this);
+  m_diagInfoTimer = nh.createTimer(ros::Duration(5.0),
+                                   &XbeeInterface::diagInfoRequest,
+	                                 this);
 }
 
 XbeeInterface::~XbeeInterface()
@@ -158,8 +158,8 @@ void XbeeInterface::xbeeDataCallback()
         {
    	      if(!m_apiFrameFunctions[msgToAdd[0]&0xFF](this, msgToAdd))
    	      {
-            m_port.diag_error("Xbee: error processing message:" + msgToAdd);
-     	      ROS_ERROR("Xbee: error processing message:%s", stringToHex(msgToAdd).c_str());
+            m_port.diag_error("Xbee: error processing message");
+            ROS_ERROR("Xbee: error processing message:%s", stringToHex(msgToAdd).c_str());
           }
         } else
         {
@@ -196,8 +196,14 @@ bool XbeeInterface::processATCommandResponse(const std::string &message)
   {
     if(message[4] != (char)0x00)//Check no error code
     {
-      ROS_ERROR("Xbee: %s error code:%x", message.c_str(), message[4] );
-      m_port.diag_error("Xbee: " + message + " error code:" + message[4]);
+      //sometimes these AT responses fail (specifically NI request) for some reason,
+      //and I can't figure out why but they are just debug info, so I send the message
+      // to debug insted of raising an error
+      ROS_DEBUG_STREAM("Xbee AT response " << message[2] << message[3] << " error code:" <<
+                       message[4] );
+      //m_port.diag_error("Xbee AT response " + message.substr(2,2) +
+      //                  " error code:" + std::to_string(message[4]));
+      ++m_atResponseFailures;
     } else
     {
       std::string command = message.substr(2, 2);
@@ -217,8 +223,8 @@ bool XbeeInterface::processATCommandResponse(const std::string &message)
       {
         m_port.diag_warn("Received unknown diagnostic command: " + command);
       }
-      return true;
     }
+    return true;
   }
   return false;
 }
@@ -241,9 +247,9 @@ bool XbeeInterface::processRemoteATCommandResponse(const std::string &message)
       {
         std::string value = message.substr(15, message.length()-16);
       }
-
       return true;
     }
+    
   }
   return false;
 
@@ -449,6 +455,7 @@ void XbeeInterface::diagInfoRequest(const ros::TimerEvent& /*time*/)
 
 void XbeeInterface::diagUpdate(const ros::TimerEvent& /*time*/)
 {
+  m_port.diag("AT Response Failures", std::to_string(m_atResponseFailures));
   m_port.diag("Transmit bandwidth B/s", std::to_string(m_bytesTransmitted));
   m_port.diag("Receive bandwidth B/s", std::to_string(m_bytesReceived));
   m_bytesTransmitted = 0;
@@ -457,7 +464,16 @@ void XbeeInterface::diagUpdate(const ros::TimerEvent& /*time*/)
   std::map<std::string, std::string>::const_iterator mapIt;
   for(mapIt = m_diagCommands.begin(); mapIt != m_diagCommands.end(); mapIt++)
   {
-    m_port.diag(mapIt->first, mapIt->second);
+    if(mapIt->first == "TR")
+    {
+      m_port.diag("TR - transmission errors", mapIt->second);
+    } else if(mapIt->first == "ER")
+    {
+      m_port.diag("ER - RF receive packet errors", mapIt->second);
+    } else
+    {
+      m_port.diag(mapIt->first, mapIt->second);
+    }
   }
 }
 

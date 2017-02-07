@@ -368,7 +368,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       m_portA.diag(msgType + " HDOP:", tokens[8].c_str());
       
       m_navSatFix.altitude = processAltitude(tokens[9], tokens[10], tokens[11], tokens[12]);
-      if(fabs(m_navSatFix.altitude) < 0.001)
+      if(fabs(m_navSatFix.altitude) < 0.001 || fabs(m_navSatFix.latitude) < 0.001 || fabs(m_navSatFix.longitude) < 0.001)
       {
         return;
       }

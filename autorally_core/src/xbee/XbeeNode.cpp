@@ -143,115 +143,116 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
     }
     else
       ROS_ERROR("XbeeNode: Received incorrect length(%d) odom message \"%s\"", (int)data.length(),data.c_str());
-  } else// if(sender == m_coordinatorAddress)
-  //{
-    if(msg == "RS")
+  } else if(msg == "RS")
+  {
+    //std::cout << "RS:" << ss << std::endl;
+    m_lastrunstop = ros::Time::now();
+    if(!broadcast)
     {
-      //std::cout << "RS:" << ss << std::endl;
-      m_lastrunstop = ros::Time::now();
-      if(!broadcast)
-      {
-        m_lastTargetedrunstop = m_lastrunstop;
-      }
+      m_lastTargetedrunstop = m_lastrunstop;
+    }
 
-      //if I'm receiving targeted xbee runstop messages, ignore broadcast xbee
-      //runstop messages
-      std::string motionEnabled = "0";
-      double timeDiff = (m_lastrunstop-m_lastTargetedrunstop).toSec();
-      if( timeDiff <= 1.0 && !broadcast)
-      {
-        ss >> m_runstop.sender >> motionEnabled;
-        try
-        {
-          m_runstop.motionEnabled = boost::lexical_cast<int>(motionEnabled);
-        }
-        catch(boost::bad_lexical_cast &e)
-        {
-          ROS_ERROR_STREAM("XbeeNode: bad motionEnabled lexical cast from:" << motionEnabled);
-          m_runstop.motionEnabled = 0;
-        }
-        m_runstop.header.stamp = m_lastTargetedrunstop;
-        m_runstopPublisher.publish(m_runstop);
-      } else if(broadcast)
-      {
-        ss >> m_runstop.sender >> motionEnabled;
-        try
-        {
-          m_runstop.motionEnabled = boost::lexical_cast<bool>(motionEnabled);
-        }
-        catch(boost::bad_lexical_cast &e)
-        {
-          ROS_ERROR_STREAM("XbeeNode: bad broadcast motionEnabled lexical cast from:" << motionEnabled);
-          m_runstop.motionEnabled = 0;
-        }
-m_runstop.header.stamp = m_lastrunstop;
-        m_runstopPublisher.publish(m_runstop);
-      } else
-      {
-        ROS_ERROR("XbeeNode: something wrong with runstop received over xbee");
-      }
-
-    } else if(msg == "GC")
+    //if I'm receiving targeted xbee runstop messages, ignore broadcast xbee
+    //runstop messages
+    std::string motionEnabled = "0";
+    double timeDiff = (m_lastrunstop-m_lastTargetedrunstop).toSec();
+    if( timeDiff <= 1.0 && !broadcast)
     {
+      ss >> m_runstop.sender >> motionEnabled;
       try
       {
-        char seq = data[2];
-        int seqLen = boost::lexical_cast<int>(data[3]);
-        int packetNum = boost::lexical_cast<int>(data[4]);
+        m_runstop.motionEnabled = boost::lexical_cast<int>(motionEnabled);
+      }
+      catch(boost::bad_lexical_cast &e)
+      {
+        ROS_ERROR_STREAM("XbeeNode: bad motionEnabled lexical cast from:" << motionEnabled);
+        m_runstop.motionEnabled = 0;
+      }
+      m_runstop.header.stamp = m_lastTargetedrunstop;
+      m_runstopPublisher.publish(m_runstop);
+    } else if(broadcast)
+    {
+      ss >> m_runstop.sender >> motionEnabled;
+      try
+      {
+        m_runstop.motionEnabled = boost::lexical_cast<bool>(motionEnabled);
+      }
+      catch(boost::bad_lexical_cast &e)
+      {
+        ROS_ERROR_STREAM("XbeeNode: bad broadcast motionEnabled lexical cast from:" << motionEnabled);
+        m_runstop.motionEnabled = 0;
+      }
+m_runstop.header.stamp = m_lastrunstop;
+      m_runstopPublisher.publish(m_runstop);
+    } else
+    {
+      ROS_ERROR("XbeeNode: something wrong with runstop received over xbee");
+    }
 
-        std::cout << seq << " " << seqLen << " " << packetNum << std::endl;
+  } else if(msg == "GC")
+  {
+    try
+    {
+      char seq = data[2];
+      int seqLen = boost::lexical_cast<int>(data[3]);
+      size_t packetNum = boost::lexical_cast<int>(data[4]);
 
-        //just received first packet of new RTCM3 message  
-        if(ros::Time::now()-m_correctionPackets[seq].time > ros::Duration(2.0))
-        {
-          //std::cout << "initializing new seq" << std::endl;
-          m_correctionPackets[seq].reset(seqLen);
-        }
-          
+      ROS_DEBUG_STREAM("Xbee sequence: " << seq << " seq length: " << seqLen <<
+                       " packet num: " << packetNum);
+
+      //just received first packet of new RTCM3 message  
+      if(ros::Time::now()-m_correctionPackets[seq].time > ros::Duration(2.0))
+      {
+        m_correctionPackets[seq].reset(seqLen);
+      }
+      
+      //check to make sure there is space in the packet vector (+1 since packets #s start at 1)
+      if(packetNum < m_correctionPackets[seq].packets.size())
+      {
         m_correctionPackets[seq].packets[packetNum] = data.substr(5);
         ++m_correctionPackets[seq].count;
-
-        //std::cout << seq << " count " << m_correctionPackets[seq].count << " size " << m_correctionPackets[seq].packets.size() << std::endl;
-        if(m_correctionPackets[seq].count == m_correctionPackets[seq].packets.size()-1)
-        {
-          std::cout << "publishing seq " << seq << std::endl;
-
-
-          std::string gpsString;
-          //actual RTCM payload from Xbee is in packets 2+. Packet 0 is unused here, packet 1 is header information for our own use
-          for(size_t i = 1; i < m_correctionPackets[seq].packets.size(); ++i)
-          {
-            gpsString += m_correctionPackets[seq].packets[i];
-          }
-          //clear message dat aimmediately so it can't be accidentally used again
-          m_correctionPackets[seq].packets.clear();
-          m_correctionPackets[seq].count = 0;
-
-          //std::cout << "reassembled data len " << gpsString.size() << std::endl;
-          //allocate new message, fill it in
-          std_msgs::ByteMultiArrayPtr m_gpsCorrection(new std_msgs::ByteMultiArray);
-
-          m_gpsCorrection->layout.dim.push_back(std_msgs::MultiArrayDimension());
-          m_gpsCorrection->layout.dim.front().label = m_msgLabel;
-
-          
-          for(size_t i = 0; i < gpsString.size(); i++)
-          {
-            m_gpsCorrection->data.push_back(gpsString[i]);
-          }
-          
-          //publish correction into ros
-          m_gpsCorrection->layout.dim.front().size = m_gpsCorrection->data.size();
-          m_gpsCorrection->layout.dim.front().stride = m_gpsCorrection->data.size();
-          m_gpsRTCM3Publisher.publish(m_gpsCorrection);
-          m_xbee.m_port.tick("RTCM3 correction");
-
-        }
-      } catch(boost::bad_lexical_cast &e)
+      } else
       {
-        ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]); 
+        ROS_ERROR_STREAM("Xbee RTCM packet number " << packetNum << " larger than packet vector length " <<
+                         m_correctionPackets[seq].packets.size());
       }
-    //}
+      
+      if(m_correctionPackets[seq].count == m_correctionPackets[seq].packets.size()-1)
+      {
+        ROS_INFO_STREAM("Xbee publishing RTCM3 msg seq " << seq);
+
+        std::string gpsString;
+        //actual RTCM payload data packets start at 1
+        for(size_t i = 1; i < m_correctionPackets[seq].packets.size(); ++i)
+        {
+          gpsString += m_correctionPackets[seq].packets[i];
+        }
+        //clear message data immediately so it can't be accidentally used again
+        m_correctionPackets[seq].packets.clear();
+        m_correctionPackets[seq].count = 0;
+
+        //allocate new message, fill it in
+        std_msgs::ByteMultiArrayPtr m_gpsCorrection(new std_msgs::ByteMultiArray);
+
+        m_gpsCorrection->layout.dim.push_back(std_msgs::MultiArrayDimension());
+        m_gpsCorrection->layout.dim.front().label = m_msgLabel;
+        
+        for(size_t i = 0; i < gpsString.size(); i++)
+        {
+          m_gpsCorrection->data.push_back(gpsString[i]);
+        }
+        
+        //publish correction into ros
+        m_gpsCorrection->layout.dim.front().size = m_gpsCorrection->data.size();
+        m_gpsCorrection->layout.dim.front().stride = m_gpsCorrection->data.size();
+        m_gpsRTCM3Publisher.publish(m_gpsCorrection);
+        m_xbee.m_port.tick("RTCM3 correction");
+
+      }
+    } catch(boost::bad_lexical_cast &e)
+    {
+      ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]); 
+    }
   } else if(msg == "HI" || msg == "ST")
   {} //These will be received but are only needed by coordinator
   else
@@ -307,7 +308,7 @@ void XbeeNode::transmitPosition(const ros::TimerEvent& /*time*/)
     */
     //ROS_WARN_STREAM("Sending position:" << data);  
     m_xbee.sendTransmitPacket(data);
-    m_xbee.m_port.tick("Transmitting pose over Xbee");
+    m_xbee.m_port.tick("pose_estimate broadcast");
     m_lastXbeeOdomTransmit = m_odometry.header.stamp;
   }
 }
