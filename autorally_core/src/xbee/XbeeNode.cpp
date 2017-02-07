@@ -61,7 +61,7 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
 	m_gpsRTCM3Publisher = nh.advertise<std_msgs::ByteMultiArray>
 	                                    ("gpsBaseRTCM3", 3);
 
-  m_xbee.registerReceiveMessageCallback(boost::bind(&Xlexical_castbeeNode::processXbeeMessage, this, _1, _2, _3, _4) );
+  m_xbee.registerReceiveMessageCallback(boost::bind(&XbeeNode::processXbeeMessage, this, _1, _2, _3, _4) );
 
 	m_xbeeHeartbeatTimer = nh.createTimer(ros::Duration(0.5),
                                         &XbeeNode::xbeeHeartbeatState,
