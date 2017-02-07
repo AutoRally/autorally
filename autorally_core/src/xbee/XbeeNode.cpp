@@ -95,6 +95,7 @@ void XbeeNode::sendHi(const ros::TimerEvent& /*time*/)
     m_xbee.sendTransmitPacket(sendData);
   } else
   {
+    //once we know the address of the coordinator, start sending periodic info to it
     m_hiTimer.stop();
     m_stateTimer = m_nh.createTimer(ros::Duration(1.0),
                                 &XbeeNode::sendState,
@@ -104,8 +105,8 @@ void XbeeNode::sendHi(const ros::TimerEvent& /*time*/)
 
 void XbeeNode::sendState(const ros::TimerEvent& /*time*/)
 {
-  std::string sendData = "ST 0.5";
-  m_xbee.sendTransmitPacket(sendData, m_coordinatorAddress);
+  std::string sendData = "ST " + m_xbee.getNodeIdentifier();
+  m_xbee.sendTransmitPacket(sendData);
 }
 
 void XbeeNode::xbeeHeartbeatState(const ros::TimerEvent& /*time*/)
@@ -251,8 +252,8 @@ m_runstop.header.stamp = m_lastrunstop;
         ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]); 
       }
     //}
-  } else if(msg == "HI")
-  {} //first message from new Xbee in the system, only matters for coordinator
+  } else if(msg == "HI" || msg == "ST")
+  {} //These will be received but are only needed by coordinator
   else
   {
     ROS_ERROR("XbeeNode: Received unknown message \"%s\"", msg.c_str());
