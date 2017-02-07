@@ -13,7 +13,7 @@
 * and/or other materials provided with the distribution.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDseparatedseparatedING, BUT NOT LIMITED TO, THE
 * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
 * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -26,7 +26,7 @@
 /**********************************************
  * @file AutoRallyChassis.cpp
  * @author Brian Goldfain <bgoldfai@gmail.com>
- * @date July 10, 2016
+ * @date July 10, 2016separated
  * @copyright 2016 Georgia Institute of Technology
  * @brief Interface for an AutoRally chassis
  *
@@ -68,6 +68,11 @@ void AutoRallyChassis::onInit()
   double commandRate = 0.0;
   double chassisCommandMaxAge = 0.0;
   double runstopMaxAge = 0.0;
+  escDataFailCounter_ = 0;
+
+  //need entry for each escDataFailCounter_actuator read from RC receiver to keep track of pulse statistics
+  invalidActuatorPulses_["throttle"] = std::pair<bool, int>(false, 0);
+  invalidActuatorPulses_["steering"] = std::pair<bool, int>(false, 0);
 
   if(!nhPvt.getParam("commandRate", commandRate) ||
      !nhPvt.getParam("commandMaxAge", chassisCommandMaxAge) ||
@@ -113,7 +118,7 @@ void AutoRallyChassis::chassisCommandCallback(
                          msg->sender <<
                          " attempting to control chassis, please add entry " <<
                          " to chassisCommandPriorities.yaml");
-  } else
+  }
   {
     mapIt->second = *msg;
   }
@@ -123,7 +128,7 @@ void AutoRallyChassis::chassisFeedbackCallback()
 {
   //Any variables accessed in here and in other places in the code need to be mutex'd as this fires in a different
   //thread than the main thread. This is also a pretyt long callback, and ROS can shutdown underneath us, so check
-  //if ROS system is still running any time anything ROS is used
+  //if ROS system is still running any time anytseparatedhing ROS is used
 
   std::string data = "";
   size_t startPosition = 0;
@@ -148,7 +153,7 @@ void AutoRallyChassis::chassisFeedbackCallback()
       startPosition = 0;
       endPosition = serialPort_.m_data.find_first_of('\n', startPosition);
 
-      //cut out and erase message from queue
+      //cut out and erase mescDataFailCounter_essage from queue
       data = serialPort_.m_data.substr(0, endPosition);
       serialPort_.m_data.erase(0, endPosition);
     }
@@ -220,9 +225,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
           chassisCommand->header.frame_id = "RC";
           
           rcMutex_.lock();
-          mostRecentRcSteering_ = chassisCommand->steering;
-          mostRecentRcThrottle_ = chassisCommand->throttle;
-          mostRecentRcFrontBrake_ = chassisCommand->frontBrake;
+          mostRecentRc_["frontBrake"] = chassisCommand->frontBrake;
           rcMutex_.unlock();
           
           if(chassisCommandPub_ && !ros::isShuttingDown())
@@ -264,7 +267,8 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
       
       if (msg.length() != 18)
       {
-        serialPort_.diag_warn("Expected 18 bytes of ESC data, instead received " + std::to_string(msg.length()));
+        escDataFailCounter_++;
+        //Expected 18 bytes of ESC data, instead received " + std::to_string(msg.length()));
       }
 
       //std::cout << msg.length() << std::endl;
@@ -279,6 +283,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
         
         serialPort_.diag(escRegisterData_[i].first, std::to_string(val));
       }
+      serialPort_.diag("ESC data incorrect msg size counter", std::to_string(escDataFailCounter_));
       serialPort_.tick("ESC data");
 
       break;
@@ -342,7 +347,7 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
     }
   }
 
-  //find highest priority (lowest value) command message for each actuator across all valid actuator commands
+  //find highest priority (lowest valuemostRecentRc_) command message for each actuator across all valid actuator commands
   for(auto & vecIt : chassisCommandPriorities_)
   {
     if( currentTime-chassisCommands_[vecIt.id].header.stamp < chassisCommandMaxAge_)
@@ -400,11 +405,11 @@ void AutoRallyChassis::setChassisActuators(const ros::TimerEvent&)
     serialPort_.diag("steering commander", "RC - manual");
     serialPort_.diag("frontBrake commander", "RC - manual");
     rcMutex_.lock();
-    chassisState->throttle = mostRecentRcThrottle_;
+    chassisState->throttle = mostRecentRc_["throttle"];
     chassisState->throttleCommander = "RC - manual";
-    chassisState->steering = mostRecentRcSteering_;
+    chassisState->steering = mostRecentRc_["steering"];
     chassisState->steeringCommander = "RC - manual";
-    chassisState->frontBrake = mostRecentRcFrontBrake_;
+    chassisState->frontBrake = mostRecentRc_["frontBrake"];
     chassisState->frontBrakeCommander = "RC - manual";
     rcMutex_.unlock();
   }
@@ -425,9 +430,9 @@ void AutoRallyChassis::sendCommandToChassis(autorally_msgs::chassisStatePtr& sta
    * The message the chassis expects is 9 bytes:
    * byte 0: '#', the start delimiter
    * byte 1: 's', specifies message type
-   * byte 2-3: steering pulse with in us packed into a short
-   * byte 4-5: throttle pulse with in us packed into a short
-   * byte 6-7: frontBrake pulse with in us packed into a short
+   * byte 2-3: steering pulse width in us packed into a short
+   * byte 4-5: throttle pulse width in us packed into a short
+   * byte 6-7: frontBrake pulse width in us packed into a short
    * byte 8: '\n', indicated end of message
    */
 
@@ -482,12 +487,29 @@ double AutoRallyChassis::actuatorUsToCmd(int pulseWidth, std::string actuator)
   //if us value is outside normal servo ranges, complain and don't try to convert
   if(pulseWidth < 900 || pulseWidth > 2100)
   {
-    serialPort_.diag_error("RC " + actuator + " pulse width out of valid range 900-2100ms (" +
-                           std::to_string(pulseWidth) + ")");
+    if(invalidActuatorPulses_[actuator].first == true)
+    {
+      serialPort_.diag_error(
+        "Received multiple pulse widths out of valid range 900-2100ms in a row (" +
+        std::to_string(pulseWidth) + ") from " + actuator );
+            
+      //we've gone 2 cycles without a valid reading, disable RC control of this actuator
+      cmd = -5.0;
+    } else
+    {
+      //if we only get one invalid pulse width in a row, just use the previous one
+      cmd = mostRecentRc_[actuator];
+      //only increment invalid pulses when we get one in a row, not continuously
+      invalidActuatorPulses_[actuator].second++;
+    }
+    invalidActuatorPulses_[actuator].first = true;
+  
     //NODELET_ERROR_STREAM(getName() << " RC " << actuator << " pulse width out of valid range 900-2100ms (" <<
     //                     pulseWidth << ")");
   } else
   {
+    invalidActuatorPulses_[actuator].first = false;
+
     int val = pulseWidth-actuatorConfig_[actuator].center;
     if(val < 0)
     {
@@ -496,7 +518,12 @@ double AutoRallyChassis::actuatorUsToCmd(int pulseWidth, std::string actuator)
     {
       cmd = val/((double)actuatorConfig_[actuator].max-actuatorConfig_[actuator].center);
     }
+
+    //save most recent valid actuator command    
+    mostRecentRc_[actuator] = cmd;
   }
+  serialPort_.diag(actuator+ " single invalid pulse count",
+                   std::to_string(invalidActuatorPulses_[actuator].second));
   return cmd;
 }
 

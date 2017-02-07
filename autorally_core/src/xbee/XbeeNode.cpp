@@ -36,8 +36,7 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
   m_nh(nh),
   m_lastrunstop(0),
   m_lastTargetedrunstop(0),
-  m_coordinatorAddress(""),
-  m_prevGpsMsgNum(0)
+  m_coordinatorAddress("")
 {
   std::string nName = ros::this_node::getName();
   int transmitPositionRate;
@@ -45,13 +44,24 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
   {
     ROS_ERROR("Could not get all xbee parameters for %s", nName.c_str());
   }
+ 
+  //until a runstop is received from rf, it will publish runstops
+  //with this name
+  m_runstop.sender = "XbeeNode";
+  m_runstop.motionEnabled = false;
 
-  m_xbee.registerReceiveMessageCallback(boost::bind(&XbeeNode::processXbeeMessage, this, _1, _2, _3, _4) );
+  //fill out space for incoming RTCM3 message sequences  
+  for(unsigned char i = 'A'; i <= 'Z'; i++)
+  {  
+    m_correctionPackets[i] = Rtcm3Packets();
+  }
 
   m_runstopPublisher = nh.advertise<autorally_msgs::runstop>
 	                                    ("runstop", 1);
 	m_gpsRTCM3Publisher = nh.advertise<std_msgs::ByteMultiArray>
 	                                    ("gpsBaseRTCM3", 3);
+
+  m_xbee.registerReceiveMessageCallback(boost::bind(&Xlexical_castbeeNode::processXbeeMessage, this, _1, _2, _3, _4) );
 
 	m_xbeeHeartbeatTimer = nh.createTimer(ros::Duration(0.5),
                                         &XbeeNode::xbeeHeartbeatState,
@@ -69,12 +79,6 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
                                   &XbeeNode::odomCallback,
                                   this);
   }
-  //until a runstop is received from rf, it will publish runstops
-  //with this name
-  m_runstop.sender = "XbeeNode";
-  m_runstop.motionEnabled = false;
-
-  
 }
 
 XbeeNode::~XbeeNode()
@@ -123,6 +127,7 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
   std::stringstream ss(data);
   std::string msg;
   ss >> msg;
+  msg = data.substr(0,2);
   //ROS_INFO_STREAM("Xbee NODE receive:" << data << " -" << msg << "-" << m_coordinatorAddress);
   if(msg == "AK")
   {
@@ -146,14 +151,30 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
       if( timeDiff <= 1.0 && !broadcast)
       {
         ss >> m_runstop.sender >> motionEnabled;
-        m_runstop.motionEnabled = boost::lexical_cast<int>(motionEnabled);
+        try
+        {
+          m_runstop.motionEnabled = boost::lexical_cast<int>(motionEnabled);
+        }
+        catch(boost::bad_lexical_cast &e)
+        {
+          ROS_ERROR_STREAM("XbeeNode: bad motionEnabled lexical cast from:" << motionEnabled);
+          m_runstop.motionEnabled = 0;
+        }
         m_runstop.header.stamp = m_lastTargetedrunstop;
         m_runstopPublisher.publish(m_runstop);
       } else if(broadcast)
       {
         ss >> m_runstop.sender >> motionEnabled;
-        m_runstop.motionEnabled = boost::lexical_cast<bool>(motionEnabled);
-        m_runstop.header.stamp = m_lastrunstop;
+        try
+        {
+          m_runstop.motionEnabled = boost::lexical_cast<bool>(motionEnabled);
+        }
+        catch(boost::bad_lexical_cast &e)
+        {
+          ROS_ERROR_STREAM("XbeeNode: bad broadcast motionEnabled lexical cast from:" << motionEnabled);
+          m_runstop.motionEnabled = 0;
+        }
+m_runstop.header.stamp = m_lastrunstop;
         m_runstopPublisher.publish(m_runstop);
       } else
       {
@@ -162,63 +183,65 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
 
     } else if(msg == "GC")
     {
-      ++m_prevGpsMsgNum;
-      /*if(m_prevGpsMsgNum==1)
+      try
       {
-        ROS_INFO_STREAM(data[3] << " " << boost::lexical_cast<int>(data[4]) << " " <<
-                        m_prevGpsMsgNum << ":" << data.substr(5));
-      } else
-      {
-        ROS_INFO_STREAM(data[3] << " " << boost::lexical_cast<int>(data[4]) << " " <<
-                        m_prevGpsMsgNum << ":" << std::to_string(data.size()));
-      }*/
-      
-      
-      if(boost::lexical_cast<int>(data[4]) == m_prevGpsMsgNum)
-      {
-        if(m_prevGpsMsgNum == 1)
+        char seq = data[2];
+        int seqLen = boost::lexical_cast<int>(data[3]);
+        int packetNum = boost::lexical_cast<int>(data[4]);
+
+        std::cout << seq << " " << seqLen << " " << packetNum << std::endl;
+
+        //just received first packet of new RTCM3 message  
+        if(ros::Time::now()-m_correctionPackets[seq].time > ros::Duration(2.0))
         {
-          m_msgLabel = data.substr(5);
-          m_gpsString.clear();
-        } else
-        {
-          m_gpsString += data.substr(5);
+          //std::cout << "initializing new seq" << std::endl;
+          m_correctionPackets[seq].reset(seqLen);
         }
-        //ROS_INFO_STREAM("GPS correction " << m_prevGpsMsgNum << ":" << m_gpsCorrection);
-        //m_gpsCorrection += data.substr(4);
-      } else
-      {
-        ROS_ERROR_STREAM("XbeeNode: received gps correction number:" << data[4] << 
-          " out of order, expected:" << m_prevGpsMsgNum);
-        m_prevGpsMsgNum = 0;
-        //m_gpsCorrection->data.clear();
-      }
+          
+        m_correctionPackets[seq].packets[packetNum] = data.substr(5);
+        ++m_correctionPackets[seq].count;
 
-      if(data[4] == data[3] && m_prevGpsMsgNum != 0)
-      {
-        ROS_DEBUG_STREAM("Rec'd complete GPS correction, " << m_gpsString.size() <<  " bytes in " <<
-                         m_prevGpsMsgNum << " xbee packets");
-        
-        //allocate new message, fill it in
-        std_msgs::ByteMultiArrayPtr m_gpsCorrection(new std_msgs::ByteMultiArray);
-
-        m_gpsCorrection->layout.dim.push_back(std_msgs::MultiArrayDimension());
-        m_gpsCorrection->layout.dim.front().label = m_msgLabel;
-
-        
-        for(size_t i = 0; i < m_gpsString.size(); i++)
+        //std::cout << seq << " count " << m_correctionPackets[seq].count << " size " << m_correctionPackets[seq].packets.size() << std::endl;
+        if(m_correctionPackets[seq].count == m_correctionPackets[seq].packets.size()-1)
         {
-          m_gpsCorrection->data.push_back(m_gpsString[i]);
-        }
+          std::cout << "publishing seq " << seq << std::endl;
 
-        //publish correction into ros
-        m_gpsCorrection->layout.dim.front().size = m_gpsCorrection->data.size();
-        m_gpsCorrection->layout.dim.front().stride = m_gpsCorrection->data.size();
-        m_gpsRTCM3Publisher.publish(m_gpsCorrection);
-        m_xbee.m_port.tick("RTCM3 correction");
-        m_prevGpsMsgNum = 0;
-        //m_gpsCorrection->data.clear();
+
+          std::string gpsString;
+          //actual RTCM payload from Xbee is in packets 2+. Packet 0 is unused here, packet 1 is header information for our own use
+          for(size_t i = 2; i < m_correctionPackets[seq].packets.size(); ++i)
+          {
+            gpsString += m_correctionPackets[seq].packets[i];
+          }
+          //clear message dat aimmediately so it can't be accidentally used again
+          m_correctionPackets[seq].packets.clear();
+          m_correctionPackets[seq].count = 0;
+
+          //std::cout << "reassembled data len " << gpsString.size() << std::endl;
+          //allocate new message, fill it in
+          std_msgs::ByteMultiArrayPtr m_gpsCorrection(new std_msgs::ByteMultiArray);
+
+          m_gpsCorrection->layout.dim.push_back(std_msgs::MultiArrayDimension());
+          m_gpsCorrection->layout.dim.front().label = m_msgLabel;
+
+          
+          for(size_t i = 0; i < gpsString.size(); i++)
+          {
+            m_gpsCorrection->data.push_back(gpsString[i]);
+          }
+          
+          //publish correction into ros
+          m_gpsCorrection->layout.dim.front().size = m_gpsCorrection->data.size();
+          m_gpsCorrection->layout.dim.front().stride = m_gpsCorrection->data.size();
+          m_gpsRTCM3Publisher.publish(m_gpsCorrection);
+          m_xbee.m_port.tick("RTCM3 correction");
+
+        }
+      } catch(boost::bad_lexical_cast &e)
+      {
+        ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]); 
       }
+    
     } else if (msg == "OD")
     {
       if(data.length() == 62)
