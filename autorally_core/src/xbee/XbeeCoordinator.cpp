@@ -20,7 +20,8 @@ int main(int argc, char **argv)
 }
 
 XbeeCoordinator::XbeeCoordinator(ros::NodeHandle &nh, const std::string& port):
-  m_xbee(nh, port)
+  m_xbee(nh, port),
+  m_rtkCount('A')
 {
   m_xbee.registerReceiveMessageCallback(boost::bind(&XbeeCoordinator::processXbeeMessage, this, _1, _2, _3, _4) );
 
@@ -54,6 +55,7 @@ void XbeeCoordinator::processXbeeMessage(const std::string& sender,
   } else if(msg == "ST")
   {
     m_robotInfos[sender].lastHeartbeat = ros::Time::now();
+    m_robotInfos[sender].name = data.substr(2);
   } else if(msg == "AK")
   {
     ROS_ERROR("XbeeCoordinator: Received AK message, there may be another\
@@ -89,11 +91,13 @@ void XbeeCoordinator::runstopCallback(const autorally_msgs::runstopConstPtr& msg
   //regardless of what overall system runstop is
   for(mapIt = m_robotInfos.begin(); mapIt != m_robotInfos.end(); mapIt++)
   {
-    if( (now-mapIt->second.lastHeartbeat).toSec() > 5.0)
+    //if we received a hearbeat in the last 2 sec from xbee
+    if( (ros::Time::now()-mapIt->second.lastHeartbeat) < ros::Duration(2.0) )
     {
-      ROS_WARN("No recent heartbeat from %s", mapIt->first.c_str());
-      sendData = "RS " + msg->sender + " 0.00";
-      m_xbee.sendTransmitPacket(sendData, mapIt->second.address);
+      m_xbee.m_port.diag(mapIt->first, mapIt->second.name);
+      //ROS_WARN("No recent heartbeat from %s", mapIt->first.c_str());
+      //sendData = "RS " + msg->sender + " 0.00";
+      //m_xbee.sendTransmitPacket(sendData, mapIt->second.address);
     }
   }
 
@@ -104,22 +108,33 @@ void XbeeCoordinator::gpsCorrectionsCallback(const std_msgs::ByteMultiArray::Con
   //xbee packet has max len of 72 bytes
   //size_t bytesSent = 0;
   std::string correctionSubstr;
-  int numMsgs = 2 + (correction->data.size()-1)/67;
+  size_t payloadSize = 67;
+  int numMsgs = 1 + (correction->data.size()-1)/payloadSize;
   int msgNum = 1;
 
+  //each msg gets a unique character to identify it
+  //this system will break down if more than 27 GPS RTCM msgs are being sent per second
+  if(m_rtkCount == 'Z')
+  {
+    m_rtkCount = 'A';
+  } else
+  {
+    ++m_rtkCount;
+  }
+
   //send a header packet with identifier, msg count, label from the MultiByteArray
-  std::string msgHeader = "GC " + boost::lexical_cast<std::string>(numMsgs);
+  //std::string msgHeader = "GC" + boost::lexical_cast<std::string>(m_rtkCount) + boost::lexical_cast<std::string>(numMsgs);
   //ROS_INFO_STREAM("Sending gps correction len " << correction->data.size() << 
   //                " in " << numMsgs << " xbee packets");
   //ROS_INFO_STREAM(msgHeader + boost::lexical_cast<std::string>(msgNum) +
   //                            correction->layout.dim.front().label);
-  if(correction->layout.dim.front().label.size() < 67)
+  if(correction->layout.dim.front().label.size() < payloadSize)
   {
-    if(m_xbee.sendTransmitPacket(msgHeader +
-                               boost::lexical_cast<std::string>(msgNum) +
-                               correction->layout.dim.front().label) )
-    {
-      msgNum++;
+    //if(m_xbee.sendTransmitPacket(msgHeader +
+    //                           boost::lexical_cast<std::string>(msgNum) +
+    //                           correction->layout.dim.front().label) )
+    //{
+      //msgNum++;
       std::vector<unsigned char> msgBody;
       
       while(msgNum <= numMsgs)
@@ -129,34 +144,37 @@ void XbeeCoordinator::gpsCorrectionsCallback(const std_msgs::ByteMultiArray::Con
         msgBody.clear();
         msgBody.push_back('G');
         msgBody.push_back('C');
-        msgBody.push_back(' ');
+        msgBody.push_back(m_rtkCount);
         msgBody.push_back(boost::lexical_cast<char>(numMsgs));
         msgBody.push_back(boost::lexical_cast<char>(msgNum));
         
-        for(int i = (msgNum-2)*67; i < std::min<int>((msgNum-1)*67, correction->data.size()); i++)
+        for(int i = (msgNum-1)*payloadSize; i < std::min<int>((msgNum)*payloadSize, correction->data.size()); i++)
         {
           msgBody.push_back(correction->data[i]);
         }
 
-        //ROS_INFO_STREAM(msgHeader + std::to_string(msgNum) <<
-        //                " positions " << (msgNum-2)*67 << ":" <<
-        //                std::min<int>((msgNum-1)*67, correction->data.size()));
+        ROS_INFO_STREAM("GC" << m_rtkCount << std::to_string(numMsgs) << 
+                        std::to_string(msgNum) << " positions " << (msgNum-1)*payloadSize << ":" <<
+                        std::min<int>((msgNum)*payloadSize, correction->data.size()));
 
         if(!m_xbee.sendTransmitPacket(msgBody))
         {
           ROS_ERROR_STREAM("XbeeCoordinator: transmit of gps correction packet " << msgNum << "/" <<
                            numMsgs << " failed");
         } else
+        {
+          msgNum++;
+        }
         
-        msgNum++;
       }
-    } else
-    {
-      ROS_ERROR("XbeeCoordinator gps correction header transmit failed");
-    }
+    //} else
+    //{
+    //  ROS_ERROR("XbeeCoordinator gps correction header transmit failed");
+    //}
   } else
   {
-    ROS_WARN_STREAM("Xbee: ByteMultiArray label " << correction->layout.dim.front().label << " will be clipped to 67 bytes");
+    ROS_WARN_STREAM("Xbee: ByteMultiArray label " << correction->layout.dim.front().label << " will be clipped to " <<
+                    payloadSize << " bytes");
   }
 }
 

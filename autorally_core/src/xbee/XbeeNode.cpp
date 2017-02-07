@@ -95,6 +95,7 @@ void XbeeNode::sendHi(const ros::TimerEvent& /*time*/)
     m_xbee.sendTransmitPacket(sendData);
   } else
   {
+    //once we know the address of the coordinator, start sending periodic info to it
     m_hiTimer.stop();
     m_stateTimer = m_nh.createTimer(ros::Duration(1.0),
                                 &XbeeNode::sendState,
@@ -104,8 +105,8 @@ void XbeeNode::sendHi(const ros::TimerEvent& /*time*/)
 
 void XbeeNode::sendState(const ros::TimerEvent& /*time*/)
 {
-  std::string sendData = "ST 0.5";
-  m_xbee.sendTransmitPacket(sendData, m_coordinatorAddress);
+  std::string sendData = "ST " + m_xbee.getNodeIdentifier();
+  m_xbee.sendTransmitPacket(sendData);
 }
 
 void XbeeNode::xbeeHeartbeatState(const ros::TimerEvent& /*time*/)
@@ -128,13 +129,22 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
   std::string msg;
   ss >> msg;
   msg = data.substr(0,2);
+  //std::cout << msg << std::endl;
   //ROS_INFO_STREAM("Xbee NODE receive:" << data << " -" << msg << "-" << m_coordinatorAddress);
   if(msg == "AK")
   {
     ss >> m_coordinatorAddress;
-  }
-  else if(sender == m_coordinatorAddress)
+  } else if (msg == "OD")
   {
+    //ROS_ERROR("XbeeNode: Received pose estimate");
+    if(data.length() == 62)
+    {
+      processXbeeOdom(data, sender);
+    }
+    else
+      ROS_ERROR("XbeeNode: Received incorrect length(%d) odom message \"%s\"", (int)data.length(),data.c_str());
+  } else// if(sender == m_coordinatorAddress)
+  //{
     if(msg == "RS")
     {
       //std::cout << "RS:" << ss << std::endl;
@@ -209,7 +219,7 @@ m_runstop.header.stamp = m_lastrunstop;
 
           std::string gpsString;
           //actual RTCM payload from Xbee is in packets 2+. Packet 0 is unused here, packet 1 is header information for our own use
-          for(size_t i = 2; i < m_correctionPackets[seq].packets.size(); ++i)
+          for(size_t i = 1; i < m_correctionPackets[seq].packets.size(); ++i)
           {
             gpsString += m_correctionPackets[seq].packets[i];
           }
@@ -241,20 +251,13 @@ m_runstop.header.stamp = m_lastrunstop;
       {
         ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]); 
       }
-    
-    } else if (msg == "OD")
-    {
-      if(data.length() == 62)
-      {
-        processXbeeOdom(data, sender);
-      }
-      else
-        ROS_ERROR("XbeeNode: Received incorrect length(%d) odom message \"%s\"", (int)data.length(),data.c_str());
-    } else
-    {
-      ROS_ERROR("XbeeNode: Received unknown message \"%s\"", msg.c_str());
-    }
-  }
+    //}
+  } else if(msg == "HI" || msg == "ST")
+  {} //These will be received but are only needed by coordinator
+  else
+  {
+    ROS_ERROR("XbeeNode: Received unknown message \"%s\"", msg.c_str());
+  } 
 }
 void XbeeNode::odomCallback(const nav_msgs::OdometryConstPtr& odom)
 {

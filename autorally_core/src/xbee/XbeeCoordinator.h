@@ -76,7 +76,8 @@ class XbeeCoordinator
  private:
 
   XbeeInterface m_xbee;  ///< Xbee object that manages sending/receiving data
-  std::map<std::string, RobotState> m_robotInfos;  ///< Info for all XbeeCoordinators in system
+  std::map<std::string, RobotState> m_robotInfos;  ///< Info for all XbeeNodes in system
+  unsigned char m_rtkCount;
   ros::Subscriber m_runstopSubscriber; ///< Subscriber for runstop
   ros::Subscriber m_baseStationRTKSubscriber; ///< Subscriber for RTK corrections
 
