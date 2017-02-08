@@ -156,10 +156,17 @@ void XbeeInterface::xbeeDataCallback()
         //call appropritate callback
         if(m_apiFrameFunctions.find(msgToAdd[0]&0xFF) != m_apiFrameFunctions.end())
         {
-   	      if(!m_apiFrameFunctions[msgToAdd[0]&0xFF](this, msgToAdd))
-   	      {
-            m_port.diag_error("Xbee: error processing message");
-            ROS_ERROR("Xbee: error processing message:%s", stringToHex(msgToAdd).c_str());
+          try
+          {
+     	      if(!m_apiFrameFunctions[msgToAdd[0]&0xFF](this, msgToAdd))
+     	      {
+              m_port.diag_error("Xbee: error processing message");
+              ROS_ERROR("Xbee: error processing message:%s", stringToHex(msgToAdd).c_str());
+            }
+          } catch(boost::bad_function_call &)
+          {
+            //catch this exception for cleaner shutdown
+            std::cout << "Caught bad function call in XbeeInterface (probably during shutdown)" << std::endl;
           }
         } else
         {
@@ -352,6 +359,13 @@ bool XbeeInterface::sendTransmitPacket(const std::string &message,
   ROS_DEBUG_STREAM("Xbee: Sending:" << message << " with checksum:" << (int)buff[totalSize-1] << " to:" << destAddress <<
                    " in network:" << networkAddress);
 
+  //while(ros::Time::now()-m_mostRecentXbeeXmit < ros::Duration(0.05))
+  //{
+    //usleep(5000);
+    //ROS_INFO("sleepString");
+  //}
+  
+  //m_mostRecentXbeeXmit = ros::Time::now();
   if(m_port.writePort(buff, totalSize) >= 0)
 	{
     m_bytesTransmitted += totalSize;
@@ -416,6 +430,13 @@ bool XbeeInterface::sendTransmitPacket(const std::vector<unsigned char> &message
   ROS_DEBUG_STREAM("Xbee: Sending " << message.size() << " bytes to:" << destAddress <<
                    " in network:" << networkAddress);
 
+  //while(ros::Time::now()-m_mostRecentXbeeXmit < ros::Duration(0.02))
+  //{
+  //  usleep(5000);
+  //  ROS_INFO("sleepVec");
+  //}
+  
+  //m_mostRecentXbeeXmit = ros::Time::now();
   if(m_port.writePort(buff, totalSize) >= 0)
   {
     m_bytesTransmitted += totalSize;

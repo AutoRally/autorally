@@ -89,10 +89,14 @@ void XbeeNode::sendHi(const ros::TimerEvent& /*time*/)
   if(m_coordinatorAddress.size() == 0 || m_coordinatorAddress == "--")
   {
 
-    std::string sendData = "HI " + m_xbee.getNodeIdentifier();
-    //std::cout << "SENDING:" << sendData << std::endl;
+    //dont send until we read our own node identifier
+    if(m_xbee.getNodeIdentifier() != "-")
+    {
+      std::string sendData = "HI " + m_xbee.getNodeIdentifier();
+      //std::cout << "SENDING:" << sendData << std::endl;
 
-    m_xbee.sendTransmitPacket(sendData);
+      m_xbee.sendTransmitPacket(sendData);
+    }
   } else
   {
     //once we know the address of the coordinator, start sending periodic info to it
