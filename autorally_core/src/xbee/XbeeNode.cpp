@@ -223,7 +223,7 @@ m_runstop.header.stamp = m_lastrunstop;
       
       if(m_correctionPackets[seq].count == m_correctionPackets[seq].packets.size()-1)
       {
-        ROS_INFO_STREAM("Xbee publishing RTCM3 msg seq " << seq);
+        ROS_DEBUG_STREAM("Xbee publishing RTCM3 msg seq " << seq);
 
         std::string gpsString;
         //actual RTCM payload data packets start at 1
