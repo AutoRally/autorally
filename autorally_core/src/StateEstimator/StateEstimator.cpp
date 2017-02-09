@@ -280,6 +280,8 @@ namespace autorally_core
 
   void StateEstimator::GpsHelper()
   {
+    double prevTime;
+
     // Kick off the thread, and wait for our GPS measurements to come streaming in
     while (ros::ok())
     {
@@ -339,6 +341,8 @@ namespace autorally_core
           m_lastImuTgps = m_lastIMU->header.stamp.toSec();
           m_lastIMU = m_ImuOptQ.popBlocking();
         }
+
+        prevTime = fix->header.stamp.toSec();
       }
       else
       {
@@ -346,10 +350,31 @@ namespace autorally_core
         Values newVariables;
         double E, N, U;
         m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-        //double D = -U;  // We want to work in ENU, don't need down
 
+        // toss out old wheel odom messages (ie. before the last optimized time stamp
+        while (m_odomOptQ.front()->header.stamp.toSec() < prevTime)
+          m_odomOptQ.popBlocking();
+
+        nav_msgs::OdometryPtr firstOdom = m_odomOptQ.popBlocking();
+        nav_msgs::OdometryPtr lastOdom;
+        while (m_odomOptQ.front()->header.stamp.toSec() <fix->header.stamp.toSec())
+            lastOdom = m_odomOptQ.popBlocking();
+
+        Pose3 betweenOdomPose = Pose3(Rot3(gtsam::Quaternion(firstOdom->pose.pose.orientation.w,
+              firstOdom->pose.pose.orientation.x, firstOdom->pose.pose.orientation.y, firstOdom->pose.pose.orientation.z)),
+              Point3(firstOdom->pose.pose.position.x, firstOdom->pose.pose.position.y, firstOdom->pose.pose.position.z));
+        Pose3 lastOdomPose = Pose3(Rot3(gtsam::Quaternion(lastOdom->pose.pose.orientation.w,
+              lastOdom->pose.pose.orientation.x, lastOdom->pose.pose.orientation.y, lastOdom->pose.pose.orientation.z)),
+              Point3(lastOdom->pose.pose.position.x, lastOdom->pose.pose.position.y, lastOdom->pose.pose.position.z));
+        betweenOdomPose.between(lastOdomPose);
+
+        BetweenFactor<Pose3> odomFactor(X(m_poseVelKey), X(m_poseVelKey), betweenOdomPose,
+            noiseModel::Diagonal::Sigmas((Vector(6) << 0.1,0.1,0.1,0.3,0.3,0.3).finished()));
+
+
+
+        // integrating the IMU measurements
         PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
-
         while(m_lastIMU->header.stamp.toSec() < fix->header.stamp.toSec())
         {
           Vector3 acc, gyro;
@@ -360,7 +385,7 @@ namespace autorally_core
           m_lastIMU = m_ImuOptQ.popBlocking();
 //          ROS_WARN("Last IMU dt was %f, put time %f", imuDT, m_lastIMU->header.stamp.toSec());
         }
-
+        // adding the integrated IMU measurements to the factor graph
         ImuFactor imuFactor(X(m_poseVelKey), V(m_poseVelKey), X(m_poseVelKey+1), V(m_poseVelKey+1), B(m_biasKey),
                   pre_int_data);
 
@@ -421,6 +446,7 @@ namespace autorally_core
 
         m_biasKey ++;
         m_poseVelKey ++;
+        prevTime = fix->header.stamp.toSec();
       }
     }
   }

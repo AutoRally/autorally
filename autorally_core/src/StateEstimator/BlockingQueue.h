@@ -90,6 +90,12 @@ public:
     return boost::optional<WorkType>(element);
   }
 
+  // TODO this might not make sense - will assess later
+  WorkType front()
+  {
+    return queue_.front();
+  }
+
   size_t size() const { return queue_.size(); }
   size_t max_size() const { return max_size_; }
 
