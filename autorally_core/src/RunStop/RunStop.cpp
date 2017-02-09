@@ -48,26 +48,34 @@ int main(int argc, char **argv)
 	}
 
 	RunStop runStop(nh, runStopPort);
-	runStop.runstopPub_ = nh.advertise<autorally_msgs::runstop>("runstop", 1);
-
-  //publish runsto pat 10Hz into system
-	runStop.doWorkTimer_ = nh.createTimer(ros::Rate(10),
-	                                     &RunStop::doWorkTimerCallback,
-	                                     &runStop);
-
+	
 	ros::spin();
 	return 0;
 }
 
 RunStop::RunStop(ros::NodeHandle &nh,
-                             const std::string& port):
-  state_("RED")
+                 const std::string& port):
+                 state_("RED")
 {
+  lastMessageTime_ = ros::Time::now() + ros::Duration(5.0);
+  
+  double runstopRate = 5.0;
+  if(!nh.getParam("runStop/runstopRate", runstopRate))
+	{
+		ROS_ERROR("Could not get all RunStop parameters");
+	}
+
+	runstopPub_ = nh.advertise<autorally_msgs::runstop>("runstop", 1);
+
   serialPort_.init(nh, ros::this_node::getName(), "","RunStop", port, true);
+  //publish runsto pat 10Hz into system
+	doWorkTimer_ = nh.createTimer(ros::Rate(runstopRate),
+                                &RunStop::doWorkTimerCallback,
+                                this);
+  
+
   runstopData_.header.frame_id="RUNSTOP";
   runstopData_.sender = "RUNSTOP";
-
-  lastMessageTime_ = ros::Time::now() + ros::Duration(1);
 }
 
 RunStop::~RunStop()
@@ -128,7 +136,7 @@ void RunStop::doWorkTimerCallback(const ros::TimerEvent& /*time*/)
   }
 
   //if no recent message, runstop is false
- 	if((ros::Time::now()-lastMessageTime_).toSec() > 1.0)
+ 	if( ros::Time::now()-lastMessageTime_ > ros::Duration(1.0))
  	{
  	  serialPort_.diag_error("No recent data from runstop box");
  	  runstopData_.motionEnabled = false;
