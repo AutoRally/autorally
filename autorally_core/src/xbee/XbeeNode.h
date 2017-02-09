@@ -38,6 +38,28 @@ class XbeeNode
   ~XbeeNode();
 
  private:
+  struct Rtcm3Packets
+  {
+    size_t count;
+    ros::Time time;
+    std::vector<std::string> packets;
+
+    Rtcm3Packets()
+    {
+      count = 0;
+    }
+    
+    void reset(int s)
+    {
+      count = 0;
+      time = ros::Time::now();
+      packets.clear();
+      packets.resize(s+1);
+    }
+  };
+
+  std::map<char, Rtcm3Packets> m_correctionPackets;
+
   XbeeInterface m_xbee; ///< Xbee object, handles communication with device
   ros::NodeHandle m_nh; ///< local copy
   ros::Publisher m_runstopPublisher; ///< Subscriber for runstop
@@ -57,9 +79,8 @@ class XbeeNode
   std::string m_coordinatorAddress; ///< Xbee addess of coordinator
   autorally_msgs::runstop m_runstop; ///< runstop message to send
   std::string m_msgLabel; ///< RTCM3 message header from xbee
-  std::string m_gpsString; ///< buffer to store incoming message data as packets arrive
-  int m_prevGpsMsgNum; ///< sequence number for received message
-  nav_msgs::Odometry m_odometry;
+  nav_msgs::Odometry m_odometry; ///< most recently received Odom message to send over Xbee
+
   /**
    * @brief Send startup information to xbee coordinator and wait for confirmation
    * @param time timer information

@@ -153,6 +153,7 @@ class XbeeInterface
   ros::Timer m_diagInfoTimer; ///< timer to request diagnostic info from Xbee
   int m_bytesReceived;
   int m_bytesTransmitted;
+  int m_atResponseFailures;
 
   /**
    * @brief Callback triggered by SerialInterfaceThreaded when USB data is available
