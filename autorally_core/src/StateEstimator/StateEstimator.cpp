@@ -170,7 +170,7 @@ namespace autorally_core
       while (!ip)
       {
         ROS_WARN("Waiting for valid initial pose");
-        ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("filter", m_nh, ros::Duration(15));
+        ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("/imu/filter", m_nh, ros::Duration(15));
       }
       m_initialPose = *ip;
     }
@@ -237,9 +237,10 @@ namespace autorally_core
      noiseModelBetweenbias_sigma = (Vector(6) << sigma_acc_bias_c, sigma_gyro_bias_c).finished();
      noiseModelBetweenbias = noiseModel::Diagonal::Sigmas((noiseModelBetweenbias_sigma));
 
-     m_gpsSub = m_nh.subscribe("gps", 300, &StateEstimator::GpsCallback, this);
-     m_imuSub = m_nh.subscribe("imu", 600, &StateEstimator::ImuCallback, this);
-     m_odomSub = m_nh.subscribe("wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
+     m_gpsSub = m_nh.subscribe("/gpsRoverStatus", 300, &StateEstimator::GpsCallback, this);
+     m_imuSub = m_nh.subscribe("/imu/imu", 600, &StateEstimator::ImuCallback, this);
+     m_odomSub = m_nh.subscribe("/wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
+
 
      boost::thread optimizer(&StateEstimator::GpsHelper,this);
 
@@ -356,21 +357,26 @@ namespace autorally_core
           m_odomOptQ.popBlocking();
 
         nav_msgs::OdometryPtr firstOdom = m_odomOptQ.popBlocking();
-        nav_msgs::OdometryPtr lastOdom;
-        while (m_odomOptQ.front()->header.stamp.toSec() <fix->header.stamp.toSec())
+        nav_msgs::OdometryPtr lastOdom = m_odomOptQ.popBlocking();
+
+        // only want to do the following if the odom messages are behind relative to the GPS
+        if (lastOdom->header.stamp.toSec() < fix->header.stamp.toSec())
+        {
+          // tossing all odom messages except the last one before the GPS time stamp
+          while (m_odomOptQ.size() != 0 && (m_odomOptQ.front()->header.stamp.toSec() < fix->header.stamp.toSec()))
             lastOdom = m_odomOptQ.popBlocking();
 
-        Pose3 betweenOdomPose = Pose3(Rot3(gtsam::Quaternion(firstOdom->pose.pose.orientation.w,
+          Pose3 betweenOdomPose = Pose3(Rot3(gtsam::Quaternion(firstOdom->pose.pose.orientation.w,
               firstOdom->pose.pose.orientation.x, firstOdom->pose.pose.orientation.y, firstOdom->pose.pose.orientation.z)),
               Point3(firstOdom->pose.pose.position.x, firstOdom->pose.pose.position.y, firstOdom->pose.pose.position.z));
-        Pose3 lastOdomPose = Pose3(Rot3(gtsam::Quaternion(lastOdom->pose.pose.orientation.w,
+          Pose3 lastOdomPose = Pose3(Rot3(gtsam::Quaternion(lastOdom->pose.pose.orientation.w,
               lastOdom->pose.pose.orientation.x, lastOdom->pose.pose.orientation.y, lastOdom->pose.pose.orientation.z)),
               Point3(lastOdom->pose.pose.position.x, lastOdom->pose.pose.position.y, lastOdom->pose.pose.position.z));
-        betweenOdomPose.between(lastOdomPose);
+          betweenOdomPose.between(lastOdomPose);
 
-        BetweenFactor<Pose3> odomFactor(X(m_poseVelKey), X(m_poseVelKey), betweenOdomPose,
-            noiseModel::Diagonal::Sigmas((Vector(6) << 0.1,0.1,0.1,0.3,0.3,0.3).finished()));
-
+          BetweenFactor<Pose3> odomFactor(X(m_poseVelKey), X(m_poseVelKey), betweenOdomPose,
+              noiseModel::Diagonal::Sigmas((Vector(6) << 0.1,0.1,0.1,0.3,0.3,0.3).finished()));
+        }
 
 
         // integrating the IMU measurements
@@ -558,10 +564,8 @@ namespace autorally_core
 
   void StateEstimator::WheelOdomCallback(nav_msgs::OdometryPtr odom)
   {
-      if (!m_odomOptQ.pushNonBlocking(odom))
-        ROS_WARN("Dropping a wheel odometry measurement due to full queue!!");
-      else // TODO cut this out
-          ROS_INFO("Adding wheel odometry message to queue.");
+      m_odomOptQ.pushNonBlocking(odom);
+        //std::cout<<"Dropping a wheel odometry measurement due to full queue!!"<<std::endl;
   }
 
   void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)
@@ -574,7 +578,7 @@ namespace autorally_core
 
 int main (int argc, char** argv)
 {
-  ros::init(argc, argv, "stateEstimator");
+  ros::init(argc, argv, "StateEstimator");
   //ros::NodeHandle n;
   autorally_core::StateEstimator wpt;
   ros::spin();

@@ -8,10 +8,10 @@ if(GTSAM_FOUND)
   find_package(TBB)
   include_directories(include ${catkin_INCLUDE_DIRS} "/usr/local/include")
 
-  add_executable(stateEstimator StateEstimator.cpp)
-  target_link_libraries(stateEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/local/lib/libGeographic.so ${TBB_LIBRARIES} Diagnostics)
+  add_executable(StateEstimator StateEstimator.cpp)
+  target_link_libraries(StateEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/local/lib/libGeographic.so ${TBB_LIBRARIES} Diagnostics)
 
-  install(TARGETS stateEstimator
+  install(TARGETS StateEstimator
           ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
           LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
           RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
