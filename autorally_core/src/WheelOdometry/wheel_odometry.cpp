@@ -238,7 +238,7 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
   {
     // debug mode publishes data for visualization purposes
     odom_msg->pose.pose.position.x = delta_x_state_estimator_;
-    odom_msg->pose.pose.position.y = delta_x_state_estimator_;
+    odom_msg->pose.pose.position.y = delta_y_state_estimator_;
     odom_msg->pose.pose.position.z = error_velocity_x_;
     double yaw = theta_ * PI / 180.0;
     odom_msg->pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, yaw);
