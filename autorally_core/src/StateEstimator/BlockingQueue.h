@@ -93,7 +93,13 @@ public:
   // TODO this might not make sense - will assess later
   WorkType front()
   {
+    boost::mutex::scoped_lock guard(mutex_);
     return queue_.front();
+  }
+  WorkType back()
+  {
+    boost::mutex::scoped_lock guard(mutex_);
+    return queue_.back();
   }
 
   size_t size() const { return queue_.size(); }

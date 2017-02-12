@@ -129,6 +129,7 @@ namespace autorally_core
     Pose3 m_bodyPSensor, m_carENUPcarNED;
     Pose3 m_imuPgps;
 
+    bool m_fixedOrigin;
     LocalCartesian m_enu;   /// Object to put lat/lon coordinates into local cartesian
     bool m_gotFirstFix;
     bool m_invertx, m_inverty, m_invertz;
