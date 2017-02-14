@@ -63,6 +63,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
 Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking first if you will be working with the code.
 
+
 To clone straight from the AutoRally repo:
 
     git clone https://github.com/AutoRally/autorally.git
@@ -94,7 +95,6 @@ _Note:_ If you are unfamiliar with catkin, please know that you must run `source
 You can generate or update code documentation by running `doxygen` in `autorally/`.
 
 To view code documentation open `autorally/doc/html/index.html` in a web browser.
-
 
 ### 6. Start the AutoRally Simulation to Test Configuration
 
