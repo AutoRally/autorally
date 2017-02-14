@@ -2,8 +2,8 @@
 Changelog for package autorally_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.4 (2017-02-14)
+------------------
 * New camera_trigger Arduino and .cpp code
 * removed GPGSV messages from being displayed in diagnostics
 * SystemStatus: added disc usage, removed m4api stats that are causing a hang on startup, fixed broken fan speed parsing

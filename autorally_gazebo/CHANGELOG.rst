@@ -2,8 +2,8 @@
 Changelog for package autorally_gazebo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.4 (2017-02-14)
+------------------
 * Added ground, vehicle, and wheel textures
 
 0.2.3 (2016-09-20 11:06)
