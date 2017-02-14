@@ -26,7 +26,6 @@ generate_dynamic_reconfigure_options(
   cfg/camera_trigger_params.cfg
 )
 
-
 catkin_package(
     DEPENDS libqt4-dev lm-sensors Boost
     CATKIN-DEPENDS roscpp rospy std_msgs geometry_msgs sensor_msgs nav_msgs image_transport qt-ros diagnostic_updater qt_build autorally_msgs
