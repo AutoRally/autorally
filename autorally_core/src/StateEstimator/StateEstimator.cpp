@@ -325,8 +325,17 @@ namespace autorally_core
         NonlinearFactorGraph newFactors;
         Values newVariables;
         m_gotFirstFix = true;
+
+        double E, N, U;
         if (!m_fixedOrigin)
+        {
           m_enu.Reset(fix->latitude, fix->longitude, fix->altitude);
+          E = 0; N = 0; U = 0; // we're choosing this as the origin
+        }
+        else
+        {
+          m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
+        }
 
         // Add prior factors on pose, vel and bias
         Rot3 initialOrientation = Rot3::Quaternion(m_initialPose.orientation.w,
@@ -336,7 +345,7 @@ namespace autorally_core
         std::cout << "Initial orientation" << std::endl;
         std::cout << m_bodyPSensor.rotation() * initialOrientation * m_carENUPcarNED.rotation() << std::endl;
         Pose3 x0(m_bodyPSensor.rotation() * initialOrientation * m_carENUPcarNED.rotation(),
-            Point3(0, 0, 0)); /// We always start at the origin of m_enu
+            Point3(E, N, U));
         m_prevPose = x0;
         PriorFactor<Pose3> priorPose(X(0), x0, priorNoisePose);
         newFactors.add(priorPose);
@@ -370,7 +379,7 @@ namespace autorally_core
           m_lastIMU = m_ImuOptQ.popBlocking();
         }
 
-        prevTime = fix->header.stamp.toSec();
+        prevTime = curTime;
         loopRate.sleep();
       }
       else if (usingGPS || usingOdom)

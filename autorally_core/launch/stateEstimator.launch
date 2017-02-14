@@ -51,9 +51,9 @@
       <!-- set the lat/lon/alt origin for GPS local frame coordinates -->
       <param name="FixedOrigin" value="false"/>
       <!-- currently using approximate marietta location -->
-      <param name="latOrigin" value="33.774513"/>
-      <param name="lonOrigin" value="-84.405062"/>
-      <param name="altOrigin" value="306.02"/>
+      <param name="latOrigin" value="33.7744980893"/>
+      <param name="lonOrigin" value="-84.4050941205"/>
+      <param name="altOrigin" value="277.752"/>
       
       
   </node>
