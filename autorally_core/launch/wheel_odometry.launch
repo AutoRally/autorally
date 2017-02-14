@@ -1,0 +1,13 @@
+<launch>
+  <node name="WheelOdometry" pkg="autorally_core" type="WheelOdometry" output="screen"/>
+    <param name="vehicle_wheelbase" value="0.57785" />
+    <param name="vehicle_width" value="0.3175" />
+    <param name="using_sim" value="false" />
+
+    <!-- note: the debug parameter delays the output of the angular velocity -->
+    <param name="debug" value="false" />
+
+    <!-- time_delay applies to the angular velocity calculation that lines data up with state estimator - only debug mode -->
+    <param name="time_delay" value="0.2714" />
+
+</launch>

@@ -84,12 +84,19 @@ def getSources(status):
   try:
     sourcesText = check_output("chronyc sources", shell=True);
     lines = sourcesText.split('\n')
+    status.level = 1
     for line in lines[3:]:
       if len(line):
         tok = line.split()
         text = 'ModeState:' + tok[0] + ' Stratum:' + tok[2] + ' Poll:' + tok[3] + ' Reach:' + tok[4] +\
                ' LastRx:' + tok[5] + ' Last Sample:' + ''.join(tok[6:])
         status.values.append(KeyValue(key='source '+tok[1], value=text))    
+        #M = tok[0][0]
+        #S = tok[0][1]
+        #all is good if we are synchronizing to a source
+        if tok[0][1] == '*':
+          status.level = 0
+        #print M, S
     
   except subprocess.CalledProcessError as e:
     rospy.logerr(e.output)

@@ -34,3 +34,11 @@
     </description>
   </class>
 </library>
+
+<library path="lib/libCameraTrigger">
+  <class name="autorally_core/CameraTrigger" type="autorally_core::CameraTrigger" base_class_type="nodelet::Nodelet">
+    <description>
+    Camera Trigger nodelet
+    </description>
+  </class>
+</library>

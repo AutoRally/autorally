@@ -1,0 +1,16 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node pkg="nodelet" type="nodelet" name="CameraTrigger" args="load autorally_core/CameraTrigger camera_nodelet_manager" output="screen" machine="autorally-master" >
+
+    <param name="port" value="/dev/arComputeBoxArduino" />
+    
+    <!--configure settings for 115200 baud, 8N1 -->
+    <param name="serialBaud" value="115200" />
+    <param name="serialDataBits" value="8" />
+    <param name="serialParity" value="none" />
+    <param name="serialStopBits" value="1" />
+    <param name="serialHardwareFlow" value="false" />
+    <param name="serialSoftwareFlow" value="false" />
+  </node>
+</launch>

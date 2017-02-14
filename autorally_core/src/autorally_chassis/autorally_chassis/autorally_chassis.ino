@@ -25,7 +25,7 @@ auto& cap_steer = capture_tc7; //pin 3, steer
 auto& cap_thr = capture_tc8; //pin 11, throttle
 
 // 50 ms max period, in us
-#define SERVO_TIME_WINDOW 50000
+#define SERVO_TIME_WINDOW 110000
 
 #define MAX_MEASUREMENT_AGE 400  ///< Zero the reading at 400 ms
 
@@ -144,7 +144,9 @@ void setup()
   //clear serial link command buffer
   for (int i = 0; i < 5; i++)
   {
-    Serial3.write('0x00');
+    Serial3.write(static_cast<byte>(0x00));
+//    Serial3.write('0x00');
+
   }
 
   // Setup input captures for RC

@@ -169,11 +169,29 @@ class TempStatus:
         else:
             self.cpuTemp4 = 0.0
         self.cpuTemp = max(self.cpuTemp1, self.cpuTemp2, self.cpuTemp3, self.cpuTemp4)
+
+        outputString = commands.getoutput("sensors | grep \"fan1:\"")
+        split = outputString.split()
+        if(len(split) >= 2):
+          self.fanSpeed = split[1]
+        else:
+          self.fanSpeed = " "
+
         outputString = commands.getoutput("sensors | grep \"fan2:\"")
-        try:
-            self.fanSpeed = float(outputString[23:27])
-        except ValueError:
-            self.fanSpeed = -1.0
+        split = outputString.split()
+        if(len(split) >= 2):
+          self.fanSpeed += "/" + split[1]
+        else:
+          self.fanSpeed += "/ "
+
+
+        outputString = commands.getoutput("sensors | grep \"fan3:\"")
+        split = outputString.split()
+        if(len(split) >= 2):
+          self.fanSpeed += "/" + split[1]
+        else:
+          self.fanSpeed += "/ "
+
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
@@ -192,13 +210,21 @@ if __name__ == '__main__':
         not rospy.has_param('/systemStatus/batteryLow') or\
         not rospy.has_param('/systemStatus/batteryCrit') or\
         not rospy.has_param('/systemStatus/wirelessLow') or\
-        not rospy.has_param('/systemStatus/wirelessCrit'):
-        rospy.logerr("Could not get all SystemStatus parameters");
+        not rospy.has_param('/systemStatus/wirelessCrit') or\
+        not rospy.has_param('/systemStatus/dataDrive') or\
+        not rospy.has_param('/systemStatus/dataDriveSpaceHighPercent') or\
+        not rospy.has_param('/systemStatus/dataDriveSpaceCritPercent'):
+      rospy.logerr("Could not get all SystemStatus parameters");
+
+    dataDrive = rospy.get_param('/systemStatus/dataDrive')
+    dataDriveHighPercent = rospy.get_param('/systemStatus/dataDriveSpaceHighPercent')
+    dataDriveCritPercent = rospy.get_param('/systemStatus/dataDriveSpaceCritPercent')
 
     wirelessStatusPublisher = WirelessStatus()
     powerStatusPublisher = PowerStatus()
     tempStatusPublisher = TempStatus()
     powerSupplyHandler = M4ATXPowerStatus()
+    powerSupplyHandler.valid=False
 
     rate = rospy.Rate(0.5) #1Hz
     while not rospy.is_shutdown() and running:
@@ -233,7 +259,7 @@ if __name__ == '__main__':
             status.values.append(KeyValue(key='CPU CRITICALLY HOT', value=chr(2)))
         elif tempStatusPublisher.cpuTemp >= rospy.get_param('/systemStatus/cpuTempHigh'):
             status.values.append(KeyValue(key='CPU HOT', value=chr(1)))
-        status.values.append(KeyValue(key='Fan Speed', value=str(tempStatusPublisher.fanSpeed)))
+        status.values.append(KeyValue(key='Fan 1/2/3 (case/CPU/case) Speeds', value=tempStatusPublisher.fanSpeed))
 
         # WiFi status is not currently published by our driver
         status.values.append(KeyValue(key='WiFi Quality', value=str(wirelessStatusPublisher.linkQuality)))
@@ -242,6 +268,33 @@ if __name__ == '__main__':
             status.values.append(KeyValue(key='WiFi CRITICALLY WEAK', value=chr(2)))
         elif wirelessStatusPublisher.linkQuality <= rospy.get_param('/systemStatus/wirelessLow'):
             status.values.append(KeyValue(key='WiFi WEAK', value=chr(1)))
+
+        #get available dick space in /media/data
+        try:
+            diskUsage = subprocess.check_output("df -h " + dataDrive, shell=True)
+            lines = diskUsage.split("\n")
+            #remove extra spaces and split on remaini/media/datang spaces
+            line0 = (" ".join(lines[0].split())).split(" ")
+            line1 = (" ".join(lines[1].split())).split(" ")
+            for a, b in zip(line0, line1):
+              #check disc usage %              
+              if a == "Use%":
+                discPercent = int(b.strip("%"))
+                if discPercent > dataDriveHighPercent:
+                  status.values.append(KeyValue(key=dataDrive + " filling up!", value=chr(1)))              
+                if discPercent > dataDriveCritPercent:
+                  status.values.append(KeyValue(key=dataDrive + " almost full!", value=chr(2)))  
+
+              #only add part of the df -h output to diagnostics              
+              if a not in ["Filesystem", "Mounted", "on"]:
+                status.values.append(KeyValue(key=a + " " + dataDrive, value=b))
+        except subprocess.CalledProcessError, e:
+            status.values.append(KeyValue(key="Error reading disc usage", value=e))
+
+        
+#        diag1="
+
+
         pub.publish(array)
         rate.sleep()
     print("SystemStatus: Shutting down");

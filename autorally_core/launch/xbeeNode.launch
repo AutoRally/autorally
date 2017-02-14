@@ -14,7 +14,7 @@
     <param name="serialDataBits" value="8" />
     <param name="serialParity" value="none" />
     <param name="serialStopBits" value="1" />
-    <param name="serialHardwareFlow" value="false" />
+    <param name="serialHardwareFlow" value="true" />
     <param name="serialSoftwareFlow" value="false" />
   </node>
 </launch>
