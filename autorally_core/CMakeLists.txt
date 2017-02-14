@@ -21,7 +21,10 @@ find_package(cmake_modules REQUIRED)
 
 catkin_python_setup()
 
-generate_dynamic_reconfigure_options(cfg/camera_auto_balance_params.cfg)
+generate_dynamic_reconfigure_options(
+  cfg/camera_auto_balance_params.cfg
+  cfg/camera_trigger_params.cfg
+)
 
 catkin_package(
     DEPENDS libqt4-dev lm-sensors Boost
@@ -49,7 +52,9 @@ add_subdirectory(src/xbee)
 add_subdirectory(src/ImageRepublisher)
 add_subdirectory(src/StateEstimator)
 add_subdirectory(src/autorally_chassis)
+add_subdirectory(src/camera_trigger)
 add_subdirectory(src/CameraAutoBalance)
+add_subdirectory(src/WheelOdometry)
 
 #install(TARGETS
 # 

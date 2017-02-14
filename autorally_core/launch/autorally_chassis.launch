@@ -6,6 +6,7 @@
     <param name="commandRate" value="75" />
     <param name="commandMaxAge" value="0.2" />
     <param name="runstopMaxAge" value="2" />
+    <param name="wheelDiameter" value="0.190" />
 
     <rosparam param="actuators" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
 
