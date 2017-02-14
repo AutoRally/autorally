@@ -4,7 +4,8 @@
   <node name="runStop" pkg="autorally_core" type="runStop"
         machine="autorally-ocs" output="screen">
     <remap from="runstop" to="runstopBox"/>
-
+    
+    <param name="runstopRate" value="5"/>
     <param name="port" value="/dev/arRunStop" />
 
     <!--configure settings for 57600 baud, 8N1 -->

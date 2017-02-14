@@ -170,7 +170,14 @@ void SerialInterfaceThreaded::run()
         //callback triggered within same thread
         if(m_dataCallback)
         {
-          m_dataCallback();
+          try
+          {
+            m_dataCallback();
+          } catch(boost::bad_function_call &)
+          {
+            //catch this exception for cleaner shutdown
+            std::cout << "Caught bad function call in SerialInterfaceThreaded (probably during shutdown)" << std::endl;
+          }
         }
         //condition can notify (wake) other threads waiting for data
 //        m_waitCond.notify_all();

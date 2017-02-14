@@ -44,8 +44,8 @@
 #include <vector>
 
 /**
- * This GPS Interface program currently using the hemisphere
- * GPS R320 pr P303 Receivers.
+ * This NMEA GPS Interface program currently for the hemisphere
+ * GPS R320, P303, and P307 Receivers.
  */
 int main(int argc, char **argv)
 {
@@ -141,8 +141,8 @@ GPSHemisphere::GPSHemisphere(ros::NodeHandle &nh):
        * if a message is received from serial before the associated publisher
        * is connected, an exception occurs and the node crashes.
        */
-      m_portA.init(nh, nodeName, "primaryPort", "Hemisphere p303", portPathA, true);
-      m_portB.init(nh, nodeName, "correctionPort", "Hemisphere p303", portPathB, false);
+      m_portA.init(nh, nodeName, "primaryPort", "Hemisphere", portPathA, true);
+      m_portB.init(nh, nodeName, "correctionPort", "Hemisphere", portPathB, false);
       
       m_statusPub = nh.advertise<sensor_msgs::NavSatFix>("gpsRoverStatus", 5);
 
@@ -289,6 +289,7 @@ void GPSHemisphere::rtcmDataCallback()
         {
           ROS_ERROR_STREAM("GPSHemisphere failed RTCM3.0 type lexical cast:" << type);
           m_portB.diag_warn("GPSHemisphere failed RTCM3.0 type lexical cast");
+          return;
         }
         
         m_portB.m_data.erase(0,len);
@@ -367,7 +368,11 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       m_portA.diag(msgType + " HDOP:", tokens[8].c_str());
       
       m_navSatFix.altitude = processAltitude(tokens[9], tokens[10], tokens[11], tokens[12]);
-
+      if(fabs(m_navSatFix.altitude) < 0.001 || fabs(m_navSatFix.latitude) < 0.001 || fabs(m_navSatFix.longitude) < 0.001)
+      {
+        return;
+      }
+      
       //quality token
       if(tokens[6] != "0" && tokens[6] != "1")
       {
@@ -402,6 +407,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     {
       ROS_ERROR_STREAM("GPSHemisphere failed GPS message age lexical cast");
       m_portB.diag_warn("GPSHemisphere failed GPS message age lexical cast");
+      return;
     }
 
     m_statusPub.publish(m_navSatFix);
@@ -472,6 +478,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       {
         m_portA.diag_error("GPSHemisphere::GPGNS bad altitude lexical cast");
         ROS_ERROR("GPSHemisphere::GPGNS bad altitude lexical cast");
+        return;
       } 
       
       if((tokens[6][0] == 'D' ||
@@ -528,6 +535,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     {
       ROS_ERROR_STREAM("GPSHemisphere failed GPS message age lexical cast");
       m_portB.diag_warn("GPSHemisphere failed GPS message age lexical cast");
+      return;
     }
 
     m_statusPub.publish(m_navSatFix);
@@ -662,6 +670,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
         m_portA.diag_error("GPSHemisphere: process of GSA msg cause bad lexical cast for:"
                            + msgType);
         ROS_ERROR_STREAM("GPSHemisphere::process " << msgType << " caused bad lexical cast failed");
+        return;
       }
     }
 
@@ -698,6 +707,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       //Token 4 = Standard deviation of semi-minor axis of error ellipse, meters
       //Token 5 = Error in semi major axis origination, in decimal degrees, true north
 
+
       //Std dev of latitude error, in meters
       try
       {
@@ -720,6 +730,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
       {
         m_portA.diag_error("GPSHemisphere: process GPGST bad lexical cast");
         ROS_ERROR("GPSHemisphere: process GPGST bad lexical cast");
+        return;
       }
     }
   } else if(msgType == "GPVTG") //course over ground/ground speed
@@ -740,14 +751,14 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     //Token 4 = UTC year
     //Token 5 = Local zone hours
     //Token 6 = Local zone minutes
-  } else if(msgType == "$PSAT")
+  } else if(msgType == "PSAT")
   {
     if(tokens.size() < 2)
     {
       ROS_WARN("GPSHemisphere: wrong token count 9 in: %s", msg.c_str());
       return;
     }
-    m_portA.tick("$PSAT");
+    m_portA.tick("PSAT");
     if(tokens[1] == "RTKSTAT")
     {
     } else if(tokens[1] == "RTKPROG")
@@ -800,6 +811,7 @@ void GPSHemisphere::processGPSMessage(std::string& msg)
     {
       m_portA.diag_error("GPSHemisphere: process GSV failed");
       ROS_ERROR_STREAM("GPSHemisphere: process " << msgType << " failed");
+      return;
     }
 
   } else if(msgType == "GPGNS" ||
@@ -914,8 +926,8 @@ double GPSHemisphere::processLatitude(const std::string& lat,
   {
     m_portA.diag_error("GPSHemisphere::processLatitude bad lexical cast");
     ROS_ERROR("GPSHemisphere::processLatitude bad lexical cast");
+    return 0.0;
   }
-  return 0.0;
 }
 double GPSHemisphere::processLongitude(const std::string& lon,
                                       const std::string& lonInd)
@@ -937,9 +949,8 @@ double GPSHemisphere::processLongitude(const std::string& lon,
   {
     m_portA.diag_error("GPSHemisphere::processLongitude bad lexical cast");
     ROS_ERROR("GPSHemisphere::processLongitude bad lexical cast");
+    return 0.0;
   }
-  return 0.0;
-
 }
 double GPSHemisphere::processAltitude(const std::string& antAlt,
                                       const std::string& antAltUnits,
@@ -985,6 +996,7 @@ void GPSHemisphere::processUTC(const std::string& utc, const std::string& source
     {
       m_portA.diag_error("GPSHemisphere::processUTC bad lexical cast");
       ROS_ERROR("GPSHemisphere::processUTC bad lexical cast");
+      return;
     }
   }
 }
