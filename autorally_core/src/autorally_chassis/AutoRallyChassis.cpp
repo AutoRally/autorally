@@ -61,6 +61,13 @@ void AutoRallyChassis::onInit()
     NODELET_ERROR("AutoRallyChassis: could not get chassis interface port");
   }
 
+  chassisStatePub_ = nh.advertise<autorally_msgs::chassisState>
+                     ("chassisState", 1);
+  wheelSpeedsPub_ = nh.advertise<autorally_msgs::wheelSpeeds>
+                     ("wheelSpeeds", 1);
+  chassisCommandPub_ = nh.advertise<autorally_msgs::chassisCommand>
+                     ("RC/chassisCommand", 1);
+
   loadChassisConfig();
   loadChassisCommandPriorities();
   serialPort_.init(nh, getName(), "", "AutoRallyChassis", port, true);
@@ -83,13 +90,6 @@ void AutoRallyChassis::onInit()
   }
   chassisCommandMaxAge_ = ros::Duration(chassisCommandMaxAge);
   runstopMaxAge_ = ros::Duration(runstopMaxAge);
-
-  chassisStatePub_ = nh.advertise<autorally_msgs::chassisState>
-                     ("chassisState", 1);
-  wheelSpeedsPub_ = nh.advertise<autorally_msgs::wheelSpeeds>
-                     ("wheelSpeeds", 1);
-  chassisCommandPub_ = nh.advertise<autorally_msgs::chassisCommand>
-                     ("RC/chassisCommand", 1);
 
   for (auto& mapIt : chassisCommands_)
   {
