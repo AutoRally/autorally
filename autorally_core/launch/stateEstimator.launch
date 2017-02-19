@@ -1,6 +1,7 @@
 <launch>
 
   <include file="$(find autorally_core)/launch/hardware.machine" />
+  <include file="$(find autorally_core)/launch/wheel_odometry.launch" />
 
 
   <node name="state_estimator" pkg="autorally_core" type="StateEstimator" output="screen" machine="autorally-master">
