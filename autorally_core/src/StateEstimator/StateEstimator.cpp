@@ -303,10 +303,12 @@ namespace autorally_core
       if (!m_gotFirstFix || (m_gpsOptQ.size() > 0))
       {
         // we are using the GPS measurement or we haven't gotten the first yet
-        // only use the latests measurement
         fix = m_gpsOptQ.popBlocking();
-        curTime = fix->header.stamp.toSec();
-        while (m_gpsOptQ.size() > 0)
+        double firstGPSTime = fix->header.stamp.toSec();
+        curTime = firstGPSTime;
+
+        // if there are more measurements in the queue, drop any that are less than 0.1s older (the rate we want to add factors at)
+        while (m_gpsOptQ.size() > 0 && (m_gpsOptQ.front()->header.stamp.toSec() - firstGPSTime) < 0.1)
         {
           fix = m_gpsOptQ.popBlocking();
           curTime = fix->header.stamp.toSec();
@@ -381,8 +383,9 @@ namespace autorally_core
 
         prevTime = curTime;
         loopRate.sleep();
+        loopRate.sleep();
       }
-      else if (usingGPS || usingOdom)
+      else if (m_gotFirstFix && (usingGPS || usingOdom))
       {
         if (fix == NULL)
           std::cout<<"adding factor with no GPS measurement"<<std::endl;
