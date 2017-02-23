@@ -302,6 +302,10 @@ namespace autorally_core
       // set up for using Odom or GPS but always at ~10Hz
       if (!m_gotFirstFix || (m_gpsOptQ.size() > 0))
       {
+        // remove any old GPS measurements
+        while (m_gpsOptQ.size() > 0 && m_gpsOptQ.front()->header.stamp.toSec() < prevTime)
+          m_gpsOptQ.popBlocking();
+
         // we are using the GPS measurement or we haven't gotten the first yet
         fix = m_gpsOptQ.popBlocking();
         double firstGPSTime = fix->header.stamp.toSec();
@@ -315,8 +319,12 @@ namespace autorally_core
         }
         usingGPS =  true;
       }
-      else if (m_gotFirstFix && m_odomOptQ.size() > 0)
+      else if ((m_odomOptQ.size() > 0) && (m_odomOptQ.back()->header.stamp.toSec() - prevTime) >= 0.1)
       {
+        // toss out old wheel odom messages (ie. before the last optimized time stamp)
+        while (m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
+          m_lastOdom = m_odomOptQ.popBlocking();
+
         // using odom message instead of GPS measurement to make a factor
         curTime = m_odomOptQ.back()->header.stamp.toSec();
         usingOdom = true;
@@ -393,32 +401,8 @@ namespace autorally_core
         NonlinearFactorGraph newFactors;
         Values newVariables;
 
-        // toss out old wheel odom messages (ie. before the last optimized time stamp
-        while (m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
-          m_odomOptQ.popBlocking();
-
-        nav_msgs::OdometryPtr firstOdom = m_odomOptQ.popBlocking();
-        nav_msgs::OdometryPtr lastOdom = m_odomOptQ.popBlocking();
-
-        // only want to do the following if the odom messages are behind relative to the GPS
-        if (!usingGPS || lastOdom->header.stamp.toSec() < curTime)
-        {
-          // tossing all odom messages except the last one before the GPS time stamp
-          while (m_odomOptQ.size() != 0 && (m_odomOptQ.front()->header.stamp.toSec() < curTime))
-            lastOdom = m_odomOptQ.popBlocking();
-
-          Pose3 betweenOdomPose = Pose3(Rot3(gtsam::Quaternion(firstOdom->pose.pose.orientation.w,
-              firstOdom->pose.pose.orientation.x, firstOdom->pose.pose.orientation.y, firstOdom->pose.pose.orientation.z)),
-              Point3(firstOdom->pose.pose.position.x, firstOdom->pose.pose.position.y, firstOdom->pose.pose.position.z));
-          Pose3 lastOdomPose = Pose3(Rot3(gtsam::Quaternion(lastOdom->pose.pose.orientation.w,
-              lastOdom->pose.pose.orientation.x, lastOdom->pose.pose.orientation.y, lastOdom->pose.pose.orientation.z)),
-              Point3(lastOdom->pose.pose.position.x, lastOdom->pose.pose.position.y, lastOdom->pose.pose.position.z));
-          betweenOdomPose.between(lastOdomPose);
-
-          BetweenFactor<Pose3> odomFactor(X(m_poseVelKey), X(m_poseVelKey), betweenOdomPose,
-              noiseModel::Diagonal::Sigmas((Vector(6) << 0.1,0.1,100,100,100,0.3).finished())); // TODO add in legitamte noise
-          newFactors.add(odomFactor);
-        }
+        // integrate odom messages and add factor
+        newFactors.add(integrateWheelOdom(prevTime, curTime));
 
         // integrating the IMU measurements
         PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
@@ -610,6 +594,48 @@ namespace autorally_core
   {
       m_odomOptQ.pushNonBlocking(odom);
         //std::cout<<"Dropping a wheel odometry measurement due to full queue!!"<<std::endl;
+  }
+
+  BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime)
+  {
+    double x, y, theta, xVariance, yVariance, thetaVariance, dt, lastTimeUsed;
+
+    lastTimeUsed = prevTime;
+
+    while (lastTimeUsed != stopTime)
+    {
+      if (m_odomOptQ.size() != 0 && m_odomOptQ.front()->header.stamp.toSec() < stopTime)
+      {
+        m_lastOdom = m_odomOptQ.popBlocking();
+        dt = m_lastOdom->header.stamp.toSec() - lastTimeUsed;
+        lastTimeUsed = m_lastOdom->header.stamp.toSec();
+      }
+      else
+      {
+        dt = stopTime - lastTimeUsed;
+        lastTimeUsed = stopTime;
+      }
+
+      // the local frame velocities
+      double vx = m_lastOdom->twist.twist.linear.x;
+      double vy = m_lastOdom->twist.twist.linear.y;
+
+      // update the relative position from the initial
+      x += vx*dt*cos(theta) - vy*dt*sin(theta);
+      y += vx*dt*sin(theta) + vy*dt*cos(theta);
+      theta += dt*m_lastOdom->twist.twist.angular.z;
+
+      double varX = m_lastOdom->twist.covariance[0];
+      double varY = m_lastOdom->twist.covariance[7];
+
+      xVariance += varX*dt*cos(theta) - varY*dt*sin(theta);
+      yVariance += varX*dt*sin(theta) + varY*dt*cos(theta);
+      thetaVariance += dt*m_lastOdom->twist.covariance[35];
+    }
+
+    Pose3 betweenPose = Pose3(Rot3::Rz(theta), Point3(x, y, 0.0));
+    return BetweenFactor<Pose3>(X(m_poseVelKey), X(m_poseVelKey+1), betweenPose,
+        noiseModel::Diagonal::Sigmas((Vector(6) << xVariance,yVariance,100,100,100,thetaVariance).finished()));
   }
 
   void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)

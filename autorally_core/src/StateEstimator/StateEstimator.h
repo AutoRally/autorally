@@ -78,9 +78,7 @@ namespace autorally_core
 {
   class StateEstimator : public Diagnostics
   {
-  public:
-    StateEstimator();
-    ~StateEstimator();
+  private:
     ros::NodeHandle m_nh;
     ros::Subscriber m_gpsSub, m_imuSub, m_odomSub;
     ros::Publisher  m_posePub;
@@ -147,13 +145,17 @@ namespace autorally_core
 
     ISAM2 *m_isam;
 
+    nav_msgs::OdometryPtr m_lastOdom;
+
+  public:
+    StateEstimator();
+    ~StateEstimator();
     void GpsCallback(sensor_msgs::NavSatFixConstPtr fix);
     void ImuCallback(sensor_msgs::ImuConstPtr imu);
     void WheelOdomCallback(nav_msgs::OdometryPtr odom);
-    //void FilterCb(imu_3dm_gx4::FilterOutputConstPtr fix);
     void GpsHelper();
     void diagnosticStatus(const ros::TimerEvent& time);
-
+    BetweenFactor<Pose3> integrateWheelOdom(double prevTime, double stopTime);
     void GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro);
   };
 };
