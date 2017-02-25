@@ -294,7 +294,7 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
     };
 
     odom_msg->twist.twist.linear.x = delta_x_ / delta_t_;
-    odom_msg->twist.twist.linear.y = delta_y_ / delta_t_;
+    odom_msg->twist.twist.linear.y = 0; // assume instantaneous y velocity is 0
     odom_msg->twist.twist.linear.z = 0;
 
     odom_msg->twist.twist.angular.x = 0;

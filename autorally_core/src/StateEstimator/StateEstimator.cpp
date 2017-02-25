@@ -294,18 +294,22 @@ namespace autorally_core
     // Kick off the thread, and wait for our GPS measurements to come streaming in
     while (ros::ok())
     {
-
       sensor_msgs::NavSatFixConstPtr fix;
       bool usingGPS = false;
       bool usingOdom = false;
 
-      // set up for using Odom or GPS but always at ~10Hz
-      if (!m_gotFirstFix || (m_gpsOptQ.size() > 0))
-      {
-        // remove any old GPS measurements
-        while (m_gpsOptQ.size() > 0 && m_gpsOptQ.front()->header.stamp.toSec() < prevTime)
-          m_gpsOptQ.popBlocking();
+      // remove any old GPS measurements
+      while (m_gpsOptQ.size() > 0 && m_gpsOptQ.front()->header.stamp.toSec() < prevTime)
+        m_gpsOptQ.popBlocking();
 
+      // toss out old wheel odom messages (ie. before the last optimized time stamp)
+      while (m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
+        m_lastOdom = m_odomOptQ.popBlocking();
+
+
+      // set up for using Odom or GPS but always at ~10Hz
+      if (m_gotFirstFix && (m_gpsOptQ.size() > 0))
+      {
         // we are using the GPS measurement or we haven't gotten the first yet
         fix = m_gpsOptQ.popBlocking();
         double firstGPSTime = fix->header.stamp.toSec();
@@ -319,12 +323,8 @@ namespace autorally_core
         }
         usingGPS =  true;
       }
-      else if ((m_odomOptQ.size() > 0) && (m_odomOptQ.back()->header.stamp.toSec() - prevTime) >= 0.1)
+      else if (m_gotFirstFix && (m_odomOptQ.size() > 0))
       {
-        // toss out old wheel odom messages (ie. before the last optimized time stamp)
-        while (m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
-          m_lastOdom = m_odomOptQ.popBlocking();
-
         // using odom message instead of GPS measurement to make a factor
         curTime = m_odomOptQ.back()->header.stamp.toSec();
         usingOdom = true;
@@ -332,6 +332,9 @@ namespace autorally_core
 
       if (!m_gotFirstFix)
       {
+        fix = m_gpsOptQ.popBlocking();
+        m_lastOdom = m_odomOptQ.popBlocking();
+
         NonlinearFactorGraph newFactors;
         Values newVariables;
         m_gotFirstFix = true;
@@ -390,7 +393,6 @@ namespace autorally_core
         }
 
         prevTime = curTime;
-        loopRate.sleep();
         loopRate.sleep();
       }
       else if (m_gotFirstFix && (usingGPS || usingOdom))
@@ -598,9 +600,7 @@ namespace autorally_core
 
   BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime)
   {
-    double x, y, theta, xVariance, yVariance, thetaVariance, dt, lastTimeUsed;
-
-    lastTimeUsed = prevTime;
+    double x=0, y=0, theta=0, positionalVariance=0, thetaVariance=0, dt=0, lastTimeUsed=prevTime;
 
     while (lastTimeUsed != stopTime)
     {
@@ -626,16 +626,13 @@ namespace autorally_core
       theta += dt*m_lastOdom->twist.twist.angular.z;
 
       double varX = m_lastOdom->twist.covariance[0];
-      double varY = m_lastOdom->twist.covariance[7];
-
-      xVariance += varX*dt*cos(theta) - varY*dt*sin(theta);
-      yVariance += varX*dt*sin(theta) + varY*dt*cos(theta);
+      positionalVariance += varX*dt;
       thetaVariance += dt*m_lastOdom->twist.covariance[35];
     }
 
     Pose3 betweenPose = Pose3(Rot3::Rz(theta), Point3(x, y, 0.0));
-    return BetweenFactor<Pose3>(X(m_poseVelKey), X(m_poseVelKey+1), betweenPose,
-        noiseModel::Diagonal::Sigmas((Vector(6) << xVariance,yVariance,100,100,100,thetaVariance).finished()));
+    return BetweenFactor<Pose3>(X(m_poseVelKey), X(m_poseVelKey+1), betweenPose, noiseModel::Diagonal::Sigmas(
+          (Vector(6) << positionalVariance,positionalVariance,10,10,10,thetaVariance).finished()));
   }
 
   void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)
