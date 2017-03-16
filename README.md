@@ -43,7 +43,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    * cmake-curses-gui
    * coriander
    * synaptic
-   * arduino
+   * arduino (latest version of [Arduino IDE](https://www.arduino.cc/en/Main/Software))
    * python-termcolor
    
 3. __[Install](http://www.ros.org/install/) ros-indigo-desktop-full__
