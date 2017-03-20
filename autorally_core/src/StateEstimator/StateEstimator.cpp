@@ -407,7 +407,12 @@ namespace autorally_core
       else if (m_gotFirstFix && (usingGPS || usingOdom))
       {
         if (!usingGPS)
+        {
+          // keeping track of how long since last GPS message - if > 3s warn
           timeWithoutGPS += curTime - prevTime;
+          if (timeWithoutGPS > 3)
+            diag_warn("State estimator has gone too long without GPS");
+        }
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
@@ -501,10 +506,12 @@ namespace autorally_core
         catch(gtsam::IndeterminantLinearSystemException ex)
         {
           ROS_ERROR("Encountered Indeterminant System Error!");
+          diag_error("State estimator has encountered indeterminant system error");
         }
         catch (std::exception ex)
         {
           ROS_ERROR(ex.what());
+          diag_error("State estimator has encountered an error");
         }
         prevTime = curTime;
         m_biasKey++;
