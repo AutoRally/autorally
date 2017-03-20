@@ -10,6 +10,7 @@ if(GTSAM_FOUND)
 
   add_executable(StateEstimator StateEstimator.cpp)
   target_link_libraries(StateEstimator ${catkin_LIBRARIES} ${ROS_LIBRARIES} /usr/local/lib/libgtsam.so /usr/local/lib/libGeographic.so ${TBB_LIBRARIES} Diagnostics)
+  add_dependencies(StateEstimator autorally_msgs_gencpp)
 
   install(TARGETS StateEstimator
           ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

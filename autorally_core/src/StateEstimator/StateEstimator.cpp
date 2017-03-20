@@ -207,6 +207,7 @@ namespace autorally_core
     m_biasAccPub = m_nh.advertise<geometry_msgs::Point>("bias_acc", 1);
     m_biasGyroPub = m_nh.advertise<geometry_msgs::Point>("bias_gyro", 1);
     m_timePub = m_nh.advertise<geometry_msgs::Point>("time_delays", 1);
+    m_statusPub = m_nh.advertise<autorally_msgs::stateEstimatorStatus>("status", 1);
 
 
     m_gravity << 0, 0, m_gravityMagnitude; // Define gravity
@@ -286,6 +287,7 @@ namespace autorally_core
     double prevTime = 0;
     double curTime = 0;
     double timeWithoutGPS = 0;
+    unsigned char status = autorally_msgs::stateEstimatorStatus::OK;
     ros::Rate loop_rate(15);
 
     // Kick off the thread, and wait for our GPS measurements to come streaming in
@@ -411,8 +413,18 @@ namespace autorally_core
           // keeping track of how long since last GPS message - if > 3s warn
           timeWithoutGPS += curTime - prevTime;
           if (timeWithoutGPS > 3)
+          {
             diag_warn("State estimator has gone too long without GPS");
+            status = autorally_msgs::stateEstimatorStatus::WARN;
+            std::cout<<"WARNING!!"<<std::endl;
+          }
         }
+        else if (status == autorally_msgs::stateEstimatorStatus::WARN)
+        {
+          // we got a GPS message so status is back to nominal
+          status = autorally_msgs::stateEstimatorStatus::OK;
+        }
+
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
@@ -483,6 +495,7 @@ namespace autorally_core
             m_optimizedState = NavState(m_prevPose, m_prevVel);
             m_optimizedBias = m_previousBias;
             m_optimizedTime = curTime;
+            m_status = status;
           }
 
           nav_msgs::Odometry poseNew;
@@ -507,11 +520,21 @@ namespace autorally_core
         {
           ROS_ERROR("Encountered Indeterminant System Error!");
           diag_error("State estimator has encountered indeterminant system error");
+          status = autorally_msgs::stateEstimatorStatus::ERROR;
+          {
+            boost::mutex::scoped_lock guard(m_optimizedStateMutex);
+            m_status = status;
+          }
         }
         catch (std::exception ex)
         {
           ROS_ERROR(ex.what());
           diag_error("State estimator has encountered an error");
+          status = autorally_msgs::stateEstimatorStatus::ERROR;
+          {
+            boost::mutex::scoped_lock guard(m_optimizedStateMutex);
+            m_status = status;
+          }
         }
         prevTime = curTime;
         m_biasKey++;
@@ -539,11 +562,13 @@ namespace autorally_core
     double optimizedTime;
     NavState optimizedState;
     imuBias::ConstantBias optimizedBias;
+    unsigned char status;
     {
       boost::mutex::scoped_lock guard(m_optimizedStateMutex);
       optimizedState = m_optimizedState;
       optimizedBias = m_optimizedBias;
       optimizedTime = m_optimizedTime;
+      status = m_status;
     }
     if (optimizedTime == 0) return;
 
@@ -615,6 +640,11 @@ namespace autorally_core
     delays.y = (ros::Time::now() - imu->header.stamp).toSec();
     delays.z = imu->header.stamp.toSec() - optimizedTime;
     m_timePub.publish(delays);
+
+    autorally_msgs::stateEstimatorStatus statusMsgs;
+    statusMsgs.header.stamp = imu->header.stamp;
+    statusMsgs.status = status;
+    m_statusPub.publish(statusMsgs);
     return;
   }
 

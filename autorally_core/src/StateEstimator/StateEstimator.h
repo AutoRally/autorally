@@ -64,6 +64,7 @@
 
 #include <autorally_msgs/wheelSpeeds.h>
 #include <autorally_msgs/imageMask.h>
+#include <autorally_msgs/stateEstimatorStatus.h>
 #include <imu_3dm_gx4/FilterOutput.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Point.h>
@@ -85,6 +86,7 @@ namespace autorally_core
     ros::Publisher  m_biasAccPub, m_biasGyroPub;
 //    ros::Publisher  m_anglePub, m_imuAnglePub;
     ros::Publisher  m_timePub;
+    ros::Publisher m_statusPub;
 
     ros::Time m_lastImuTime;
     ros::Time m_overlimitTime;
@@ -93,6 +95,7 @@ namespace autorally_core
 
     double m_initialYaw;
     double m_lastImuT, m_lastImuTgps, m_imuQPrevTime;
+    unsigned char m_status;
     double m_initialRotationNoise, m_initialTransNoise, m_initialVelNoise;
     double m_initialBiasNoiseAcc, m_initialBiasNoiseGyro;
     double m_AccelBiasSigma, m_GyroBiasSigma;
