@@ -86,7 +86,6 @@ namespace autorally_core
 //    ros::Publisher  m_anglePub, m_imuAnglePub;
     ros::Publisher  m_timePub;
 
-    ros::Time m_prevTime;
     ros::Time m_lastImuTime;
     ros::Time m_overlimitTime;
 
@@ -107,7 +106,8 @@ namespace autorally_core
 
     BlockingQueue<sensor_msgs::NavSatFixConstPtr> m_gpsOptQ;
     BlockingQueue<sensor_msgs::ImuConstPtr> m_ImuOptQ;
-    BlockingQueue<nav_msgs::OdometryPtr> m_odomOptQ;
+    BlockingQueue<nav_msgs::OdometryConstPtr> m_odomOptQ;
+
     boost::mutex m_optimizedStateMutex;
     NavState m_optimizedState;
     double m_optimizedTime;
@@ -145,14 +145,14 @@ namespace autorally_core
 
     ISAM2 *m_isam;
 
-    nav_msgs::OdometryPtr m_lastOdom;
+    nav_msgs::OdometryConstPtr m_lastOdom;
 
   public:
     StateEstimator();
     ~StateEstimator();
     void GpsCallback(sensor_msgs::NavSatFixConstPtr fix);
     void ImuCallback(sensor_msgs::ImuConstPtr imu);
-    void WheelOdomCallback(nav_msgs::OdometryPtr odom);
+    void WheelOdomCallback(nav_msgs::OdometryConstPtr odom);
     void GpsHelper();
     void diagnosticStatus(const ros::TimerEvent& time);
     BetweenFactor<Pose3> integrateWheelOdom(double prevTime, double stopTime);
