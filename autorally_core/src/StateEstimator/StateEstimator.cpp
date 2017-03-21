@@ -315,12 +315,13 @@ namespace autorally_core
           fix = m_gpsOptQ.popBlocking();
 
         // check if the GPS measurement is reasonable - within 5m of expected from the previous velocity and pose
+        // if there has been no GPS then our estimate is inaccurate and should trust the GPS more
         double E, N, U, expectedE, expectedN, expectedU;
         m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
         expectedE = (curTime-prevTime)*m_prevVel[0] + m_prevPose.x();
         expectedN = (curTime-prevTime)*m_prevVel[1] + m_prevPose.y();
         expectedU = (curTime-prevTime)*m_prevVel[2] + m_prevPose.z();
-        if (abs(expectedE-E) < 5 && abs(expectedN-N) < 5 && abs(expectedU-U) < 5)
+        if ((abs(expectedE-E) < 5 && abs(expectedN-N) < 5 && abs(expectedU-U) < 5) || (timeWithoutGPS > 3))
         {
           usingGPS =  true;
           timeWithoutGPS = 0;
@@ -328,7 +329,7 @@ namespace autorally_core
         }
         else
         {
-          ROS_ERROR("GPS message does not match expected position");
+          ROS_WARN("GPS message does not match expected position");
           curTime = prevTime + 0.09;
         }
       }
@@ -416,7 +417,6 @@ namespace autorally_core
           {
             diag_warn("State estimator has gone too long without GPS");
             status = autorally_msgs::stateEstimatorStatus::WARN;
-            std::cout<<"WARNING!!"<<std::endl;
           }
         }
         else if (status == autorally_msgs::stateEstimatorStatus::WARN)
