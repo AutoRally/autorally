@@ -10,7 +10,7 @@
     <param name="accuracyAutonomous" value="2.5" />
     <param name="utcSource" value="GPZDA" />
     <param name="statusPositionSource" value="GPGNS" /> <!-- GPGNS | GPGGA -->
-    <param name="showGsv" value="true" />
+    <param name="showGsv" value="false" />
     
     <!--configure settings for primary port -->
     <param name="primaryPort/portPath" value="/dev/arGPSroverPortA" />
