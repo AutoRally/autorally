@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <cmath>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp>
@@ -59,12 +60,12 @@
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 
+using namespace gtsam;
 // Convenience for named keys
 using symbol_shorthand::X;
 using symbol_shorthand::V;
 using symbol_shorthand::B;
-// Gps pose
-using symbol_shorthand::G;
+using symbol_shorthand::G; // GPS pose
 
 namespace autorally_core
 {
@@ -77,7 +78,6 @@ namespace autorally_core
     m_lastImuT(0.0),
     m_lastImuTgps(0.0),
     m_imuQPrevTime(0),
-    m_gpsCounter(0),
     m_maxQSize(0),
     m_gpsOptQ(40),
     m_ImuOptQ(400),
@@ -104,7 +104,6 @@ namespace autorally_core
     m_nh.param<double>("CarXAngle",  m_carXAngle, 0);
     m_nh.param<double>("CarYAngle",  m_carYAngle, 0);
     m_nh.param<double>("CarZAngle",  m_carZAngle, 0);
-    m_nh.param<int>("GpsSkip",   m_gpsSkip, 5);
     m_nh.param<double>("Gravity",   m_gravityMagnitude, 9.8);
     //Limit to about 0.9g
 //    m_nh.param<double>("MaxGPSAccel", m_accelLimit, 9.0);
@@ -134,6 +133,10 @@ namespace autorally_core
     m_nh.param<double>("lonOrigin", lonOrigin, 0);
     m_nh.param<double>("altOrigin", altOrigin, 0);
 
+    m_nh.param<bool>("UseOdom", m_usingOdom, false);
+    m_nh.param<int>("FactorFrequency", m_frequency, 10);
+    m_nh.param<double>("MaxGPSError", m_maxGPSError, 10);
+
     if (m_fixedOrigin)
       m_enu.Reset(latOrigin, lonOrigin, altOrigin);
 
@@ -157,7 +160,6 @@ namespace autorally_core
     << "CarXAngle " <<  m_carXAngle << "\n"
     << "CarYAngle " <<  m_carYAngle << "\n"
     << "CarZAngle " <<  m_carZAngle << "\n"
-    << "GpsSkip " <<   m_gpsSkip << "\n"
     << "Gravity " <<   m_gravityMagnitude << "\n";
 
     // Use an ENU frame
@@ -238,15 +240,16 @@ namespace autorally_core
              m_initialBiasNoiseGyro,
              m_initialBiasNoiseGyro).finished());
 
-      sigma_acc_bias_c << m_AccelBiasSigma,  m_AccelBiasSigma,  m_AccelBiasSigma;
-      sigma_gyro_bias_c << m_GyroBiasSigma, m_GyroBiasSigma, m_GyroBiasSigma;
+     sigma_acc_bias_c << m_AccelBiasSigma,  m_AccelBiasSigma,  m_AccelBiasSigma;
+     sigma_gyro_bias_c << m_GyroBiasSigma, m_GyroBiasSigma, m_GyroBiasSigma;
 
      noiseModelBetweenbias_sigma = (Vector(6) << sigma_acc_bias_c, sigma_gyro_bias_c).finished();
      noiseModelBetweenbias = noiseModel::Diagonal::Sigmas((noiseModelBetweenbias_sigma));
 
      m_gpsSub = m_nh.subscribe("/gpsRoverStatus", 300, &StateEstimator::GpsCallback, this);
      m_imuSub = m_nh.subscribe("/imu/imu", 600, &StateEstimator::ImuCallback, this);
-     m_odomSub = m_nh.subscribe("/wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
+     if (m_usingOdom)
+       m_odomSub = m_nh.subscribe("/wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
 
      boost::thread optimizer(&StateEstimator::GpsHelper,this);
   }
@@ -288,7 +291,7 @@ namespace autorally_core
     double curTime = 0;
     double timeWithoutGPS = 0;
     unsigned char status = autorally_msgs::stateEstimatorStatus::OK;
-    ros::Rate loop_rate(15);
+    ros::Rate loop_rate(m_frequency * 1.25);
 
     // Kick off the thread, and wait for our GPS measurements to come streaming in
     while (ros::ok())
@@ -296,6 +299,7 @@ namespace autorally_core
       sensor_msgs::NavSatFixConstPtr fix;
       bool usingGPS = false;
       bool usingOdom = false;
+      bool usingIMU = false;
 
 
       // remove any old GPS measurements
@@ -303,15 +307,15 @@ namespace autorally_core
         m_gpsOptQ.popBlocking();
 
       // remove any old odom messages
-      while (m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
+      while (m_usingOdom && m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
         m_lastOdom = m_odomOptQ.popBlocking();
 
 
       // set up for using odom or GPS timestamp but always at ~10Hz
-      if (m_gotFirstFix && (m_gpsOptQ.size() > 0) && (m_gpsOptQ.back()->header.stamp.toSec() - prevTime) > 0.09)
+      if (m_gotFirstFix && m_gpsOptQ.size() > 0 && (m_gpsOptQ.back()->header.stamp.toSec() - prevTime) > 0.9/m_frequency)
       {
         fix = m_gpsOptQ.popBlocking();
-        while ((fix->header.stamp.toSec() - prevTime) < 0.09)
+        while ((fix->header.stamp.toSec() - prevTime) < 0.9/m_frequency)
           fix = m_gpsOptQ.popBlocking();
 
         // check if the GPS measurement is reasonable - within 5m of expected from the previous velocity and pose
@@ -321,7 +325,7 @@ namespace autorally_core
         expectedE = (curTime-prevTime)*m_prevVel[0] + m_prevPose.x();
         expectedN = (curTime-prevTime)*m_prevVel[1] + m_prevPose.y();
         expectedU = (curTime-prevTime)*m_prevVel[2] + m_prevPose.z();
-        if ((abs(expectedE-E) < 5 && abs(expectedN-N) < 5 && abs(expectedU-U) < 5) || (timeWithoutGPS > 3))
+        if ((sqrt(pow(expectedE-E,2) + pow(expectedN-N,2) + pow(expectedU-U,2)) < m_maxGPSError) || (timeWithoutGPS > 3))
         {
           usingGPS =  true;
           timeWithoutGPS = 0;
@@ -330,21 +334,29 @@ namespace autorally_core
         else
         {
           ROS_WARN("GPS message does not match expected position");
-          curTime = prevTime + 0.09;
+          curTime = prevTime + m_frequency * 0.9;
         }
       }
-      else if (m_gotFirstFix && (m_odomOptQ.size() > 0) && (m_odomOptQ.back()->header.stamp.toSec() - prevTime) > 0.125)
+      else if (m_usingOdom && m_gotFirstFix && (m_odomOptQ.size() > 0)
+          && (m_odomOptQ.back()->header.stamp.toSec() - prevTime) > 1.25/m_frequency)
       {
         // GPS messages are a little slower so wait a little extra before continuing without one
-        curTime = prevTime + 0.09;
+        curTime = prevTime + 0.9/m_frequency;
         usingOdom = true;
+      }
+      else if (m_gotFirstFix && m_ImuOptQ.size() > 0 &&
+          (m_ImuOptQ.back()->header.stamp.toSec() - prevTime) > 1.25/m_frequency)
+      {
+        curTime = prevTime + 0.9/m_frequency;
+        usingIMU = true;
       }
 
 
       if (!m_gotFirstFix)
       {
         fix = m_gpsOptQ.popBlocking();
-        m_lastOdom = m_odomOptQ.popBlocking();
+        if (m_usingOdom)
+          m_lastOdom = m_odomOptQ.popBlocking();
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
@@ -407,7 +419,7 @@ namespace autorally_core
         prevTime = fix->header.stamp.toSec();
         loop_rate.sleep();
       }
-      else if (m_gotFirstFix && (usingGPS || usingOdom))
+      else if (m_gotFirstFix && (usingGPS || usingOdom || usingIMU))
       {
         if (!usingGPS)
         {
@@ -431,7 +443,8 @@ namespace autorally_core
 
 
         // integrate odom messages and add factor
-        newFactors.add(integrateWheelOdom(prevTime, curTime));
+        if (m_usingOdom)
+          newFactors.add(integrateWheelOdom(prevTime, curTime));
 
         // integrating the IMU measurements
         PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
@@ -548,14 +561,17 @@ namespace autorally_core
     double dt;
     if (m_lastImuT == 0) dt = 0.005;
     else dt = imu->header.stamp.toSec() - m_lastImuT;
+
     m_lastImuT = imu->header.stamp.toSec();
     ros::Time before = ros::Time::now();
+
     // Push the IMU measurement to the optimization thread
     int qSize = m_ImuOptQ.size();
     if (qSize > m_maxQSize)
       m_maxQSize = qSize;
     if (!m_ImuOptQ.pushNonBlocking(imu))
       ROS_WARN("Dropping an IMU measurement due to full queue!!");
+
     // Each time we get an imu measurement, calculate the incremental pose from the last GTSAM pose
     m_imuMeasurements.push_back(imu);
     //Grab the most current optimized state
@@ -570,7 +586,7 @@ namespace autorally_core
       optimizedTime = m_optimizedTime;
       status = m_status;
     }
-    if (optimizedTime == 0) return;
+    if (optimizedTime == 0) return; // haven't optimized first state yet
 
     bool newMeasurements = false;
     int numImuDiscarded = 0;
@@ -595,18 +611,19 @@ namespace autorally_core
         GetAccGyro(*it, acc, gyro);
         m_imuPredictor->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
-//        ROS_INFO("IMU time %f, dt %f", (*it)->header.stamp.toSec(), dt_temp);
+        // ROS_INFO("IMU time %f, dt %f", (*it)->header.stamp.toSec(), dt_temp);
       }
-//      ROS_INFO("Resetting Integration, %d measurements integrated, %d discarded", numMeasurements, numImuDiscarded);
+      // ROS_INFO("Resetting Integration, %d measurements integrated, %d discarded", numMeasurements, numImuDiscarded);
     }
     else
     {
       //Just need to add the newest measurement, no new optimized pose
       GetAccGyro(imu, acc, gyro);
       m_imuPredictor->integrateMeasurement(acc, gyro, dt);//m_bodyPSensor);
-//      ROS_INFO("Integrating %f, dt %f", m_lastImuT, dt);
-
+      // ROS_INFO("Integrating %f, dt %f", m_lastImuT, dt);
     }
+
+    // predict next state given the imu measurements
     NavState currentPose = m_imuPredictor->predict(optimizedState, optimizedBias);
     nav_msgs::Odometry poseNew;
     poseNew.header.stamp = imu->header.stamp;
@@ -641,6 +658,7 @@ namespace autorally_core
     delays.z = imu->header.stamp.toSec() - optimizedTime;
     m_timePub.publish(delays);
 
+    // publish the status of the estimate - set in the gpsHelper thread
     autorally_msgs::stateEstimatorStatus statusMsgs;
     statusMsgs.header.stamp = imu->header.stamp;
     statusMsgs.status = status;
@@ -650,8 +668,8 @@ namespace autorally_core
 
   void StateEstimator::WheelOdomCallback(nav_msgs::OdometryConstPtr odom)
   {
-      m_odomOptQ.pushNonBlocking(odom);
-        //std::cout<<"Dropping a wheel odometry measurement due to full queue!!"<<std::endl;
+      if (!m_odomOptQ.pushNonBlocking(odom))
+        ROS_WARN("Dropping an wheel odometry measurement due to full queue!!");
   }
 
   BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime)

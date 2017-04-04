@@ -72,8 +72,6 @@
 
 #define PI 3.14159265358979323846264338
 
-using namespace gtsam;
-using namespace GeographicLib;
 
 namespace autorally_core
 {
@@ -84,7 +82,6 @@ namespace autorally_core
     ros::Subscriber m_gpsSub, m_imuSub, m_odomSub;
     ros::Publisher  m_posePub;
     ros::Publisher  m_biasAccPub, m_biasGyroPub;
-//    ros::Publisher  m_anglePub, m_imuAnglePub;
     ros::Publisher  m_timePub;
     ros::Publisher m_statusPub;
 
@@ -104,7 +101,6 @@ namespace autorally_core
     double m_sensorXAngle, m_sensorYAngle, m_sensorZAngle;
     double m_carXAngle, m_carYAngle, m_carZAngle;
 
-    int m_gpsSkip, m_gpsCounter;
     int m_maxQSize;
 
     BlockingQueue<sensor_msgs::NavSatFixConstPtr> m_gpsOptQ;
@@ -112,41 +108,44 @@ namespace autorally_core
     BlockingQueue<nav_msgs::OdometryConstPtr> m_odomOptQ;
 
     boost::mutex m_optimizedStateMutex;
-    NavState m_optimizedState;
+    gtsam::NavState m_optimizedState;
     double m_optimizedTime;
-    boost::shared_ptr<PreintegratedImuMeasurements> m_imuPredictor;
+    boost::shared_ptr<gtsam::PreintegratedImuMeasurements> m_imuPredictor;
     double m_imuDt;
-    imuBias::ConstantBias m_optimizedBias, m_previousBias;
+    gtsam::imuBias::ConstantBias m_optimizedBias, m_previousBias;
     sensor_msgs::ImuConstPtr m_lastIMU;
-    boost::shared_ptr<PreintegrationParams> m_preintegrationParams;
+    boost::shared_ptr<gtsam::PreintegrationParams> m_preintegrationParams;
 
     std::list<sensor_msgs::ImuConstPtr> m_imuMeasurements, m_imuGrav;
     imu_3dm_gx4::FilterOutput m_initialPose;
 
-    Vector3 m_gravity;
-    Vector3 m_omegaCoriolis;
-    Vector3 m_prevVel;
-    Pose3 m_prevPose;
-    Pose3 m_bodyPSensor, m_carENUPcarNED;
-    Pose3 m_imuPgps;
+    gtsam::Vector3 m_gravity;
+    gtsam::Vector3 m_omegaCoriolis;
+    gtsam::Vector3 m_prevVel;
+    gtsam::Pose3 m_prevPose;
+    gtsam::Pose3 m_bodyPSensor, m_carENUPcarNED;
+    gtsam::Pose3 m_imuPgps;
 
     bool m_fixedOrigin;
-    LocalCartesian m_enu;   /// Object to put lat/lon coordinates into local cartesian
+    GeographicLib::LocalCartesian m_enu;   /// Object to put lat/lon coordinates into local cartesian
     bool m_gotFirstFix;
     bool m_invertx, m_inverty, m_invertz;
+    bool m_usingOdom;
+    int m_frequency;
+    double m_maxGPSError;
 
-    SharedDiagonal priorNoisePose;
-    SharedDiagonal priorNoiseVel;
-    SharedDiagonal priorNoiseBias;
-    SharedDiagonal priorNoiseimuPgps;
+    gtsam::SharedDiagonal priorNoisePose;
+    gtsam::SharedDiagonal priorNoiseVel;
+    gtsam::SharedDiagonal priorNoiseBias;
+    gtsam::SharedDiagonal priorNoiseimuPgps;
 
-    Vector3 sigma_acc_bias_c;
-    Vector3 sigma_gyro_bias_c;
+    gtsam::Vector3 sigma_acc_bias_c;
+    gtsam::Vector3 sigma_gyro_bias_c;
 
-    Vector noiseModelBetweenbias_sigma;
-    SharedDiagonal noiseModelBetweenbias;
+    gtsam::Vector noiseModelBetweenbias_sigma;
+    gtsam::SharedDiagonal noiseModelBetweenbias;
 
-    ISAM2 *m_isam;
+    gtsam::ISAM2 *m_isam;
 
     nav_msgs::OdometryConstPtr m_lastOdom;
 
@@ -158,8 +157,8 @@ namespace autorally_core
     void WheelOdomCallback(nav_msgs::OdometryConstPtr odom);
     void GpsHelper();
     void diagnosticStatus(const ros::TimerEvent& time);
-    BetweenFactor<Pose3> integrateWheelOdom(double prevTime, double stopTime);
-    void GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro);
+    gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime);
+    void GetAccGyro(sensor_msgs::ImuConstPtr imu, gtsam::Vector3 &acc, gtsam::Vector3 &gyro);
   };
 };
 

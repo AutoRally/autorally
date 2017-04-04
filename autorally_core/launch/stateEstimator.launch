@@ -49,13 +49,22 @@
       <param name="GPSY" value="0"/>
       <param name="GPSZ" value="-0.06"/>
 
-      <!-- set the lat/lon/alt origin for GPS local frame coordinates -->
+      <!-- set the lat/lon/alt origin for GPS UTM to local frame transform -->
       <param name="FixedOrigin" value="false"/>
       <!-- currently using approximate marietta location -->
       <param name="latOrigin" value="33.7744980893"/>
       <param name="lonOrigin" value="-84.4050941205"/>
       <param name="altOrigin" value="277.752"/>
-      
-      
+
+      <!-- flag for whether to use the wheel odometry messages -->
+      <param name="UseOdom" value="false"/>
+
+      <!-- rate in hz at which factors are added to the factor graph for optimization -->
+      <param name="FactorFrequency" value="10"/>
+
+      <!-- if a GPS measurement is more than this threshold from the expected reading given
+           the previous estimate, it will be disgarded (in meters) -->
+      <param name="MaxGPSError" value="15"/>
+
   </node>
 </launch>
