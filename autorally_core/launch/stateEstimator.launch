@@ -5,12 +5,14 @@
 
 
   <node name="state_estimator" pkg="autorally_core" type="StateEstimator" output="screen" machine="autorally-master">
-      <remap from="/gps_imu/gps" to="/gpsRoverStatus"/>
-      <remap from="/gps_imu/imu" to="/imu/imu"/>
-      <remap from="/gps_imu/pose" to="/pose_estimate"/>
-      <remap from="/gps_imu/filter" to="/imu/filter"/>
-      <remap from="/gps_imu/bias_acc" to="/bias_acc"/>
-      <remap from="/gps_imu/bias_gyro" to="/bias_gyro"/>
+      <remap from="/state_estimator/gps" to="/gpsRoverStatus"/>
+      <remap from="/state_estimator/imu" to="/imu/imu"/>
+      <remap from="/state_estimator/pose" to="/pose_estimate"/>
+      <remap from="/state_estimator/filter" to="/imu/filter"/>
+      <remap from="/state_estimator/bias_acc" to="/bias_acc"/>
+      <remap from="/state_estimator/bias_gyro" to="/bias_gyro"/>
+      <remap from="/state_estimator/wheel_odom" to="/wheel_odom"/>
+      <remap from="/state_estimator/status" to="/state_estimator_status"/>
       
       <param name="InitialRotationNoise" value="0.25"/>
       <param name="InitialTranslationNoise" value="0.1"/>
@@ -57,7 +59,7 @@
       <param name="altOrigin" value="277.752"/>
 
       <!-- flag for whether to use the wheel odometry messages -->
-      <param name="UseOdom" value="false"/>
+      <param name="UseOdom" value="true"/>
 
       <!-- rate in hz at which factors are added to the factor graph for optimization -->
       <param name="FactorFrequency" value="10"/>

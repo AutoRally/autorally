@@ -180,7 +180,7 @@ namespace autorally_core
       while (!ip)
       {
         ROS_WARN("Waiting for valid initial pose");
-        ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("/imu/filter", m_nh, ros::Duration(15));
+        ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("filter", m_nh, ros::Duration(15));
       }
       m_initialPose = *ip;
     }
@@ -246,10 +246,10 @@ namespace autorally_core
      noiseModelBetweenbias_sigma = (Vector(6) << sigma_acc_bias_c, sigma_gyro_bias_c).finished();
      noiseModelBetweenbias = noiseModel::Diagonal::Sigmas((noiseModelBetweenbias_sigma));
 
-     m_gpsSub = m_nh.subscribe("/gpsRoverStatus", 300, &StateEstimator::GpsCallback, this);
-     m_imuSub = m_nh.subscribe("/imu/imu", 600, &StateEstimator::ImuCallback, this);
+     m_gpsSub = m_nh.subscribe("gps", 300, &StateEstimator::GpsCallback, this);
+     m_imuSub = m_nh.subscribe("imu", 600, &StateEstimator::ImuCallback, this);
      if (m_usingOdom)
-       m_odomSub = m_nh.subscribe("/wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
+       m_odomSub = m_nh.subscribe("wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
 
      boost::thread optimizer(&StateEstimator::GpsHelper,this);
   }
