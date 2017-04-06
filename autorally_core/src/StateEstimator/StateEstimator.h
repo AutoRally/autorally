@@ -133,6 +133,7 @@ namespace autorally_core
     bool m_usingOdom;
     int m_frequency;
     double m_maxGPSError;
+    double m_timeWithoutGPS;
 
     gtsam::SharedDiagonal priorNoisePose;
     gtsam::SharedDiagonal priorNoiseVel;

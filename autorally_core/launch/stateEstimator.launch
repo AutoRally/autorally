@@ -12,7 +12,7 @@
       <remap from="/state_estimator/bias_acc" to="/bias_acc"/>
       <remap from="/state_estimator/bias_gyro" to="/bias_gyro"/>
       <remap from="/state_estimator/wheel_odom" to="/wheel_odom"/>
-      <remap from="/state_estimator/status" to="/state_estimator_status"/>
+      <remap from="/state_estimator/status" to="/pose_estimate/status"/>
       
       <param name="InitialRotationNoise" value="0.25"/>
       <param name="InitialTranslationNoise" value="0.1"/>
@@ -59,7 +59,7 @@
       <param name="altOrigin" value="277.752"/>
 
       <!-- flag for whether to use the wheel odometry messages -->
-      <param name="UseOdom" value="true"/>
+      <param name="UseOdom" value="false"/>
 
       <!-- rate in hz at which factors are added to the factor graph for optimization -->
       <param name="FactorFrequency" value="10"/>
@@ -67,6 +67,9 @@
       <!-- if a GPS measurement is more than this threshold from the expected reading given
            the previous estimate, it will be disgarded (in meters) -->
       <param name="MaxGPSError" value="15"/>
+
+      <!-- time (s) the state estimator can operate without GPS - after it changes its status -->
+      <param name="TimeWithoutGPS" value="3"/>
 
   </node>
 </launch>

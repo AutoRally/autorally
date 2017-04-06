@@ -105,8 +105,6 @@ namespace autorally_core
     m_nh.param<double>("CarYAngle",  m_carYAngle, 0);
     m_nh.param<double>("CarZAngle",  m_carZAngle, 0);
     m_nh.param<double>("Gravity",   m_gravityMagnitude, 9.8);
-    //Limit to about 0.9g
-//    m_nh.param<double>("MaxGPSAccel", m_accelLimit, 9.0);
     m_nh.param<bool>("InvertX", m_invertx, false);
     m_nh.param<bool>("InvertY", m_inverty, false);
     m_nh.param<bool>("InvertZ", m_invertz, false);
@@ -136,6 +134,7 @@ namespace autorally_core
     m_nh.param<bool>("UseOdom", m_usingOdom, false);
     m_nh.param<int>("FactorFrequency", m_frequency, 10);
     m_nh.param<double>("MaxGPSError", m_maxGPSError, 10);
+    m_nh.param<double>("TimeWithoutGPS", m_timeWithoutGPS, 3);
 
     if (m_fixedOrigin)
       m_enu.Reset(latOrigin, lonOrigin, altOrigin);
@@ -292,6 +291,7 @@ namespace autorally_core
     double timeWithoutGPS = 0;
     unsigned char status = autorally_msgs::stateEstimatorStatus::OK;
     ros::Rate loop_rate(m_frequency * 1.25);
+    int gpsErrorCount = 0;
 
     // Kick off the thread, and wait for our GPS measurements to come streaming in
     while (ros::ok())
@@ -318,14 +318,15 @@ namespace autorally_core
         while ((fix->header.stamp.toSec() - prevTime) < 0.9/m_frequency)
           fix = m_gpsOptQ.popBlocking();
 
-        // check if the GPS measurement is reasonable - within 5m of expected from the previous velocity and pose
-        // if there has been no GPS then our estimate is inaccurate and should trust the GPS more
-        double E, N, U, expectedE, expectedN, expectedU;
+        // check if the GPS measurement is close to expected from the previous velocity and pose
+        double E, N, U, expectedE, expectedN, expectedU, distance;
         m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
         expectedE = (curTime-prevTime)*m_prevVel[0] + m_prevPose.x();
         expectedN = (curTime-prevTime)*m_prevVel[1] + m_prevPose.y();
         expectedU = (curTime-prevTime)*m_prevVel[2] + m_prevPose.z();
-        if ((sqrt(pow(expectedE-E,2) + pow(expectedN-N,2) + pow(expectedU-U,2)) < m_maxGPSError) || (timeWithoutGPS > 3))
+        distance = sqrt(pow(expectedE-E,2) + pow(expectedN-N,2) + pow(expectedU-U,2));
+        // if there has been no GPS then our estimate is inaccurate and should trust the GPS more
+        if ((distance < m_maxGPSError) || (timeWithoutGPS > m_timeWithoutGPS))
         {
           usingGPS =  true;
           timeWithoutGPS = 0;
@@ -334,7 +335,7 @@ namespace autorally_core
         else
         {
           ROS_WARN("GPS message does not match expected position");
-          curTime = prevTime + m_frequency * 0.9;
+          diag("GPS error count", std::to_string(++gpsErrorCount));
         }
       }
       else if (m_usingOdom && m_gotFirstFix && (m_odomOptQ.size() > 0)
@@ -423,9 +424,9 @@ namespace autorally_core
       {
         if (!usingGPS)
         {
-          // keeping track of how long since last GPS message - if > 3s warn
+          // keeping track of how long since last GPS message
           timeWithoutGPS += curTime - prevTime;
-          if (timeWithoutGPS > 3)
+          if (timeWithoutGPS > m_timeWithoutGPS)
           {
             diag_warn("State estimator has gone too long without GPS");
             status = autorally_msgs::stateEstimatorStatus::WARN;
