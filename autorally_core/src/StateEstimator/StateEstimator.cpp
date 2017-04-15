@@ -318,25 +318,9 @@ namespace autorally_core
         while ((fix->header.stamp.toSec() - prevTime) < 0.9/m_frequency)
           fix = m_gpsOptQ.popBlocking();
 
-        // check if the GPS measurement is close to expected from the previous velocity and pose
-        double E, N, U, expectedE, expectedN, expectedU, distance;
-        m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-        expectedE = (curTime-prevTime)*m_prevVel[0] + m_prevPose.x();
-        expectedN = (curTime-prevTime)*m_prevVel[1] + m_prevPose.y();
-        expectedU = (curTime-prevTime)*m_prevVel[2] + m_prevPose.z();
-        distance = sqrt(pow(expectedE-E,2) + pow(expectedN-N,2) + pow(expectedU-U,2));
-        // if there has been no GPS then our estimate is inaccurate and should trust the GPS more
-        if ((distance < m_maxGPSError) || (timeWithoutGPS > m_timeWithoutGPS))
-        {
-          usingGPS =  true;
-          timeWithoutGPS = 0;
-          curTime = fix->header.stamp.toSec();
-        }
-        else
-        {
-          ROS_WARN("GPS message does not match expected position");
-          diag("GPS error count", std::to_string(++gpsErrorCount));
-        }
+        usingGPS =  true;
+        timeWithoutGPS = 0;
+        curTime = fix->header.stamp.toSec();
       }
       else if (m_usingOdom && m_gotFirstFix && (m_odomOptQ.size() > 0)
           && (m_odomOptQ.back()->header.stamp.toSec() - prevTime) > 1.25/m_frequency)
@@ -422,26 +406,8 @@ namespace autorally_core
       }
       else if (m_gotFirstFix && (usingGPS || usingOdom || usingIMU))
       {
-        if (!usingGPS)
-        {
-          // keeping track of how long since last GPS message
-          timeWithoutGPS += curTime - prevTime;
-          if (timeWithoutGPS > m_timeWithoutGPS)
-          {
-            diag_warn("State estimator has gone too long without GPS");
-            status = autorally_msgs::stateEstimatorStatus::WARN;
-          }
-        }
-        else if (status == autorally_msgs::stateEstimatorStatus::WARN)
-        {
-          // we got a GPS message so status is back to nominal
-          status = autorally_msgs::stateEstimatorStatus::OK;
-        }
-
-
         NonlinearFactorGraph newFactors;
         Values newVariables;
-
 
         // integrate odom messages and add factor
         if (m_usingOdom)
@@ -473,18 +439,35 @@ namespace autorally_core
 
         if (usingGPS)
         {
-          double E, N, U;
+          // check if the GPS measurement is within a reasonable distance of expected position
+          double E,N,U;
           m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-
-          SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(m_gpsSigma, m_gpsSigma, 3.0 * m_gpsSigma));
-
-          GPSFactor gpsFactor(G(m_poseVelKey+1), Point3(E, N, U), gpsNoise);
-          newFactors.add(gpsFactor);
-
-          BetweenFactor<Pose3> imuPgpsFactor(X(m_poseVelKey+1), G(m_poseVelKey+1), m_imuPgps,
-              noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
-          newFactors.add(imuPgpsFactor);
+          Pose3 nextPose = nextNavState.pose();
+          double distance = sqrt( pow(E-nextPose.x(), 2) + pow(N-nextPose.y(), 2) + pow(U-nextPose.z(), 2) );
+          if ((distance < m_maxGPSError) || (timeWithoutGPS > m_timeWithoutGPS))
+          {
+            SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(m_gpsSigma, m_gpsSigma, 3.0 * m_gpsSigma));
+            GPSFactor gpsFactor(G(m_poseVelKey+1), Point3(E, N, U), gpsNoise);
+            newFactors.add(gpsFactor);
+            BetweenFactor<Pose3> imuPgpsFactor(X(m_poseVelKey+1), G(m_poseVelKey+1), m_imuPgps,
+                noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
+            newFactors.add(imuPgpsFactor);
+            // we got a GPS message so status is nominal
+            status = autorally_msgs::stateEstimatorStatus::OK;
+          }
+          else
+          {
+            // keeping track of how many bad GPS measurements we have
+            ROS_WARN("GPS message does not match expected position");
+            diag("GPS error count", std::to_string(++gpsErrorCount));
+            timeWithoutGPS += curTime - prevTime;
+          }
         }
+        else
+        {
+          timeWithoutGPS += curTime - prevTime;
+        }
+
 
         newVariables.insert(X(m_poseVelKey+1), nextNavState.pose());
         newVariables.insert(V(m_poseVelKey+1), nextNavState.v());
@@ -501,6 +484,14 @@ namespace autorally_core
           m_prevVel = m_isam->calculateEstimate<Vector3>(V(m_poseVelKey+1));
           m_previousBias = m_isam->calculateEstimate<imuBias::ConstantBias>(B(m_biasKey+1));
           //std::cout << m_isam->marginalCovariance(X(m_poseVelKey+1)) << std::endl << std::endl;
+
+
+          if (timeWithoutGPS > m_timeWithoutGPS)
+          {
+            diag_warn("State estimator has gone too long without GPS");
+            status = autorally_msgs::stateEstimatorStatus::WARN;
+          }
+
 
           diag_ok("Still ok!");
 

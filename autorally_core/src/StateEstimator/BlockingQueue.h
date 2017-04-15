@@ -90,7 +90,6 @@ public:
     return boost::optional<WorkType>(element);
   }
 
-  // TODO this might not make sense - will assess later
   WorkType front()
   {
     boost::mutex::scoped_lock guard(mutex_);
