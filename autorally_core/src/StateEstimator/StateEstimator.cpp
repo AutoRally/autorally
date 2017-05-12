@@ -67,44 +67,48 @@ using symbol_shorthand::V;
 using symbol_shorthand::B;
 using symbol_shorthand::G; // GPS pose
 
+
+// macro for getting the time stamp of a ros message
+#define TIME(msg) ( (msg)->header.stamp.toSec() )
+
 namespace autorally_core
 {
 
   StateEstimator::StateEstimator() :
     Diagnostics("StateEstimator", "", ""),
     m_nh("~"),
-    m_biasKey(0),
-    m_poseVelKey(0),
     m_lastImuT(0.0),
     m_lastImuTgps(0.0),
-    m_imuQPrevTime(0),
     m_maxQSize(0),
     m_gpsOptQ(40),
     m_ImuOptQ(400),
     m_odomOptQ(100),
     m_gotFirstFix(false)
   {
-    double accSigma, gyroSigma;
-    m_nh.param<double>("InitialYaw", m_initialYaw, 5);
-    m_nh.param<double>("InitialRotationNoise", m_initialRotationNoise, 1.0);
-    m_nh.param<double>("InitialVelocityNoise", m_initialVelNoise, 0.1);
-    m_nh.param<double>("InitialBiasNoiseAcc", m_initialBiasNoiseAcc, 1e-1);
-    m_nh.param<double>("InitialBiasNoiseGyro", m_initialBiasNoiseGyro, 1e-2);
+    // temporary variables to retrieve parameters
+    double accSigma, gyroSigma, initialVelNoise, initialBiasNoiseAcc, initialBiasNoiseGyro, initialRotationNoise,
+        carXAngle, carYAngle, carZAngle, sensorX, sensorY, sensorZ, sensorXAngle, sensorYAngle, sensorZAngle,
+        gravityMagnitude;
+
+    m_nh.param<double>("InitialRotationNoise", initialRotationNoise, 1.0);
+    m_nh.param<double>("InitialVelocityNoise", initialVelNoise, 0.1);
+    m_nh.param<double>("InitialBiasNoiseAcc", initialBiasNoiseAcc, 1e-1);
+    m_nh.param<double>("InitialBiasNoiseGyro", initialBiasNoiseGyro, 1e-2);
     m_nh.param<double>("AccelerometerSigma", accSigma, 6.0e-2);
     m_nh.param<double>("GyroSigma", gyroSigma, 2.0e-2);
     m_nh.param<double>("AccelBiasSigma", m_AccelBiasSigma, 2.0e-4);
     m_nh.param<double>("GyroBiasSigma", m_GyroBiasSigma, 3.0e-5);
     m_nh.param<double>("GPSSigma", m_gpsSigma, 0.07);
-    m_nh.param<double>("SensorTransformX", m_sensorX, 0.0);
-    m_nh.param<double>("SensorTransformY", m_sensorY, 0.0);
-    m_nh.param<double>("SensorTransformZ", m_sensorZ, 0.0);
-    m_nh.param<double>("SensorXAngle",  m_sensorXAngle, 0);
-    m_nh.param<double>("SensorYAngle", m_sensorYAngle, 0);
-    m_nh.param<double>("SensorZAngle",   m_sensorZAngle, 0);
-    m_nh.param<double>("CarXAngle",  m_carXAngle, 0);
-    m_nh.param<double>("CarYAngle",  m_carYAngle, 0);
-    m_nh.param<double>("CarZAngle",  m_carZAngle, 0);
-    m_nh.param<double>("Gravity",   m_gravityMagnitude, 9.8);
+    m_nh.param<double>("SensorTransformX", sensorX, 0.0);
+    m_nh.param<double>("SensorTransformY", sensorY, 0.0);
+    m_nh.param<double>("SensorTransformZ", sensorZ, 0.0);
+    m_nh.param<double>("SensorXAngle",  sensorXAngle, 0);
+    m_nh.param<double>("SensorYAngle", sensorYAngle, 0);
+    m_nh.param<double>("SensorZAngle",   sensorZAngle, 0);
+    m_nh.param<double>("CarXAngle",  carXAngle, 0);
+    m_nh.param<double>("CarYAngle",  carYAngle, 0);
+    m_nh.param<double>("CarZAngle",  carZAngle, 0);
+    m_nh.param<double>("Gravity",   gravityMagnitude, 9.8);
     m_nh.param<bool>("InvertX", m_invertx, false);
     m_nh.param<bool>("InvertY", m_inverty, false);
     m_nh.param<bool>("InvertZ", m_invertz, false);
@@ -140,29 +144,28 @@ namespace autorally_core
       m_enu.Reset(latOrigin, lonOrigin, altOrigin);
 
 
-    std::cout << "InitialYaw " << m_initialYaw << "\n"
-    << "InitialRotationNoise " << m_initialRotationNoise << "\n"
-    << "InitialVelocityNoise " << m_initialVelNoise << "\n"
-    << "InitialBiasNoiseAcc " << m_initialBiasNoiseAcc << "\n"
-    << "InitialBiasNoiseGyro " << m_initialBiasNoiseGyro << "\n"
+    std::cout << "InitialRotationNoise " << initialRotationNoise << "\n"
+    << "InitialVelocityNoise " << initialVelNoise << "\n"
+    << "InitialBiasNoiseAcc " << initialBiasNoiseAcc << "\n"
+    << "InitialBiasNoiseGyro " << initialBiasNoiseGyro << "\n"
     << "AccelerometerSigma " << accSigma << "\n"
     << "GyroSigma " << gyroSigma << "\n"
     << "AccelBiasSigma " << m_AccelBiasSigma << "\n"
     << "GyroBiasSigma " << m_GyroBiasSigma << "\n"
     << "GPSSigma " << m_gpsSigma << "\n"
-    << "SensorTransformX " << m_sensorX << "\n"
-    << "SensorTransformY " << m_sensorY << "\n"
-    << "SensorTransformZ " << m_sensorZ << "\n"
-    << "SensorXAngle " <<  m_sensorXAngle << "\n"
-    << "SensorYAngle " << m_sensorYAngle << "\n"
-    << "SensorZAngle " <<   m_sensorZAngle << "\n"
-    << "CarXAngle " <<  m_carXAngle << "\n"
-    << "CarYAngle " <<  m_carYAngle << "\n"
-    << "CarZAngle " <<  m_carZAngle << "\n"
-    << "Gravity " <<   m_gravityMagnitude << "\n";
+    << "SensorTransformX " << sensorX << "\n"
+    << "SensorTransformY " << sensorY << "\n"
+    << "SensorTransformZ " << sensorZ << "\n"
+    << "SensorXAngle " <<  sensorXAngle << "\n"
+    << "SensorYAngle " << sensorYAngle << "\n"
+    << "SensorZAngle " <<   sensorZAngle << "\n"
+    << "CarXAngle " <<  carXAngle << "\n"
+    << "CarYAngle " <<  carYAngle << "\n"
+    << "CarZAngle " <<  carZAngle << "\n"
+    << "Gravity " <<   gravityMagnitude << "\n";
 
     // Use an ENU frame
-    m_preintegrationParams =  PreintegrationParams::MakeSharedU(m_gravityMagnitude);
+    m_preintegrationParams =  PreintegrationParams::MakeSharedU(gravityMagnitude);
     m_preintegrationParams->accelerometerCovariance = accSigma * I_3x3;
     m_preintegrationParams->gyroscopeCovariance = gyroSigma * I_3x3;
     m_preintegrationParams->integrationCovariance = 1e-5 * I_3x3;
@@ -197,9 +200,9 @@ namespace autorally_core
 
     Rot3 initRot(Quaternion(m_initialPose.orientation.w, m_initialPose.orientation.x, m_initialPose.orientation.y, m_initialPose.orientation.z));
 
-    m_bodyPSensor = Pose3(Rot3::RzRyRx(m_sensorXAngle, m_sensorYAngle, m_sensorZAngle),
-        Point3(m_sensorX, m_sensorY, m_sensorZ));
-    m_carENUPcarNED = Pose3(Rot3::RzRyRx(m_carXAngle, m_carYAngle, m_carZAngle), Point3());
+    m_bodyPSensor = Pose3(Rot3::RzRyRx(sensorXAngle, sensorYAngle, sensorZAngle),
+        Point3(sensorX, sensorY, sensorZ));
+    m_carENUPcarNED = Pose3(Rot3::RzRyRx(carXAngle, carYAngle, carZAngle), Point3());
 
     m_bodyPSensor.print("Body pose\n");
     m_carENUPcarNED.print("CarBodyPose\n");
@@ -210,38 +213,30 @@ namespace autorally_core
     m_timePub = m_nh.advertise<geometry_msgs::Point>("time_delays", 1);
     m_statusPub = m_nh.advertise<autorally_msgs::stateEstimatorStatus>("status", 1);
 
-
-    m_gravity << 0, 0, m_gravityMagnitude; // Define gravity
-    m_omegaCoriolis << 0, 0, 0;
-
     ISAM2Params params;
     params.factorization = ISAM2Params::QR;
     m_isam = new ISAM2(params);
 
-    m_prevVel = (Vector(3) << 0.0,0.0,0.0).finished();
-
     // prior on the first pose
     priorNoisePose = noiseModel::Diagonal::Sigmas(
-         (Vector(6) << m_initialRotationNoise, m_initialRotationNoise, 3*m_initialRotationNoise,
+         (Vector(6) << initialRotationNoise, initialRotationNoise, 3*initialRotationNoise,
              m_gpsSigma, m_gpsSigma, m_gpsSigma).finished());
-     // add to solver and values
 
      // Add velocity prior
      priorNoiseVel = noiseModel::Diagonal::Sigmas(
-         (Vector(3) << m_initialVelNoise, m_initialVelNoise, m_initialVelNoise).finished());
+         (Vector(3) << initialVelNoise, initialVelNoise, initialVelNoise).finished());
 
      // Add bias prior
      priorNoiseBias = noiseModel::Diagonal::Sigmas(
-         (Vector(6) << m_initialBiasNoiseAcc,
-             m_initialBiasNoiseAcc,
-             m_initialBiasNoiseAcc,
-             m_initialBiasNoiseGyro,
-             m_initialBiasNoiseGyro,
-             m_initialBiasNoiseGyro).finished());
+         (Vector(6) << initialBiasNoiseAcc,
+             initialBiasNoiseAcc,
+             initialBiasNoiseAcc,
+             initialBiasNoiseGyro,
+             initialBiasNoiseGyro,
+             initialBiasNoiseGyro).finished());
 
      sigma_acc_bias_c << m_AccelBiasSigma,  m_AccelBiasSigma,  m_AccelBiasSigma;
      sigma_gyro_bias_c << m_GyroBiasSigma, m_GyroBiasSigma, m_GyroBiasSigma;
-
      noiseModelBetweenbias_sigma = (Vector(6) << sigma_acc_bias_c, sigma_gyro_bias_c).finished();
      noiseModelBetweenbias = noiseModel::Diagonal::Sigmas((noiseModelBetweenbias_sigma));
 
@@ -284,68 +279,34 @@ namespace autorally_core
     gyro = Vector3(gx, gy, gz);
   }
 
+
   void StateEstimator::GpsHelper()
   {
-    double prevTime = 0;
-    double curTime = 0;
-    double timeWithoutGPS = 0;
+    ros::Rate loop_rate(10);
+    bool gotFirstFix = false; // doesn't need to be a member variable
+    double startTime;
+    int odomKey = 1;
+    int imuKey = 1;
+    imuBias::ConstantBias prevBias;
+    Vector3 prevVel = (Vector(3) << 0.0,0.0,0.0).finished();
+    Pose3 prevPose;
     unsigned char status = autorally_msgs::stateEstimatorStatus::OK;
-    ros::Rate loop_rate(m_frequency * 1.25);
-    int gpsErrorCount = 0;
 
-    // Kick off the thread, and wait for our GPS measurements to come streaming in
+
     while (ros::ok())
     {
-      sensor_msgs::NavSatFixConstPtr fix;
-      bool usingGPS = false;
-      bool usingOdom = false;
-      bool usingIMU = false;
+      bool optimize = false;
 
-
-      // remove any old GPS measurements
-      while (m_gpsOptQ.size() > 0 && m_gpsOptQ.front()->header.stamp.toSec() < prevTime)
-        m_gpsOptQ.popBlocking();
-
-      // remove any old odom messages
-      while (m_usingOdom && m_odomOptQ.size() > 0 && m_odomOptQ.front()->header.stamp.toSec() < prevTime)
-        m_lastOdom = m_odomOptQ.popBlocking();
-
-
-      // set up for using odom or GPS timestamp but always at ~10Hz
-      if (m_gotFirstFix && m_gpsOptQ.size() > 0 && (m_gpsOptQ.back()->header.stamp.toSec() - prevTime) > 0.9/m_frequency)
+      if (!gotFirstFix)
       {
-        fix = m_gpsOptQ.popBlocking();
-        while ((fix->header.stamp.toSec() - prevTime) < 0.9/m_frequency)
-          fix = m_gpsOptQ.popBlocking();
-
-        usingGPS =  true;
-        timeWithoutGPS = 0;
-        curTime = fix->header.stamp.toSec();
-      }
-      else if (m_usingOdom && m_gotFirstFix && (m_odomOptQ.size() > 0)
-          && (m_odomOptQ.back()->header.stamp.toSec() - prevTime) > 1.25/m_frequency)
-      {
-        // GPS messages are a little slower so wait a little extra before continuing without one
-        curTime = prevTime + 0.9/m_frequency;
-        usingOdom = true;
-      }
-      else if (m_gotFirstFix && m_ImuOptQ.size() > 0 &&
-          (m_ImuOptQ.back()->header.stamp.toSec() - prevTime) > 1.25/m_frequency)
-      {
-        curTime = prevTime + 0.9/m_frequency;
-        usingIMU = true;
-      }
-
-
-      if (!m_gotFirstFix)
-      {
-        fix = m_gpsOptQ.popBlocking();
+        sensor_msgs::NavSatFixConstPtr fix = m_gpsOptQ.popBlocking();
+        startTime = TIME(fix);
         if (m_usingOdom)
           m_lastOdom = m_odomOptQ.popBlocking();
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
-        m_gotFirstFix = true;
+        gotFirstFix = true;
 
         double E, N, U;
         if (!m_fixedOrigin)
@@ -368,14 +329,14 @@ namespace autorally_core
         std::cout << m_bodyPSensor.rotation() * initialOrientation * m_carENUPcarNED.rotation() << std::endl;
         Pose3 x0(m_bodyPSensor.rotation() * initialOrientation * m_carENUPcarNED.rotation(),
             Point3(E, N, U));
-        m_prevPose = x0;
+        prevPose = x0;
         PriorFactor<Pose3> priorPose(X(0), x0, priorNoisePose);
         newFactors.add(priorPose);
         PriorFactor<Vector3> priorVel(V(0), Vector3(0, 0, 0), priorNoiseVel);
         newFactors.add(priorVel);
         Vector biases((Vector(6) << 0, 0, 0, m_initialPose.bias.x,
             -m_initialPose.bias.y, -m_initialPose.bias.z).finished());
-        m_previousBias = imuBias::ConstantBias(biases);
+        prevBias = imuBias::ConstantBias(biases);
         PriorFactor<imuBias::ConstantBias> priorBias(B(0), imuBias::ConstantBias(biases), priorNoiseBias);
         newFactors.add(priorBias);
 
@@ -395,166 +356,147 @@ namespace autorally_core
         m_lastIMU = m_ImuOptQ.popBlocking();
         //If we only pop one, we need some dt
         m_lastImuTgps = m_lastIMU->header.stamp.toSec() - 0.005;
-        while(m_lastIMU->header.stamp.toSec() < fix->header.stamp.toSec())
+        while(m_lastIMU->header.stamp.toSec() < TIME(fix))
         {
           m_lastImuTgps = m_lastIMU->header.stamp.toSec();
           m_lastIMU = m_ImuOptQ.popBlocking();
         }
 
-        prevTime = fix->header.stamp.toSec();
         loop_rate.sleep();
       }
-      else if (m_gotFirstFix && (usingGPS || usingOdom || usingIMU))
+      else
       {
         NonlinearFactorGraph newFactors;
         Values newVariables;
 
-        // integrate odom messages and add factor
-        if (m_usingOdom)
-          newFactors.add(integrateWheelOdom(prevTime, curTime));
 
-        // integrating the IMU measurements
-        PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
-        while(m_lastIMU->header.stamp.toSec() < curTime)
+        // if available, add any odom factors
+        while (m_odomOptQ.size() > 0 && (TIME(m_odomOptQ.back()) > (startTime + odomKey * 0.1)))
         {
-          Vector3 acc, gyro;
-          GetAccGyro(m_lastIMU, acc, gyro);
-          double imuDT = m_lastIMU->header.stamp.toSec() - m_lastImuTgps;
-          m_lastImuTgps = m_lastIMU->header.stamp.toSec();
-          pre_int_data.integrateMeasurement(acc, gyro, imuDT);
-          m_lastIMU = m_ImuOptQ.popBlocking();
+          double prevTime = startTime + (odomKey-1) * 0.1;
+          newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
         }
-        // adding the integrated IMU measurements to the factor graph
-        ImuFactor imuFactor(X(m_poseVelKey), V(m_poseVelKey), X(m_poseVelKey+1), V(m_poseVelKey+1), B(m_biasKey),
-                  pre_int_data);
-        newFactors.add(imuFactor);
-        newFactors.add(BetweenFactor<imuBias::ConstantBias>(B(m_biasKey), B(m_biasKey+1), imuBias::ConstantBias(),
-            noiseModel::Diagonal::Sigmas( sqrt(pre_int_data.deltaTij()) * noiseModelBetweenbias_sigma)));
 
-
-        // Predict forward to get an initial estimate for the pose and velocity
-        NavState curNavState(m_prevPose, m_prevVel);
-        NavState nextNavState = pre_int_data.predict(curNavState, m_previousBias);
-
-
-        if (usingGPS)
+        // add GPS measurements
+        while (m_gpsOptQ.size() > 0) // && (TIME(m_gpsOptQ.front()) < ((imuKey-1)*0.1+startTime+1e-2)))
         {
-          // check if the GPS measurement is within a reasonable distance of expected position
-          double E,N,U;
-          m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-          Pose3 nextPose = nextNavState.pose();
-          double distance = sqrt( pow(E-nextPose.x(), 2) + pow(N-nextPose.y(), 2) + pow(U-nextPose.z(), 2) );
-          if ((distance < m_maxGPSError) || (timeWithoutGPS > m_timeWithoutGPS))
+          sensor_msgs::NavSatFixConstPtr fix = m_gpsOptQ.popBlocking();
+          double timeDiff = (TIME(fix) - startTime) / 0.1;
+          int key = round(timeDiff);
+          if (std::abs(timeDiff - key) < 1e-4)
           {
+            // this is a gps message for a factor
+            // TODO how to check if this message is bad - we have gotten rid of the imu messaes to predict
+            double E,N,U;
+            m_enu.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
             SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(m_gpsSigma, m_gpsSigma, 3.0 * m_gpsSigma));
-            GPSFactor gpsFactor(G(m_poseVelKey+1), Point3(E, N, U), gpsNoise);
+            GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
             newFactors.add(gpsFactor);
-            BetweenFactor<Pose3> imuPgpsFactor(X(m_poseVelKey+1), G(m_poseVelKey+1), m_imuPgps,
+            BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), m_imuPgps,
                 noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
             newFactors.add(imuPgpsFactor);
-            // we got a GPS message so status is nominal
-            status = autorally_msgs::stateEstimatorStatus::OK;
-          }
-          else
-          {
-            // keeping track of how many bad GPS measurements we have
-            ROS_WARN("GPS message does not match expected position");
-            diag("GPS error count", std::to_string(++gpsErrorCount));
-            timeWithoutGPS += curTime - prevTime;
           }
         }
-        else
+
+        // add IMU measurements
+        while (m_ImuOptQ.size() > 0 && (TIME(m_ImuOptQ.back()) > (startTime + imuKey * 0.1)))
         {
-          timeWithoutGPS += curTime - prevTime;
+          double curTime = startTime + imuKey * 0.1;
+          PreintegratedImuMeasurements pre_int_data(m_preintegrationParams, m_previousBias);
+          while(TIME(m_lastIMU) < curTime)
+          {
+            Vector3 acc, gyro;
+            GetAccGyro(m_lastIMU, acc, gyro);
+            double imuDT = TIME(m_lastIMU) - m_lastImuTgps;
+            m_lastImuTgps = TIME(m_lastIMU);
+            pre_int_data.integrateMeasurement(acc, gyro, imuDT);
+            m_lastIMU = m_ImuOptQ.popBlocking();
+          }
+          // adding the integrated IMU measurements to the factor graph
+          ImuFactor imuFactor(X(imuKey-1), V(imuKey-1), X(imuKey), V(imuKey), B(imuKey-1), pre_int_data);
+          newFactors.add(imuFactor);
+          newFactors.add(BetweenFactor<imuBias::ConstantBias>(B(imuKey-1), B(imuKey), imuBias::ConstantBias(),
+              noiseModel::Diagonal::Sigmas( sqrt(pre_int_data.deltaTij()) * noiseModelBetweenbias_sigma)));
+
+          // Predict forward to get an initial estimate for the pose and velocity
+          NavState curNavState(prevPose, prevVel);
+          NavState nextNavState = pre_int_data.predict(curNavState, prevBias);
+          newVariables.insert(X(imuKey), nextNavState.pose());
+          newVariables.insert(V(imuKey), nextNavState.v());
+          newVariables.insert(B(imuKey), m_previousBias);
+          newVariables.insert(G(imuKey), nextNavState.pose().compose(m_imuPgps));
+          // TODO figure out if I should update first - this might propagate error, but will almost certainly not happen often
+          prevPose = nextNavState.pose();
+          prevVel = nextNavState.v();
+          ++imuKey;
+          optimize = true;
         }
 
 
-        newVariables.insert(X(m_poseVelKey+1), nextNavState.pose());
-        newVariables.insert(V(m_poseVelKey+1), nextNavState.v());
-        newVariables.insert(B(m_biasKey+1), m_previousBias);
-        newVariables.insert(G(m_poseVelKey+1), nextNavState.pose().compose(m_imuPgps));
-
-
-        try
+        // if we processed imu - then we can optimize the state
+        if (optimize)
         {
-          m_isam->update(newFactors, newVariables);
-          Pose3 nextState = m_isam->calculateEstimate<Pose3>(X(m_poseVelKey+1));
-
-          m_prevPose = nextState;
-          m_prevVel = m_isam->calculateEstimate<Vector3>(V(m_poseVelKey+1));
-          m_previousBias = m_isam->calculateEstimate<imuBias::ConstantBias>(B(m_biasKey+1));
-          //std::cout << m_isam->marginalCovariance(X(m_poseVelKey+1)) << std::endl << std::endl;
-
-
-          if (timeWithoutGPS > m_timeWithoutGPS)
+          try
           {
-            diag_warn("State estimator has gone too long without GPS");
-            status = autorally_msgs::stateEstimatorStatus::WARN;
+            m_isam->update(newFactors, newVariables);
+            Pose3 nextState = m_isam->calculateEstimate<Pose3>(X(imuKey-1));
+
+            prevPose = nextState;
+            prevVel = m_isam->calculateEstimate<Vector3>(V(imuKey-1));
+            prevBias = m_isam->calculateEstimate<imuBias::ConstantBias>(B(imuKey-1));
+            //std::cout << m_isam->marginalCovariance(X(imuKey)) << std::endl << std::endl;
+
+            double curTime = startTime + (imuKey-1) * 0.1;
+            diag_ok("Still ok!");
+
+            {
+              boost::mutex::scoped_lock guard(m_optimizedStateMutex);
+              m_optimizedState = NavState(prevPose, prevVel);
+              m_optimizedBias = prevBias;
+              m_optimizedTime = curTime;
+              m_status = status;
+            }
+
+            nav_msgs::Odometry poseNew;
+            poseNew.header.stamp = ros::Time(curTime);
+
+            geometry_msgs::Point ptAcc;
+            ptAcc.x = prevBias.vector()[0];
+            ptAcc.y = prevBias.vector()[1];
+            ptAcc.z = prevBias.vector()[2];
+
+            geometry_msgs::Point ptGyro;
+            ptGyro.x = prevBias.vector()[3];
+            ptGyro.y = prevBias.vector()[4];
+            ptGyro.z = prevBias.vector()[5];
+
+            m_biasAccPub.publish(ptAcc);
+            m_biasGyroPub.publish(ptGyro);
           }
-
-
-          diag_ok("Still ok!");
-
+          catch(gtsam::IndeterminantLinearSystemException ex)
           {
-            boost::mutex::scoped_lock guard(m_optimizedStateMutex);
-            m_optimizedState = NavState(m_prevPose, m_prevVel);
-            m_optimizedBias = m_previousBias;
-            m_optimizedTime = curTime;
-            m_status = status;
-          }
-
-          nav_msgs::Odometry poseNew;
-          poseNew.header.stamp = ros::Time(curTime);
-
-          geometry_msgs::Point ptAcc;
-          ptAcc.x = m_previousBias.vector()[0];
-          ptAcc.y = m_previousBias.vector()[1];
-          ptAcc.z = m_previousBias.vector()[2];
-
-          geometry_msgs::Point ptGyro;
-          ptGyro.x = m_previousBias.vector()[3];
-          ptGyro.y = m_previousBias.vector()[4];
-          ptGyro.z = m_previousBias.vector()[5];
-
-          m_biasAccPub.publish(ptAcc);
-          m_biasGyroPub.publish(ptGyro);
-
-          loop_rate.sleep();
-        }
-        catch(gtsam::IndeterminantLinearSystemException ex)
-        {
-          ROS_ERROR("Encountered Indeterminant System Error!");
-          diag_error("State estimator has encountered indeterminant system error");
-          status = autorally_msgs::stateEstimatorStatus::ERROR;
-          {
-            boost::mutex::scoped_lock guard(m_optimizedStateMutex);
-            m_status = status;
+            ROS_ERROR("Encountered Indeterminant System Error!");
+            diag_error("State estimator has encountered indeterminant system error");
+            status = autorally_msgs::stateEstimatorStatus::ERROR;
+            {
+              boost::mutex::scoped_lock guard(m_optimizedStateMutex);
+              m_status = status;
+            }
           }
         }
-        catch (std::exception ex)
-        {
-          ROS_ERROR(ex.what());
-          diag_error("State estimator has encountered an error");
-          status = autorally_msgs::stateEstimatorStatus::ERROR;
-          {
-            boost::mutex::scoped_lock guard(m_optimizedStateMutex);
-            m_status = status;
-          }
-        }
-        prevTime = curTime;
-        m_biasKey++;
-        m_poseVelKey++;
+        loop_rate.sleep();
       }
     }
   }
+
 
   void StateEstimator::ImuCallback(sensor_msgs::ImuConstPtr imu)
   {
     double dt;
     if (m_lastImuT == 0) dt = 0.005;
-    else dt = imu->header.stamp.toSec() - m_lastImuT;
+    else dt = TIME(imu) - m_lastImuT;
 
-    m_lastImuT = imu->header.stamp.toSec();
+    m_lastImuT = TIME(imu);
     ros::Time before = ros::Time::now();
 
     // Push the IMU measurement to the optimization thread
@@ -582,10 +524,11 @@ namespace autorally_core
 
     bool newMeasurements = false;
     int numImuDiscarded = 0;
+    double imuQPrevTime;
     Vector3 acc, gyro;
-    while (!m_imuMeasurements.empty() && (m_imuMeasurements.front()->header.stamp.toSec() < optimizedTime))
+    while (!m_imuMeasurements.empty() && (TIME(m_imuMeasurements.front()) < optimizedTime))
     {
-      m_imuQPrevTime = m_imuMeasurements.front()->header.stamp.toSec();
+      imuQPrevTime = TIME(m_imuMeasurements.front());
       m_imuMeasurements.pop_front();
       newMeasurements = true;
       numImuDiscarded++;
@@ -598,8 +541,8 @@ namespace autorally_core
       int numMeasurements = 0;
       for (auto it=m_imuMeasurements.begin(); it!=m_imuMeasurements.end(); ++it)
       {
-        double dt_temp =  (*it)->header.stamp.toSec() - m_imuQPrevTime;
-        m_imuQPrevTime = (*it)->header.stamp.toSec();
+        double dt_temp =  TIME(*it) - imuQPrevTime;
+        imuQPrevTime = TIME(*it);
         GetAccGyro(*it, acc, gyro);
         m_imuPredictor->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
@@ -645,9 +588,9 @@ namespace autorally_core
 
     ros::Time after = ros::Time::now();
     geometry_msgs::Point delays;
-    delays.x = imu->header.stamp.toSec();
+    delays.x = TIME(imu);
     delays.y = (ros::Time::now() - imu->header.stamp).toSec();
-    delays.z = imu->header.stamp.toSec() - optimizedTime;
+    delays.z = TIME(imu) - optimizedTime;
     m_timePub.publish(delays);
 
     // publish the status of the estimate - set in the gpsHelper thread
@@ -664,7 +607,8 @@ namespace autorally_core
         ROS_WARN("Dropping an wheel odometry measurement due to full queue!!");
   }
 
-  BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime)
+
+  BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime, int curKey)
   {
     double x=0, y=0, theta=0, xVariance=0, thetaVariance=0, dt=0, lastTimeUsed=prevTime;
 
@@ -685,18 +629,16 @@ namespace autorally_core
       // the local frame velocities
       double vx = m_lastOdom->twist.twist.linear.x;
       double vy = m_lastOdom->twist.twist.linear.y;
-
       // update the relative position from the initial
       x += vx*dt*cos(theta) - vy*dt*sin(theta);
       y += vx*dt*sin(theta) + vy*dt*cos(theta);
       theta += dt*m_lastOdom->twist.twist.angular.z;
-
       xVariance += dt *  m_lastOdom->twist.covariance[0];
       thetaVariance += dt*m_lastOdom->twist.covariance[35];
     }
 
     Pose3 betweenPose = Pose3(Rot3::Rz(theta), Point3(x, y, 0.0));
-    return BetweenFactor<Pose3>(X(m_poseVelKey), X(m_poseVelKey+1), betweenPose, noiseModel::Diagonal::Sigmas(
+    return BetweenFactor<Pose3>(X(curKey-1), X(curKey), betweenPose, noiseModel::Diagonal::Sigmas(
           (Vector(6) << xVariance,100,100,100,100,thetaVariance).finished()));
   }
 

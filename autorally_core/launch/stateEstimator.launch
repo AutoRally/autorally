@@ -32,10 +32,6 @@
       <param name="CarXAngle" value="3.14159265359"/>
       <param name="CarYAngle" value="0"/>
       <param name="CarZAngle" value="0"/>
-      <param name="GpsSkip" value="1"/>
-      <param name="Gravity" value="9.8"/>
-      
-      <!--<param name="Gravity" value="-9.79509"/>-->
       
       <!-- To use in sumulation set "rosparam set /gps_imu/FixedInitialPose true" -->
       <!-- and <param name="InvertY" value="false"/> -->
@@ -59,7 +55,7 @@
       <param name="altOrigin" value="277.752"/>
 
       <!-- flag for whether to use the wheel odometry messages -->
-      <param name="UseOdom" value="false"/>
+      <param name="UseOdom" value="true"/>
 
       <!-- rate in hz at which factors are added to the factor graph for optimization -->
       <param name="FactorFrequency" value="10"/>

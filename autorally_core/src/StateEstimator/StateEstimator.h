@@ -85,22 +85,11 @@ namespace autorally_core
     ros::Publisher  m_timePub;
     ros::Publisher m_statusPub;
 
-    ros::Time m_lastImuTime;
-    ros::Time m_overlimitTime;
 
-    long m_biasKey, m_poseVelKey;
-
-    double m_initialYaw;
-    double m_lastImuT, m_lastImuTgps, m_imuQPrevTime;
+    double m_lastImuT, m_lastImuTgps;
     unsigned char m_status;
-    double m_initialRotationNoise, m_initialTransNoise, m_initialVelNoise;
-    double m_initialBiasNoiseAcc, m_initialBiasNoiseGyro;
     double m_AccelBiasSigma, m_GyroBiasSigma;
-    double m_gpsSigma, m_gravityMagnitude;
-    double m_sensorX, m_sensorY, m_sensorZ;
-    double m_sensorXAngle, m_sensorYAngle, m_sensorZAngle;
-    double m_carXAngle, m_carYAngle, m_carZAngle;
-
+    double m_gpsSigma;
     int m_maxQSize;
 
     BlockingQueue<sensor_msgs::NavSatFixConstPtr> m_gpsOptQ;
@@ -118,11 +107,6 @@ namespace autorally_core
 
     std::list<sensor_msgs::ImuConstPtr> m_imuMeasurements, m_imuGrav;
     imu_3dm_gx4::FilterOutput m_initialPose;
-
-    gtsam::Vector3 m_gravity;
-    gtsam::Vector3 m_omegaCoriolis;
-    gtsam::Vector3 m_prevVel;
-    gtsam::Pose3 m_prevPose;
     gtsam::Pose3 m_bodyPSensor, m_carENUPcarNED;
     gtsam::Pose3 m_imuPgps;
 
@@ -139,13 +123,10 @@ namespace autorally_core
     gtsam::SharedDiagonal priorNoiseVel;
     gtsam::SharedDiagonal priorNoiseBias;
     gtsam::SharedDiagonal priorNoiseimuPgps;
-
     gtsam::Vector3 sigma_acc_bias_c;
     gtsam::Vector3 sigma_gyro_bias_c;
-
     gtsam::Vector noiseModelBetweenbias_sigma;
     gtsam::SharedDiagonal noiseModelBetweenbias;
-
     gtsam::ISAM2 *m_isam;
 
     nav_msgs::OdometryConstPtr m_lastOdom;
@@ -157,8 +138,9 @@ namespace autorally_core
     void ImuCallback(sensor_msgs::ImuConstPtr imu);
     void WheelOdomCallback(nav_msgs::OdometryConstPtr odom);
     void GpsHelper();
+    void GpsHelper_1();
     void diagnosticStatus(const ros::TimerEvent& time);
-    gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime);
+    gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime, int curFactor);
     void GetAccGyro(sensor_msgs::ImuConstPtr imu, gtsam::Vector3 &acc, gtsam::Vector3 &gyro);
   };
 };
