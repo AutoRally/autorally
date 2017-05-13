@@ -78,58 +78,54 @@ namespace autorally_core
   class StateEstimator : public Diagnostics
   {
   private:
-    ros::NodeHandle m_nh;
-    ros::Subscriber m_gpsSub, m_imuSub, m_odomSub;
-    ros::Publisher  m_posePub;
-    ros::Publisher  m_biasAccPub, m_biasGyroPub;
-    ros::Publisher  m_timePub;
-    ros::Publisher m_statusPub;
+    ros::NodeHandle nh_;
+    ros::Subscriber gpsSub_, imuSub_, odomSub_;
+    ros::Publisher  posePub_;
+    ros::Publisher  biasAccPub_, biasGyroPub_;
+    ros::Publisher  timePub_;
+    ros::Publisher statusPub_;
 
 
-    double m_lastImuT, m_lastImuTgps;
-    unsigned char m_status;
-    double m_AccelBiasSigma, m_GyroBiasSigma;
-    double m_gpsSigma;
-    int m_maxQSize;
+    double lastImuT_, lastImuTgps_;
+    unsigned char status_;
+    double accelBiasSigma_, gyroBiasSigma_;
+    double gpsSigma_;
+    int maxQSize_;
 
-    BlockingQueue<sensor_msgs::NavSatFixConstPtr> m_gpsOptQ;
-    BlockingQueue<sensor_msgs::ImuConstPtr> m_ImuOptQ;
-    BlockingQueue<nav_msgs::OdometryConstPtr> m_odomOptQ;
+    BlockingQueue<sensor_msgs::NavSatFixConstPtr> gpsOptQ_;
+    BlockingQueue<sensor_msgs::ImuConstPtr> imuOptQ_;
+    BlockingQueue<nav_msgs::OdometryConstPtr> odomOptQ_;
 
-    boost::mutex m_optimizedStateMutex;
-    gtsam::NavState m_optimizedState;
-    double m_optimizedTime;
-    boost::shared_ptr<gtsam::PreintegratedImuMeasurements> m_imuPredictor;
-    double m_imuDt;
-    gtsam::imuBias::ConstantBias m_optimizedBias, m_previousBias;
-    sensor_msgs::ImuConstPtr m_lastIMU;
-    boost::shared_ptr<gtsam::PreintegrationParams> m_preintegrationParams;
+    boost::mutex optimizedStateMutex_;
+    gtsam::NavState optimizedState_;
+    double optimizedTime_;
+    boost::shared_ptr<gtsam::PreintegratedImuMeasurements> imuPredictor_;
+    double imuDt_;
+    gtsam::imuBias::ConstantBias optimizedBias_, previousBias_;
+    sensor_msgs::ImuConstPtr lastIMU_;
+    boost::shared_ptr<gtsam::PreintegrationParams> preintegrationParams_;
 
-    std::list<sensor_msgs::ImuConstPtr> m_imuMeasurements, m_imuGrav;
-    imu_3dm_gx4::FilterOutput m_initialPose;
-    gtsam::Pose3 m_bodyPSensor, m_carENUPcarNED;
-    gtsam::Pose3 m_imuPgps;
+    std::list<sensor_msgs::ImuConstPtr> imuMeasurements_, imuGrav_;
+    imu_3dm_gx4::FilterOutput initialPose_;
+    gtsam::Pose3 bodyPSensor_, carENUPcarNED_;
+    gtsam::Pose3 imuPgps_;
 
-    bool m_fixedOrigin;
-    GeographicLib::LocalCartesian m_enu;   /// Object to put lat/lon coordinates into local cartesian
-    bool m_gotFirstFix;
-    bool m_invertx, m_inverty, m_invertz;
-    bool m_usingOdom;
-    int m_frequency;
-    double m_maxGPSError;
-    double m_timeWithoutGPS;
+    bool fixedOrigin_;
+    GeographicLib::LocalCartesian enu_;   /// Object to put lat/lon coordinates into local cartesian
+    bool gotFirstFix_;
+    bool invertx_, inverty_, invertz_;
+    bool usingOdom_;
+    int frequency_;
+    double maxGPSError_;
+    double timeWithoutGPS_;
 
-    gtsam::SharedDiagonal priorNoisePose;
-    gtsam::SharedDiagonal priorNoiseVel;
-    gtsam::SharedDiagonal priorNoiseBias;
-    gtsam::SharedDiagonal priorNoiseimuPgps;
-    gtsam::Vector3 sigma_acc_bias_c;
-    gtsam::Vector3 sigma_gyro_bias_c;
-    gtsam::Vector noiseModelBetweenbias_sigma;
-    gtsam::SharedDiagonal noiseModelBetweenbias;
-    gtsam::ISAM2 *m_isam;
+    gtsam::SharedDiagonal priorNoisePose_;
+    gtsam::SharedDiagonal priorNoiseVel_;
+    gtsam::SharedDiagonal priorNoiseBias_;
+    gtsam::Vector noiseModelBetweenBias_sigma_;
+    gtsam::ISAM2 *isam_;
 
-    nav_msgs::OdometryConstPtr m_lastOdom;
+    nav_msgs::OdometryConstPtr lastOdom_;
 
   public:
     StateEstimator();
