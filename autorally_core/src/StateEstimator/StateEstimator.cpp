@@ -289,10 +289,11 @@ namespace autorally_core
   void StateEstimator::GpsHelper()
   {
     ros::Rate loop_rate(10);
-    bool gotFirstFix = false; // doesn't need to be a member variable
+    bool gotFirstFix = false;
     double startTime;
     int odomKey = 1;
     int imuKey = 1;
+    int latestGPSKey = 0;
     imuBias::ConstantBias prevBias;
     Vector3 prevVel = (Vector(3) << 0.0,0.0,0.0).finished();
     Pose3 prevPose;
@@ -376,34 +377,6 @@ namespace autorally_core
         Values newVariables;
 
 
-        // if available, add any odom factors
-        while (odomOptQ_.size() > 0 && (TIME(odomOptQ_.back()) > (startTime + odomKey * 0.1)))
-        {
-          double prevTime = startTime + (odomKey-1) * 0.1;
-          newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
-        }
-
-        // add GPS measurements
-        while (gpsOptQ_.size() > 0)
-        {
-          sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
-          double timeDiff = (TIME(fix) - startTime) / 0.1;
-          int key = round(timeDiff);
-          if (std::abs(timeDiff - key) < 1e-4)
-          {
-            // this is a gps message for a factor
-            // TODO how to check if this message is bad - we have gotten rid of the imu messaes to predict
-            double E,N,U;
-            enu_.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-            SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
-            GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
-            newFactors.add(gpsFactor);
-            BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), imuPgps_,
-                noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
-            newFactors.add(imuPgpsFactor);
-          }
-        }
-
         // add IMU measurements
         while (imuOptQ_.size() > 0 && (TIME(imuOptQ_.back()) > (startTime + imuKey * 0.1)))
         {
@@ -439,6 +412,38 @@ namespace autorally_core
         }
 
 
+        // if available, add any odom factors that are not ahead of the imu messages
+        while (usingOdom_ && optimize && odomKey < imuKey && odomOptQ_.size() > 0
+            && (TIME(odomOptQ_.back()) > (startTime + odomKey * 0.1)))
+        {
+          double prevTime = startTime + (odomKey-1) * 0.1;
+          newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
+        }
+
+        // add GPS measurements that are not ahead of the imu messages
+        while (optimize && gpsOptQ_.size() > 0 && TIME(gpsOptQ_.front()) < (startTime + (imuKey-1)*0.1 + 1e-2))
+        {
+          sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
+          double timeDiff = (TIME(fix) - startTime) / 0.1;
+          int key = round(timeDiff);
+          if (std::abs(timeDiff - key) < 1e-4)
+          {
+            // this is a gps message for a factor
+            latestGPSKey = key;
+            // TODO how to check if this message is bad - we have gotten rid of the imu messaes to predict
+            double E,N,U;
+            enu_.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
+            SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
+            GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
+            newFactors.add(gpsFactor);
+            BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), imuPgps_,
+                noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
+            newFactors.add(imuPgpsFactor);
+          }
+        }
+
+
+
         // if we processed imu - then we can optimize the state
         if (optimize)
         {
@@ -452,8 +457,19 @@ namespace autorally_core
             prevBias = isam_->calculateEstimate<imuBias::ConstantBias>(B(imuKey-1));
             //std::cout << m_isam->marginalCovariance(X(imuKey)) << std::endl << std::endl;
 
+            // if we haven't added gps data for 2 message (0.2s) then change status
+            if (latestGPSKey + 3 < imuKey)
+            {
+              status = autorally_msgs::stateEstimatorStatus::WARN;
+              diag_warn("No gps");
+            }
+            else
+            {
+              status = autorally_msgs::stateEstimatorStatus::OK;
+              diag_ok("Still ok!");
+            }
+
             double curTime = startTime + (imuKey-1) * 0.1;
-            diag_ok("Still ok!");
 
             {
               boost::mutex::scoped_lock guard(optimizedStateMutex_);
