@@ -1,0 +1,72 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node
+    pkg = "autorally_control" 
+    type = "path_integral_nn" 
+    name = "mppi_controller"
+    output = "screen">
+    
+    <!--Pose topic configuration parameters -->
+    <param name="pose_estimate" value="/pose_estimate" />
+    <param name="path_topic" value="/mppi_opponent_controller/nominal_path" />
+
+    <!--Debug/Sim mode parameter -->
+    <param name="debug_mode" value="true" />
+
+    <!--Setup parameters-->
+    <param name="hz" value="40" />
+    <param name="num_timesteps" value="80" />
+    <param name="x_pos" value="0.0" />
+    <param name="y_pos" value="0.0" />
+    <param name="heading" value="2.35" />
+
+    <!--Model parameters-->
+    <param name="model_path" value="$(find autorally_control)/src/path_integral/params/models/gazebo_nnet.npz" />
+
+    <!-- Control hyper-parameters-->
+    <param name="gamma" value=".0015" />
+    <param name="num_iters" value="1" />
+
+    <!-- Control parameters -->
+    <param name="init_steering" value="0.0" />
+    <param name="init_throttle" value="-.01" />
+    <param name="steering_std" value="0.175" />
+    <param name="throttle_std" value="0.175" />
+
+    <!-- Control Constraints -->
+    <param name="max_throttle" value=".5" />
+    <param name="min_throttle" value="-.99" />
+    <param name="max_steering" value="0.99" />
+    <param name="min_steering" value="-0.99" />
+
+    <!-- Cost Parameters -->
+    <param name="desired_speed" value="7.0" />
+    <param name="speed_coefficient" value="4.25" />
+    <param name="track_coefficient" value="100.0" />
+    <param name="max_slip_angle" value="1.25" />
+    <param name="slip_penalty" value="250.0" />
+    <param name="track_slop" value="0.5" />
+    <param name="crash_coeff" value="10000.0" />
+    <param name="steering_coeff" value="0.0" />
+    <param name="throttle_coeff" value="0.0" />
+    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo/" />
+  </node>
+
+  <node
+    pkg = "autorally_control" 
+    type = "path_integral_monitor" 
+    name = "mppi_monitor"
+    output = "screen">
+  </node>
+
+  <node
+    pkg = "autorally_control" 
+    type = "lap_stats.py" 
+    name = "stat_tracker"
+    output = "screen">
+    <param name="controller_type" value="mppi_controller" />
+    <param name="tag" value="Neural Network Model - Path Integral"/>
+  </node> 
+
+</launch>

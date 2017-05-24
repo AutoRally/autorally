@@ -1,0 +1,16 @@
+int64 hz
+int64 num_timesteps
+int64 num_iters
+float64 gamma
+float64 init_steering
+float64 init_throttle
+float64 steering_var
+float64 throttle_var
+float64 max_throttle
+float64 speed_coefficient
+float64 track_coefficient
+float64 max_slip_angle
+float64 track_slop
+float64 crash_coeff
+string map_path
+float64 desired_speed
