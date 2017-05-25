@@ -22,6 +22,10 @@ add_message_files(
   line2D.msg
   point2D.msg
   stateEstimatorStatus.msg
+  pathIntegralParams.msg
+  lapStats.msg
+  pathIntegralStats.msg
+  pathIntegralStatus.msg
 )
 
 generate_messages(DEPENDENCIES
