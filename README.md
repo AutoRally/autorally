@@ -45,9 +45,16 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    * synaptic
    * arduino
    * python-termcolor
+
+3. __Install MPPI Dependencies (only if you have a GPU and will run MPPI)__
+
+    The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
+
+    * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
+    * [Install CNPY](https://github.com/rogersce/cnpy)
    
-3. __[Install](http://www.ros.org/install/) ros-indigo-desktop-full__
-4. __Install gtsam__
+4. __[Install](http://www.ros.org/install/) ros-indigo-desktop-full__
+5. __Install gtsam__
 
    Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam. 
 
