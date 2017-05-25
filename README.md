@@ -153,6 +153,7 @@ More detailed explanations of the controllers and state estimator can be found o
 * [State estimator](https://github.com/AutoRally/autorally/wiki/State%20Estimator)
 * [Waypoint follower](https://github.com/AutoRally/autorally/wiki/Waypoint%20Following)
 * [Constant speed controller](https://github.com/AutoRally/autorally/wiki/Constant%20Speed)
+* [MPPI Controller](https://github.com/AutoRally/autorally/wiki/Model-Predictive-Path-Integral-Controller-(MPPI))
 
 [Controlling the AutoRally platform](https://github.com/AutoRally/autorally/wiki/Controlling%20the%20AutoRally%20Platform) is a tutorial for how your own controller can control the AutoRally platform (in simulation or on hardware).
 
