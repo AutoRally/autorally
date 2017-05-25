@@ -267,12 +267,12 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
 
     // covariance matrix takes same form as above
     odom_msg->twist.covariance = {
-            velocity_x_var_,   1e-9,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9, 100000,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9, 100000,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9, 100000,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9, 100000,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9,   1e-9, velocity_theta_var_
+            velocity_x_var_,              1e-9,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9, velocity_x_var_*2,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,   velocity_x_var_*2,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9, velocity_theta_var_*2,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9, velocity_theta_var_*2,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9,                  1e-9, velocity_theta_var_
     };
   }
   else
@@ -303,12 +303,12 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
 
     // covariance matrix takes same form as above
     odom_msg->twist.covariance = {
-            velocity_x_var_,   1e-9,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9, 100000,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9, 100000,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9, 100000,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9, 100000,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9,   1e-9, velocity_theta_var_
+            velocity_x_var_,              1e-9,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9, velocity_x_var_*2,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,   velocity_x_var_*2,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9, velocity_theta_var_*2,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9, velocity_theta_var_*2,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9,                  1e-9, velocity_theta_var_
     };
   }
   odom_.publish(odom_msg);

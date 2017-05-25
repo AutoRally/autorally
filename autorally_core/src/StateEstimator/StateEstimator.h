@@ -85,7 +85,6 @@ namespace autorally_core
     ros::Publisher  timePub_;
     ros::Publisher statusPub_;
 
-
     double lastImuT_, lastImuTgps_;
     unsigned char status_;
     double accelBiasSigma_, gyroBiasSigma_;

@@ -55,7 +55,7 @@
       <param name="altOrigin" value="277.752"/>
 
       <!-- flag for whether to use the wheel odometry messages -->
-      <param name="UseOdom" value="true"/>
+      <param name="UseOdom" value="false"/>
 
       <!-- rate in hz at which factors are added to the factor graph for optimization -->
       <param name="FactorFrequency" value="10"/>

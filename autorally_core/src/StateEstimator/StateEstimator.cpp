@@ -247,9 +247,7 @@ namespace autorally_core
 
      gpsSub_ = nh_.subscribe("gps", 300, &StateEstimator::GpsCallback, this);
      imuSub_ = nh_.subscribe("imu", 600, &StateEstimator::ImuCallback, this);
-     if (usingOdom_)
-       odomSub_ = nh_.subscribe("wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
-
+     odomSub_ = nh_.subscribe("wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
 
      boost::thread optimizer(&StateEstimator::GpsHelper,this);
   }
@@ -308,8 +306,7 @@ namespace autorally_core
       {
         sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
         startTime = TIME(fix);
-        if (usingOdom_)
-          lastOdom_ = odomOptQ_.popBlocking();
+        lastOdom_ = odomOptQ_.popBlocking();
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
@@ -412,14 +409,6 @@ namespace autorally_core
         }
 
 
-        // if available, add any odom factors that are not ahead of the imu messages
-        while (usingOdom_ && optimize && odomKey < imuKey && odomOptQ_.size() > 0
-            && (TIME(odomOptQ_.back()) > (startTime + odomKey * 0.1)))
-        {
-          double prevTime = startTime + (odomKey-1) * 0.1;
-          newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
-        }
-
         // add GPS measurements that are not ahead of the imu messages
         while (optimize && gpsOptQ_.size() > 0 && TIME(gpsOptQ_.front()) < (startTime + (imuKey-1)*0.1 + 1e-2))
         {
@@ -439,9 +428,24 @@ namespace autorally_core
             BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), imuPgps_,
                 noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
             newFactors.add(imuPgpsFactor);
+
+            if (!usingOdom_)
+              odomKey = key+1;
           }
         }
 
+
+        // if only using odom with no GPS, then remove old messages from queue
+        while (!usingOdom_ && odomOptQ_.size() > 0 && TIME(odomOptQ_.front()) < (odomKey*0.1 + startTime))
+          lastOdom_ = odomOptQ_.popBlocking();
+
+        // if available, add any odom factors that are not ahead of the imu messages
+        while ((usingOdom_ || latestGPSKey < imuKey-2) && optimize && odomKey < imuKey && odomOptQ_.size() > 0
+            && (TIME(odomOptQ_.back()) > (startTime + odomKey * 0.1)))
+        {
+          double prevTime = startTime + (odomKey-1) * 0.1;
+          newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
+        }
 
 
         // if we processed imu - then we can optimize the state
@@ -455,7 +459,6 @@ namespace autorally_core
             prevPose = nextState;
             prevVel = isam_->calculateEstimate<Vector3>(V(imuKey-1));
             prevBias = isam_->calculateEstimate<imuBias::ConstantBias>(B(imuKey-1));
-            //std::cout << m_isam->marginalCovariance(X(imuKey)) << std::endl << std::endl;
 
             // if we haven't added gps data for 2 message (0.2s) then change status
             if (latestGPSKey + 3 < imuKey)
@@ -632,7 +635,7 @@ namespace autorally_core
 
   BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime, int curKey)
   {
-    double x=0, y=0, theta=0, xVariance=0, thetaVariance=0, dt=0, lastTimeUsed=prevTime;
+    double x=0, y=0, theta=0, xVar=0, yVar=0, zVar=0, thetaVariance=0, dt=0, lastTimeUsed=prevTime;
 
     while (lastTimeUsed != stopTime)
     {
@@ -655,13 +658,15 @@ namespace autorally_core
       x += vx*dt*cos(theta) - vy*dt*sin(theta);
       y += vx*dt*sin(theta) + vy*dt*cos(theta);
       theta += dt*lastOdom_->twist.twist.angular.z;
-      xVariance += dt *  lastOdom_->twist.covariance[0];
+      xVar += dt * lastOdom_->twist.covariance[0];
+      yVar += dt * lastOdom_->twist.covariance[7];
+      zVar += dt * lastOdom_->twist.covariance[14];
       thetaVariance += dt*lastOdom_->twist.covariance[35];
     }
 
     Pose3 betweenPose = Pose3(Rot3::Rz(theta), Point3(x, y, 0.0));
     return BetweenFactor<Pose3>(X(curKey-1), X(curKey), betweenPose, noiseModel::Diagonal::Sigmas(
-          (Vector(6) << xVariance,100,100,100,100,thetaVariance).finished()));
+          (Vector(6) << thetaVariance*2,thetaVariance*2,thetaVariance,xVar,yVar,zVar).finished()));
   }
 
   void StateEstimator::diagnosticStatus(const ros::TimerEvent& /*time*/)

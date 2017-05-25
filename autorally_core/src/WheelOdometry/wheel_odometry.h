@@ -71,10 +71,10 @@ private:
   const double STEERING_ALPHA = -21.0832; ///< Coefficient for calculating steering angle
   const double STEERING_BETA = -0.1235; ///< Coefficient for calculating steering angle
   const double VELOCITY_X_ALPHA = 0; ///< Coefficient for calculating variance in x velocity
-  const double VELOCITY_X_BETA = 0.0569; ///< Coefficient for calculating variance in x velocity
-  const double VELOCITY_THETA_ALPHA = -0.6398; ///< Coefficient for calculating variance in yaw rate
+  const double VELOCITY_X_BETA = 0.569; ///< Coefficient for calculating variance in x velocity
+  const double VELOCITY_THETA_ALPHA = -3.199; ///< Coefficient for calculating variance in yaw rate
   const double VELOCITY_THETA_BETA = -5.1233; ///< Coefficient for calculating variance in yaw rate
-  const double VELOCITY_THETA_GAMMA = 0.7541; ///< Coefficient for calculating variance in yaw rate
+  const double VELOCITY_THETA_GAMMA = 3.7705; ///< Coefficient for calculating variance in yaw rate
 
   ros::Subscriber servo_sub_;           ///< Subscriber for servo status
   ros::Subscriber wheel_speeds_sub_;     ///< Subscriber for wheel speeds
