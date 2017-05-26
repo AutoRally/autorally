@@ -45,9 +45,17 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    * synaptic
    * arduino (latest version of [Arduino IDE](https://www.arduino.cc/en/Main/Software))
    * python-termcolor
+
+3. __Install MPPI Dependencies (only if you have a GPU and will run MPPI)__
+
+    The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
+
+    * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
+    * [Install CNPY](https://github.com/rogersce/cnpy)
    
-3. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
-4. __Install gtsam__
+4. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
+5. __Install gtsam__
+
 
    Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam. 
 
@@ -146,6 +154,7 @@ More detailed explanations of the controllers and state estimator can be found o
 * [State estimator](https://github.com/AutoRally/autorally/wiki/State%20Estimator)
 * [Waypoint follower](https://github.com/AutoRally/autorally/wiki/Waypoint%20Following)
 * [Constant speed controller](https://github.com/AutoRally/autorally/wiki/Constant%20Speed)
+* [MPPI Controller](https://github.com/AutoRally/autorally/wiki/Model-Predictive-Path-Integral-Controller-(MPPI))
 
 [Controlling the AutoRally platform](https://github.com/AutoRally/autorally/wiki/Controlling%20the%20AutoRally%20Platform) is a tutorial for how your own controller can control the AutoRally platform (in simulation or on hardware).
 

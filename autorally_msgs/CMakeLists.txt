@@ -21,6 +21,10 @@ add_message_files(
   imageMask.msg
   line2D.msg
   point2D.msg
+  pathIntegralParams.msg
+  lapStats.msg
+  pathIntegralStats.msg
+  pathIntegralStatus.msg
 )
 
 generate_messages(DEPENDENCIES

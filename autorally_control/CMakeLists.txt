@@ -21,12 +21,15 @@ find_package(Eigen3 REQUIRED)
 set(BUILD_FLAGS "-std=c++11 -Wuninitialized")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BUILD_FLAGS}")
 
-generate_dynamic_reconfigure_options(cfg/gpsWaypoint_params.cfg)
+generate_dynamic_reconfigure_options(cfg/gpsWaypoint_params.cfg
+				     cfg/PathIntegralParams.cfg)
 
 catkin_package(
   DEPENDS Boost
   CATKIN-DEPENDS roscpp std_msgs geometry_msgs nav_msgs nodelet dynamic_reconfigure autorally_core autorally_msgs
   INCLUDE_DIRS include
+  LIBRARIES autorally_plant param_getter
+
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${Eigen3_INCLUDE_DIRS})
@@ -34,6 +37,11 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${Eigen3
 add_subdirectory(src/ConstantSpeedController)
 add_subdirectory(src/joystick)
 add_subdirectory(src/gpsWaypoint)
+
+find_package(CUDA)
+if(CUDA_FOUND)
+  add_subdirectory(src/path_integral)
+endif(CUDA_FOUND)
 
 install(DIRECTORY launch/
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
