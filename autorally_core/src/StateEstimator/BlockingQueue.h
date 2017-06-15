@@ -90,6 +90,17 @@ public:
     return boost::optional<WorkType>(element);
   }
 
+  WorkType front()
+  {
+    boost::mutex::scoped_lock guard(mutex_);
+    return queue_.front();
+  }
+  WorkType back()
+  {
+    boost::mutex::scoped_lock guard(mutex_);
+    return queue_.back();
+  }
+
   size_t size() const { return queue_.size(); }
   size_t max_size() const { return max_size_; }
 

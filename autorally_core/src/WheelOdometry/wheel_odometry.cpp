@@ -238,7 +238,7 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
   {
     // debug mode publishes data for visualization purposes
     odom_msg->pose.pose.position.x = delta_x_state_estimator_;
-    odom_msg->pose.pose.position.y = delta_x_state_estimator_;
+    odom_msg->pose.pose.position.y = delta_y_state_estimator_;
     odom_msg->pose.pose.position.z = error_velocity_x_;
     double yaw = theta_ * PI / 180.0;
     odom_msg->pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, yaw);
@@ -267,12 +267,12 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
 
     // covariance matrix takes same form as above
     odom_msg->twist.covariance = {
-            velocity_x_var_,   1e-9,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9, 100000,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9, 100000,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9, 100000,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9, 100000,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9,   1e-9, velocity_theta_var_
+            velocity_x_var_,              1e-9,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9, velocity_x_var_*2,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,   velocity_x_var_*2,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9, velocity_theta_var_*2,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9, velocity_theta_var_*2,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9,                  1e-9, velocity_theta_var_
     };
   }
   else
@@ -294,7 +294,7 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
     };
 
     odom_msg->twist.twist.linear.x = delta_x_ / delta_t_;
-    odom_msg->twist.twist.linear.y = delta_y_ / delta_t_;
+    odom_msg->twist.twist.linear.y = 0; // assume instantaneous y velocity is 0
     odom_msg->twist.twist.linear.z = 0;
 
     odom_msg->twist.twist.angular.x = 0;
@@ -303,12 +303,12 @@ void WheelOdometry::speedCallback(const autorally_msgs::wheelSpeedsConstPtr& spe
 
     // covariance matrix takes same form as above
     odom_msg->twist.covariance = {
-            velocity_x_var_,   1e-9,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9, 100000,   1e-9,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9, 100000,   1e-9,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9, 100000,   1e-9,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9, 100000,   1e-9,
-                       1e-9,   1e-9,   1e-9,   1e-9,   1e-9, velocity_theta_var_
+            velocity_x_var_,              1e-9,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9, velocity_x_var_*2,                1e-9,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,   velocity_x_var_*2,                  1e-9,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9, velocity_theta_var_*2,                  1e-9,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9, velocity_theta_var_*2,                1e-9,
+                       1e-9,              1e-9,                1e-9,                  1e-9,                  1e-9, velocity_theta_var_
     };
   }
   odom_.publish(odom_msg);
