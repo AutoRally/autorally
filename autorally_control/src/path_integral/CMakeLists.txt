@@ -1,24 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-find_package(CUDA REQUIRED)
 find_package(OpenCV 2.4 REQUIRED)
 find_package(Eigen REQUIRED)
 
 include_directories(include ${EIGEN_INCLUDE_DIRS})
-
-include(FindCUDA)
-
-set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-
-set(
-	CUDA_NVCC_FLAGS
-	${CUDA_NVCC_FLAGS};
-	-std=c++11
-	-maxrregcount=32;
-	-O3;
-	-arch=sm_35;
-	-w
-)
 
 ################################################################################
 #First make the helper libraries
@@ -42,6 +27,28 @@ install(TARGETS
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+################################################################################
+#Now build the CUDA executables (only if CUDA is installed)
+################################################################################
+
+find_package(CUDA)
+if(CUDA_FOUND)
+
+include(FindCUDA)
+
+set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+
+set(
+	CUDA_NVCC_FLAGS
+	${CUDA_NVCC_FLAGS};
+	-std=c++11
+	-maxrregcount=32;
+	-O3;
+	-arch=sm_35;
+	-w
+)
+
 
 ####################################################################################
 #Executable for the basis function model
@@ -89,3 +96,5 @@ add_executable(path_integral_monitor
 add_dependencies(path_integral_monitor autorally_core autorally_msgs_gencpp)
 
 target_link_libraries(path_integral_monitor ${catkin_LIBRARIES})
+
+endif(CUDA_FOUND)

@@ -37,11 +37,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${Eigen3
 add_subdirectory(src/ConstantSpeedController)
 add_subdirectory(src/joystick)
 add_subdirectory(src/gpsWaypoint)
-
-find_package(CUDA)
-if(CUDA_FOUND)
-  add_subdirectory(src/path_integral)
-endif(CUDA_FOUND)
+add_subdirectory(src/path_integral)
 
 install(DIRECTORY launch/
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
