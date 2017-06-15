@@ -114,9 +114,7 @@ namespace autorally_core
     bool gotFirstFix_;
     bool invertx_, inverty_, invertz_;
     bool usingOdom_;
-    int frequency_;
     double maxGPSError_;
-    double timeWithoutGPS_;
 
     gtsam::SharedDiagonal priorNoisePose_;
     gtsam::SharedDiagonal priorNoiseVel_;

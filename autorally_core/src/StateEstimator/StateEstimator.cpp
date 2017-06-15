@@ -136,9 +136,7 @@ namespace autorally_core
     nh_.param<double>("altOrigin", altOrigin, 0);
 
     nh_.param<bool>("UseOdom", usingOdom_, false);
-    nh_.param<int>("FactorFrequency", frequency_, 10);
-    nh_.param<double>("MaxGPSError", maxGPSError_, 10);
-    nh_.param<double>("TimeWithoutGPS", timeWithoutGPS_, 3);
+    nh_.param<double>("MaxGPSError", maxGPSError_, 10.0);
 
     if (fixedOrigin_)
       enu_.Reset(latOrigin, lonOrigin, altOrigin);
@@ -401,7 +399,6 @@ namespace autorally_core
           newVariables.insert(V(imuKey), nextNavState.v());
           newVariables.insert(B(imuKey), previousBias_);
           newVariables.insert(G(imuKey), nextNavState.pose().compose(imuPgps_));
-          // TODO figure out if I should update first - this might propagate error, but will almost certainly not happen often
           prevPose = nextNavState.pose();
           prevVel = nextNavState.v();
           ++imuKey;
@@ -419,18 +416,34 @@ namespace autorally_core
           {
             // this is a gps message for a factor
             latestGPSKey = key;
-            // TODO how to check if this message is bad - we have gotten rid of the imu messaes to predict
             double E,N,U;
             enu_.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-            SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
-            GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
-            newFactors.add(gpsFactor);
-            BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), imuPgps_,
-                noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
-            newFactors.add(imuPgpsFactor);
 
-            if (!usingOdom_)
-              odomKey = key+1;
+            // check if the GPS message is close to our expected position
+            Pose3 expectedState;
+            if (newVariables.exists(X(key)))
+              expectedState = (Pose3) newVariables.at<Pose3>(X(key));
+            else
+              expectedState = isam_->calculateEstimate<Pose3>(X(key));
+
+            double dist = std::sqrt( std::pow(expectedState.x() - E, 2) + std::pow(expectedState.y() - N, 2) );
+            if (dist < maxGPSError_ || latestGPSKey < imuKey-2)
+            {
+              SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
+              GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
+              newFactors.add(gpsFactor);
+              BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), imuPgps_,
+                  noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
+              newFactors.add(imuPgpsFactor);
+
+              if (!usingOdom_)
+                odomKey = key+1;
+            }
+            else
+            {
+              ROS_WARN("Received bad GPS message");
+              diag_warn("Received bad GPS message");
+            }
           }
         }
 

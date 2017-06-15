@@ -57,15 +57,9 @@
       <!-- flag for whether to use the wheel odometry messages -->
       <param name="UseOdom" value="false"/>
 
-      <!-- rate in hz at which factors are added to the factor graph for optimization -->
-      <param name="FactorFrequency" value="10"/>
-
       <!-- if a GPS measurement is more than this threshold from the expected reading given
            the previous estimate, it will be disgarded (in meters) -->
-      <param name="MaxGPSError" value="15"/>
-
-      <!-- time (s) the state estimator can operate without GPS - after it changes its status -->
-      <param name="TimeWithoutGPS" value="3"/>
+      <param name="MaxGPSError" value="10"/>
 
   </node>
 </launch>
