@@ -1,3 +1,4 @@
+'mppi_controller': 1
 'constantSpeedController': 2
 'waypointFollower': 3
 'joystick': 4

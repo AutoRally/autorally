@@ -163,7 +163,7 @@ void AutorallyPlant::pubPath(float* nominal_traj, int num_timesteps, int hz)
 void AutorallyPlant::pubControl(float steering, float throttle)
 {
   //Publish the steering and throttle commands
-  if (isnan(throttle) || isnan(steering)){ //Nan control publish zeros and exit.
+  if (std::isnan(throttle) || std::isnan(steering)){ //Nan control publish zeros and exit.
     ROS_INFO("NaN Control Input Detected");
     control_msg_.steering = 0;
     control_msg_.throttle = -.99;
@@ -172,7 +172,7 @@ void AutorallyPlant::pubControl(float steering, float throttle)
     control_msg_.sender = "mppi_controller";
     control_pub_.publish(control_msg_);
     ros::shutdown(); //No use trying to recover, quitting is the best option.
-  } 
+  }
   else if (!activated_ && !debug_mode_) { //No state update received yet.
     control_msg_.steering = 0;
     control_msg_.throttle = 0;
@@ -244,7 +244,7 @@ int AutorallyPlant::checkStatus()
     status_ = 0; //Everything is good.
   }
   last_check_ = ros::Time::now(); //Set the last_check_ time variable to now.
-  return status_; 
+  return status_;
 }
 
 } //namespace autorally_control
