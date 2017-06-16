@@ -1,4 +1,3 @@
-
 /*
 * Software License Agreement (BSD License)
 * Copyright (c) 2013, Georgia Institute of Technology
@@ -25,16 +24,16 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /**********************************************
- * @file JumpControl.h
+ * @file StateEstimator.h
  * @author Brian Goldfain <bgoldfai@gmail.com>
- * @date November 13, 2013
- * @copyright 2012 Georgia Institute of Technology
- * @brief JumpControl class definition
+ * @date May 1, 2017
+ * @copyright 2017 Georgia Institute of Technology
+ * @brief StateEstimator class definition
  *
  ***********************************************/
 
-#ifndef IMU_GPS_H_
-#define IMU_GPS_H_
+#ifndef StateEstimator_H_
+#define StateEstimator_H_
 
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/slam/PriorFactor.h>
@@ -65,6 +64,7 @@
 
 #include <autorally_msgs/wheelSpeeds.h>
 #include <autorally_msgs/imageMask.h>
+#include <autorally_msgs/stateEstimatorStatus.h>
 #include <imu_3dm_gx4/FilterOutput.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Point.h>
@@ -72,88 +72,70 @@
 
 #define PI 3.14159265358979323846264338
 
-using namespace gtsam;
-using namespace GeographicLib;
 
 namespace autorally_core
 {
-  class Imu_Gps : public Diagnostics
+  class StateEstimator : public Diagnostics
   {
+  private:
+    ros::NodeHandle nh_;
+    ros::Subscriber gpsSub_, imuSub_, odomSub_;
+    ros::Publisher  posePub_;
+    ros::Publisher  biasAccPub_, biasGyroPub_;
+    ros::Publisher  timePub_;
+    ros::Publisher statusPub_;
+
+    double lastImuT_, lastImuTgps_;
+    unsigned char status_;
+    double accelBiasSigma_, gyroBiasSigma_;
+    double gpsSigma_;
+    int maxQSize_;
+
+    BlockingQueue<sensor_msgs::NavSatFixConstPtr> gpsOptQ_;
+    BlockingQueue<sensor_msgs::ImuConstPtr> imuOptQ_;
+    BlockingQueue<nav_msgs::OdometryConstPtr> odomOptQ_;
+
+    boost::mutex optimizedStateMutex_;
+    gtsam::NavState optimizedState_;
+    double optimizedTime_;
+    boost::shared_ptr<gtsam::PreintegratedImuMeasurements> imuPredictor_;
+    double imuDt_;
+    gtsam::imuBias::ConstantBias optimizedBias_, previousBias_;
+    sensor_msgs::ImuConstPtr lastIMU_;
+    boost::shared_ptr<gtsam::PreintegrationParams> preintegrationParams_;
+
+    std::list<sensor_msgs::ImuConstPtr> imuMeasurements_, imuGrav_;
+    imu_3dm_gx4::FilterOutput initialPose_;
+    gtsam::Pose3 bodyPSensor_, carENUPcarNED_;
+    gtsam::Pose3 imuPgps_;
+
+    bool fixedOrigin_;
+    GeographicLib::LocalCartesian enu_;   /// Object to put lat/lon coordinates into local cartesian
+    bool gotFirstFix_;
+    bool invertx_, inverty_, invertz_;
+    bool usingOdom_;
+    double maxGPSError_;
+
+    gtsam::SharedDiagonal priorNoisePose_;
+    gtsam::SharedDiagonal priorNoiseVel_;
+    gtsam::SharedDiagonal priorNoiseBias_;
+    gtsam::Vector noiseModelBetweenBias_sigma_;
+    gtsam::ISAM2 *isam_;
+
+    nav_msgs::OdometryConstPtr lastOdom_;
+
   public:
-    Imu_Gps();
-    ~Imu_Gps();
-    ros::NodeHandle m_nh;
-    ros::Subscriber m_gpsSub, m_imuSub;
-    ros::Publisher  m_posePub;
-    ros::Publisher  m_biasAccPub, m_biasGyroPub;
-//    ros::Publisher  m_anglePub, m_imuAnglePub;
-    ros::Publisher  m_timePub;
-
-    ros::Time m_prevTime;
-    ros::Time m_lastImuTime;
-    ros::Time m_overlimitTime;
-
-    long m_biasKey, m_poseVelKey;
-
-    double m_initialYaw;
-    double m_lastImuT, m_lastImuTgps, m_imuQPrevTime;
-    double m_initialRotationNoise, m_initialTransNoise, m_initialVelNoise;
-    double m_initialBiasNoiseAcc, m_initialBiasNoiseGyro;
-    double m_AccelBiasSigma, m_GyroBiasSigma;
-    double m_gpsSigma, m_gravityMagnitude;
-    double m_sensorX, m_sensorY, m_sensorZ;
-    double m_sensorXAngle, m_sensorYAngle, m_sensorZAngle;
-    double m_carXAngle, m_carYAngle, m_carZAngle;
-
-    int m_gpsSkip, m_gpsCounter;
-    int m_maxQSize;
-
-    BlockingQueue<sensor_msgs::NavSatFixConstPtr> m_gpsOptQ;
-    BlockingQueue<sensor_msgs::ImuConstPtr> m_ImuOptQ;
-    boost::mutex m_optimizedStateMutex;
-    NavState m_optimizedState;
-    double m_optimizedTime;
-    boost::shared_ptr<PreintegratedImuMeasurements> m_imuPredictor;
-    double m_imuDt;
-    imuBias::ConstantBias m_optimizedBias, m_previousBias;
-    sensor_msgs::ImuConstPtr m_lastIMU;
-    boost::shared_ptr<PreintegrationParams> m_preintegrationParams;
-
-    std::list<sensor_msgs::ImuConstPtr> m_imuMeasurements, m_imuGrav;
-    imu_3dm_gx4::FilterOutput m_initialPose;
-
-    Vector3 m_gravity;
-    Vector3 m_omegaCoriolis;
-    Vector3 m_prevVel;
-    Pose3 m_prevPose;
-    Pose3 m_bodyPSensor, m_carENUPcarNED;
-    Pose3 m_imuPgps;
-
-    LocalCartesian m_enu;   /// Object to put lat/lon coordinates into local cartesian
-    bool m_gotFirstFix;
-    bool m_invertx, m_inverty, m_invertz;
-
-    SharedDiagonal priorNoisePose;
-    SharedDiagonal priorNoiseVel;
-    SharedDiagonal priorNoiseBias;
-    SharedDiagonal priorNoiseimuPgps;
-
-    Vector3 sigma_acc_bias_c;
-    Vector3 sigma_gyro_bias_c;
-
-    Vector noiseModelBetweenbias_sigma;
-    SharedDiagonal noiseModelBetweenbias;
-
-    ISAM2 *m_isam;
-
-    void GpsCb(sensor_msgs::NavSatFixConstPtr fix);
-    void ImuCb(sensor_msgs::ImuConstPtr imu);
-    void FilterCb(imu_3dm_gx4::FilterOutputConstPtr fix);
+    StateEstimator();
+    ~StateEstimator();
+    void GpsCallback(sensor_msgs::NavSatFixConstPtr fix);
+    void ImuCallback(sensor_msgs::ImuConstPtr imu);
+    void WheelOdomCallback(nav_msgs::OdometryConstPtr odom);
     void GpsHelper();
+    void GpsHelper_1();
     void diagnosticStatus(const ros::TimerEvent& time);
-
-    void GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro);
+    gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime, int curFactor);
+    void GetAccGyro(sensor_msgs::ImuConstPtr imu, gtsam::Vector3 &acc, gtsam::Vector3 &gyro);
   };
 };
 
-#endif /* IMU_GPS_H_ */
+#endif /* StateEstimator_H_ */

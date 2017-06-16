@@ -21,6 +21,7 @@ add_message_files(
   imageMask.msg
   line2D.msg
   point2D.msg
+  stateEstimatorStatus.msg
   pathIntegralParams.msg
   lapStats.msg
   pathIntegralStats.msg

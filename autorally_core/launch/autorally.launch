@@ -6,7 +6,6 @@
 
   <include file="$(find autorally_core)/launch/ocs.launch" />
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_core)/launch/wheel_odometry.launch" />
 
   <!-- depending on if we're using an old or new chassis, launch the appropriate interface -->
   <group if="$(optenv AR_CHASSIS_NEW true)">

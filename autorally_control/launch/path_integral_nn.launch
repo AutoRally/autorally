@@ -9,7 +9,7 @@
     
     <!--Pose topic configuration parameters -->
     <param name="pose_estimate" value="/pose_estimate" />
-    <param name="path_topic" value="/mppi_opponent_controller/nominal_path" />
+    <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
     <param name="debug_mode" value="true" />
