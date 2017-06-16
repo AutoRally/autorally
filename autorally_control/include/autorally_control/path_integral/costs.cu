@@ -108,6 +108,9 @@ inline void MPPICosts::costmapToTexture(float* costmap)
   HANDLE_ERROR(cudaCreateTextureObject(&costmap_tex_, &resDesc, &texDesc, NULL) );
 }
 
+inline void MPPICosts::update(Eigen::MatrixXf state)
+{}
+
 inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl)
 {
   params_.desired_speed = (float)config.desired_speed;

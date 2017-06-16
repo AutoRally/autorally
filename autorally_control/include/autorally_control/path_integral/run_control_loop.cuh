@@ -77,6 +77,7 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
 
+    controller.costs_->update(state);
     u = controller.computeControl(state); //Compute the control
     controller.model_->enforceConstraints(state, u);
     controller.model_->updateState(state, u); //Update the state using motion model.
