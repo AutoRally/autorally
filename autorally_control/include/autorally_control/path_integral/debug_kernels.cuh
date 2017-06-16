@@ -59,6 +59,13 @@ __global__ void debugCostKernel(float x, float y, int width_m ,int height_m, int
   float cost = tex2D<float>(tex, u/w, v/w);
   //Write the cost to the debug data array
   if (x_idx < width_m*ppm && (height_m*ppm - y_idx) < height_m*ppm) {
+    if ( (x_pos - x)*(x_pos - x) + (y_pos - y)*(y_pos - y) < .125*.125){
+     if ((x_idx + y_idx) % 2 == 0){
+        cost = 1;
+     } else{
+        cost = 0;
+     }
+    }
     debug_data_d[(height_m*ppm - y_idx)*(width_m*ppm) + x_idx] = cost;
   }
 }
