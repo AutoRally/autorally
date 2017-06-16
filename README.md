@@ -30,7 +30,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 6. [Test Setup in Simulation](#6-test-setup-in-simulation)
 
 ### 1. Install Prerequisites
-1. __Install [Ubuntu 14.04 64-bit](http://www.ubuntu.com)__
+1. __Install [Ubuntu 16.04 64-bit](http://www.ubuntu.com)__
 2. __Install required packages__
 
    ```sudo apt-get install git doxygen openssh-server libusb-dev texinfo```
@@ -43,7 +43,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    * cmake-curses-gui
    * coriander
    * synaptic
-   * arduino
+   * arduino (latest version of [Arduino IDE](https://www.arduino.cc/en/Main/Software))
    * python-termcolor
 
 3. __Install MPPI Dependencies (only if you have a GPU and will run MPPI)__
@@ -53,8 +53,9 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
     * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
     * [Install CNPY](https://github.com/rogersce/cnpy)
    
-4. __[Install](http://www.ros.org/install/) ros-indigo-desktop-full__
+4. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
 5. __Install gtsam__
+
 
    Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam. 
 

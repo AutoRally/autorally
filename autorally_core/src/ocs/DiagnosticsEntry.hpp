@@ -35,8 +35,11 @@
 #ifndef DIAGNOSTICS_ENTRY_HPP_
 #define DIAGNOSTICS_ENTRY_HPP_
 
+#ifndef Q_MOC_RUN
 #include <ros/ros.h>
 #include <ros/time.h>
+#endif
+
 #include <string>
 
 #include <QtGui/QStandardItem>

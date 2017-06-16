@@ -57,9 +57,7 @@ limitations under the License.
     <arg name="namespace" value="$(arg namespace)"/>
   </include>
   
-  <!-- Remap to same topics as the actual robot -->
-  <remap from="/$(arg namespace)/imu" to="/imu/imu" />
-  <remap from="/$(arg namespace)/gpsRoverStatus" to="/gpsRoverStatus" />
+  <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
   <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
   

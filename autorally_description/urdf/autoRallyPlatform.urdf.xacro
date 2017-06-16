@@ -621,12 +621,12 @@ limitations under the License.
     </plugin>
     
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
-      <robotNamespace>/autorally_platform</robotNamespace>
+      <robotNamespace>/</robotNamespace>
       <serviceName>/imu/calibrate</serviceName>
       <updateRate>200.0</updateRate>
       <bodyName>imu_link</bodyName>
       <frameId>imu_link</frameId>
-      <topicName>imu</topicName>
+      <topicName>/imu/imu</topicName>
       <rpyOffset>0 0 0</rpyOffset>
       <xyzOffset>0 0 0</xyzOffset>
       <gaussianNoise>0.00000001</gaussianNoise>
@@ -645,7 +645,7 @@ limitations under the License.
       <updateRate>20.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
-      <topicName>gpsRoverStatus</topicName>
+      <topicName>/gpsRoverStatus</topicName>
       <velocityTopicName>fix_velocity</velocityTopicName>
       <referenceLatitude>33.774497</referenceLatitude>
       <referenceLongitude>-84.405001</referenceLongitude>
