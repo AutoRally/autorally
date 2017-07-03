@@ -16,7 +16,7 @@
 -->
 <package>
   <name>autorally</name>
-  <version>0.2.4</version>
+  <version>0.2.5</version>
   <description>Autorally metapackage</description>
   
   <author>Brian Goldfain</author>

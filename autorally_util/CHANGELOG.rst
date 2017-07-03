@@ -2,8 +2,8 @@
 Changelog for package autorally_util
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.5 (2017-07-03)
+------------------
 * Small fixes in command priorities, c++11 support
 
 0.2.4 (2017-02-14)
