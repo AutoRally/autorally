@@ -2,6 +2,9 @@
 Changelog for package autorally_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.2.4 (2017-02-14)
 ------------------
 
