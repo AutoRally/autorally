@@ -161,7 +161,7 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::computeDynamics
     acts(DYNAMICS_DIM + i) = control(i);
   }
   for (i = 0; i < NUM_LAYERS - 1; i++){
-    acts = weights_[i]*acts + biases_[i];
+    acts = (weights_[i]*acts + biases_[i]).eval();
     if (i < NUM_LAYERS - 2) { //Last layer doesn't apply any non-linearity
       for (j = 0; j < net_structure_[i+1]; j++){
         acts(j) = tanh(acts(j)); //Nonlinear component.

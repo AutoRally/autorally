@@ -2,6 +2,11 @@
 Changelog for package autorally_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.5 (2017-07-03)
+------------------
+* Initial public MPPI release, tutorial is available on wiki
+* A few minor bug fixes and updates for c++11
+
 0.2.4 (2017-02-14)
 ------------------
 
