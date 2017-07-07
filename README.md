@@ -17,7 +17,7 @@ Research Pages AutoRally is associated with:
 
 We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!
 
-Please submit pull requests to the [devel branch](https://github.com/AutoRally/autorally/pull/new/devel) that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
+Please submit pull requests to the [kinetic-devel branch](https://github.com/AutoRally/autorally/pull/new/kinetic-devel) that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
 
 ## Setup Instructions
 
@@ -34,9 +34,9 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 2. __Install required packages__
 
    ```sudo apt-get install git doxygen openssh-server libusb-dev texinfo```
-   
+
    _Recommended Tools_
-   
+
    The following tools are useful, but not necessary for this project.
    * feh
    * cutecom
@@ -52,12 +52,12 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
 
     * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
     * [Install CNPY](https://github.com/rogersce/cnpy)
-   
+
 4. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
 5. __Install gtsam__
 
 
-   Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam. 
+   Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam.
 
    Instead of `cmake ..`, use:
 
@@ -66,7 +66,7 @@ Please submit pull requests to the [devel branch](https://github.com/AutoRally/a
    Once install is complete, make sure linux can see the shared library:
 
    ```sudo ldconfig```
-   
+
 ### 2. Clone or Fork Repositories
 
 Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking first if you will be working with the code.
@@ -131,7 +131,7 @@ Position the robot in the same spot as when the simulation starts and make sure 
 #### Start state estimator:
 
 In `autorally_core/launch/state_estimator.launch` change `InvertY` and `InvertZ` to **false**, then:
-    
+
     rosparam set /gps_imu/FixedInitialPose true
     roslaunch autorally_core state_estimator.launch
 
