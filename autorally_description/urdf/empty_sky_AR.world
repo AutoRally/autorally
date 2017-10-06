@@ -17,7 +17,19 @@
     </include>
     <!-- A ground plane -->
     <include>
+      <name>blended_plane</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/blended_track</uri>
+      <pose>0 0 0 0 0 2.35619449019</pose>
+    </include>
+    <include>
+      <name>grass_plane</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>30 0 0 0 0 2.35619449019</pose>
+    </include>
+    <include>
+      <name>dirt_plane</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://urdf/models/dirt_plane</uri>
+      <pose>-30 0 0 0 0 2.35619449019</pose>
     </include>
   </world>
 </sdf>
