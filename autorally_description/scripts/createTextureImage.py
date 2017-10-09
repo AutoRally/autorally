@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from math import sqrt, tan
+from math import sqrt, atan, degrees
 
 # tuple for the size of the field X, Y
 ground_plane_size = 30
@@ -10,18 +10,24 @@ image_size = 300
 
 
 def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orientationEnd, alpha_channel):
-    #print "X range = ", centerX - convert_distance_to_pixel(radiusOut), "to", centerX + convert_distance_to_pixel(radiusOut)
-    #print "Y range = ", centerY - convert_distance_to_pixel(radiusOut), "to", centerY + convert_distance_to_pixel(radiusOut)
     for i in range(centerX - convert_distance_to_pixel(radiusOut), centerX + convert_distance_to_pixel(radiusOut)):
         for j in range(centerY - convert_distance_to_pixel(radiusOut), centerY + convert_distance_to_pixel(radiusOut)):
             distance = convert_pixel_to_distance(centerX, centerY, i, j)
-            if distance <= radiusOut and distance >= radiusIn:
+            theta = -1
+            if i - centerX != 0:
+                theta = degrees(atan((float(j) - centerY)/(i - centerX)))
+
+            if i >= centerX and j <= centerY:
+                theta += 360
+            elif i <= centerX and j >= centerY:
+                theta += 180
+            elif i <= centerX and j <= centerY:
+                theta += 180
+
+            if distance <= radiusOut and distance >= radiusIn and theta >= orientationStart and theta <= orientationEnd:
                 alpha_channel[i, j] = 0
 
     return alpha_channel
-
-def check_angle(calcualted_theta, orientationStart, orientationEnd):
-    return
 
 def convert_pixel_to_distance(pixel1X, pixel1Y, pixel2X, pixel2Y):
     xDist = (pixel1X - pixel2X) * (float(ground_plane_size) / image_size)
@@ -46,8 +52,8 @@ def main():
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
 
-    #alpha_channel = create_circle(0, 0, 1, 4, 0, 360, alpha_channel)
-    #alpha_channel = create_circle(image_size / 2, 3 * image_size / 4, 1, 4, 0, 360, alpha_channel)
+    alpha_channel = create_circle(image_size / 2, image_size / 4, 1, 4, 180, 360, alpha_channel)
+    alpha_channel = create_circle(image_size / 2, 3 * image_size / 4, 1, 4, 0, 180, alpha_channel)
     #alpha_channel = create_line(5, 5, 1, 1, alpha_channel)
     #alpha_channel = create_line(image_size / 4, image_size / 2, 5, 10, alpha_channel)
 
