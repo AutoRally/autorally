@@ -45,17 +45,16 @@ def create_line(centerX, centerY, width, length, alpha_channel):
     return alpha_channel
 
 
-
 def main():
     blank_image = np.zeros((image_size,image_size,3))
     b_channel, g_channel, r_channel = cv2.split(blank_image)
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
 
-    alpha_channel = create_circle(image_size / 2, image_size / 4, 1, 4, 180, 360, alpha_channel)
-    alpha_channel = create_circle(image_size / 2, 3 * image_size / 4, 1, 4, 0, 180, alpha_channel)
-    #alpha_channel = create_line(5, 5, 1, 1, alpha_channel)
-    #alpha_channel = create_line(image_size / 4, image_size / 2, 5, 10, alpha_channel)
+    alpha_channel = create_circle(image_size / 2, image_size / 4 + 15, 4, 8, 180, 360, alpha_channel)
+    alpha_channel = create_circle(image_size / 2, 3 * image_size / 4 - 15, 4, 8, 0, 180, alpha_channel)
+    alpha_channel = create_line(85, 90, 4, 13, alpha_channel)
+    alpha_channel = create_line(85, 210, 4, 13, alpha_channel)
 
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
     cv2.imwrite("../urdf/test.png", img_RGBA)
