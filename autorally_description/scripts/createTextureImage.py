@@ -6,7 +6,7 @@ from math import sqrt, atan, degrees
 ground_plane_size = 30
 
 # pixel width and height
-image_size = 300
+image_size = 1000
 
 
 def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orientationEnd, alpha_channel):
@@ -51,10 +51,10 @@ def main():
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
 
-    alpha_channel = create_circle(image_size / 2, image_size / 4 + 15, 4, 8, 180, 360, alpha_channel)
-    alpha_channel = create_circle(image_size / 2, 3 * image_size / 4 - 15, 4, 8, 0, 180, alpha_channel)
-    alpha_channel = create_line(85, 90, 4, 13, alpha_channel)
-    alpha_channel = create_line(85, 210, 4, 13, alpha_channel)
+    alpha_channel = create_circle(image_size / 2, convert_distance_to_pixel(9), 4, 8, 180, 360, alpha_channel)
+    alpha_channel = create_circle(image_size / 2, convert_distance_to_pixel(21), 4, 8, 0, 180, alpha_channel)
+    alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(9), 4, 13, alpha_channel)
+    alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
 
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
     cv2.imwrite("../urdf/test.png", img_RGBA)
