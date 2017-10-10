@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<sdf version="1.4">
+<sdf version="1.6">
   <world name="default">
     <scene>
       <sky>
@@ -151,8 +151,8 @@
       <uri>model://cinder_block_wide</uri>
       <pose>13.35 5.4 0.28 0 0 0</pose>
     </include>
-    <population name="box_population1">
-      <model name="box1">
+    <population name="cardboard_box_population1">
+      <model name="cardboard_box_1">
         <include>
           <static>true</static>
           <uri>model://cardboard_box</uri>
@@ -167,8 +167,8 @@
         <type>linear-y</type>
       </distribution>
     </population>
-    <population name="box_population2">
-      <model name="box11">
+    <population name="cardboard_box_population2">
+      <model name="cardboard_box_2">
         <include>
           <static>true</static>
           <uri>model://cardboard_box</uri>
