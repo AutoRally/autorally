@@ -62,44 +62,126 @@
       <pose>30 -30 0 0 0 0</pose>
     </include>
     <include>
+      <static>true</static>
       <name>lamp_post_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://lamp_post</uri>
       <pose>5 1 0 0 0 0</pose>
     </include>
     <include>
+      <static>true</static>
       <name>table_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://cafe_table</uri>
       <pose>-5 -0.5 0 0 0 0</pose>
     </include>
     <include>
-      <name>house_1</name> <!-- THE NAME MUST BE UNIQUE-->
-      <uri>model://house_1</uri>
-      <pose>24 -15 0 0 0 0</pose>
-    </include>
-    <include>
+      <static>true</static>
       <name>stop_sign_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://stop_sign</uri>
       <pose>5.5 -9.6 0 0 0 -2.25</pose>
     </include>
     <include>
+      <static>true</static>
       <name>grey_wall_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://grey_wall</uri>
-      <pose>-14 -12 0 0 0 0</pose>
+      <pose>-16 -3.8 0 0 0 -1.7685</pose>
     </include>
     <include>
-      <name>dumpster_1</name> <!-- THE NAME MUST BE UNIQUE-->
-      <uri>model://dumpster</uri>
-      <pose>1.3 13.5 0 0 0 0</pose>
+      <static>true</static>
+      <name>grey_wall_2</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://grey_wall</uri>
+      <pose>-14.57 3.395 0 0 0 -1.7685</pose>
     </include>
     <include>
+      <static>true</static>
       <name>cone_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://construction_cone</uri>
       <pose>-0.5 -3 0 0 0 0</pose>
     </include>
     <include>
+      <static>true</static>
+      <name>cone_2</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://construction_cone</uri>
+      <pose>12.3 6.9 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cone_3</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://construction_cone</uri>
+      <pose>0.44 9.45 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
       <name>barrel_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://construction_barrel</uri>
       <pose>-9 10 0 0 0 0</pose>
     </include>
+    <include>
+      <static>true</static>
+      <name>barrel_2</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://construction_barrel</uri>
+      <pose>-7.2 -11 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_1</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://cinder_block</uri>
+      <pose>13.7 -5 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_2_1</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://cinder_block_2</uri>
+      <pose>12.68 -6.1 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_wide_1</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://cinder_block_wide</uri>
+      <pose>13.35 -5.4 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_wide_2</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://cinder_block_wide</uri>
+      <pose>13.33 -5.6 0.14 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_wide_3</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://cinder_block_wide</uri>
+      <pose>13.35 -5.4 0.28 0 0 0</pose>
+    </include>
+    <population name="box_population1">
+      <model name="box1">
+        <include>
+          <static>true</static>
+          <uri>model://cardboard_box</uri>
+        </include>
+      </model>
+      <pose>16 0 0 0 0 0</pose>
+      <box>
+        <size>1 4 0.01</size>
+      </box>
+      <model_count>10</model_count>
+      <distribution>
+        <type>linear-y</type>
+      </distribution>
+    </population>
+    <population name="box_population2">
+      <model name="box11">
+        <include>
+          <static>true</static>
+          <uri>model://cardboard_box</uri>
+        </include>
+      </model>
+      <pose>16 0 0.3 0 0 0</pose>
+      <box>
+        <size>1 4 0.01</size>
+      </box>
+      <model_count>10</model_count>
+      <distribution>
+        <type>linear-y</type>
+      </distribution>
+    </population>
   </world>
 </sdf>
