@@ -8,7 +8,7 @@ from math import sqrt, atan, degrees
 ground_plane_size = 30
 
 # pixel width and height
-image_size = 1000
+image_size = 2000
 """
   alters the array passed in that will be used to generate the alpha of the image
 
@@ -73,11 +73,11 @@ def main():
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
     # changes the alpha values as necessary
-    create_circle(convert_distance_to_pixel(9), image_size / 2, 4, 8, 90, 270, alpha_channel)
-    create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 0, 90, alpha_channel)
-    create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 270, 360, alpha_channel)
-    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(9), 4, 13, alpha_channel)
-    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
+    create_circle(convert_distance_to_pixel(9.2), image_size / 2, 4.42, 7.8, 90, 270, alpha_channel)
+    create_circle(convert_distance_to_pixel(20.8), image_size / 2, 4.42, 7.8, 0, 90, alpha_channel)
+    create_circle(convert_distance_to_pixel(20.8), image_size / 2, 4.42, 7.8, 270, 360, alpha_channel)
+    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(8.8), 3.4, 13, alpha_channel)
+    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21.2), 3.4, 13, alpha_channel)
 
     # writes out the image
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
