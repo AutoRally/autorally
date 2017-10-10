@@ -7,12 +7,21 @@ ground_plane_size = 30
 
 # pixel width and height
 image_size = 1000
+"""
+  alters the array passed in that will be used to generate the alpha of the image.
 
-
+  centerX, centerY: the pixel coordinates that will be the center of the circle
+  radiusIn the inner: radius of the arc
+  radiusOut the outer: radiius of the arc
+  orientationStart: the starting angle of the arc in degrees, 0 is directly down
+  orientationEnd: the ending angle of the arc in degrees
+  alpha_channel: the array to be modified
+"""
 def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orientationEnd, alpha_channel):
     for i in range(centerX - convert_distance_to_pixel(radiusOut), centerX + convert_distance_to_pixel(radiusOut)):
         for j in range(centerY - convert_distance_to_pixel(radiusOut), centerY + convert_distance_to_pixel(radiusOut)):
             distance = convert_pixel_to_distance(centerX, centerY, i, j)
+            # gets angle from our defined zero (down)
             theta = -1
             if i - centerX != 0:
                 theta = degrees(atan((float(j) - centerY)/(i - centerX)))
@@ -29,33 +38,45 @@ def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orien
 
     return alpha_channel
 
+# converts the distance between the pixels in meters
 def convert_pixel_to_distance(pixel1X, pixel1Y, pixel2X, pixel2Y):
     xDist = (pixel1X - pixel2X) * (float(ground_plane_size) / image_size)
     yDist = (pixel1Y - pixel2Y) * (float(ground_plane_size) / image_size)
     return sqrt(xDist**2 + yDist**2)
 
+# converts the distance (in meters) to pixel distance
 def convert_distance_to_pixel(distance):
     return int(round(distance * (float(image_size) / ground_plane_size)))
 
-def create_line(centerX, centerY, width, length, alpha_channel):
+"""
+  draws a line at the given center with the given width and length
+
+  startX, startY the starting point of the line
+  width: the distance in meters of how wide the line should be
+  length: the distance in meters of how long the line should be
+  alpha_channel: the array to alter
+"""
+def create_line(startX, startY, width, length, alpha_channel):
     half_width = float(width) / 2
-    for i in range(centerY - convert_distance_to_pixel(half_width), centerY + convert_distance_to_pixel(half_width)):
-        for j in range(centerX, centerX + convert_distance_to_pixel(length)):
+    for i in range(startY - convert_distance_to_pixel(half_width), startY + convert_distance_to_pixel(half_width)):
+        for j in range(startX, startX + convert_distance_to_pixel(length)):
             alpha_channel[i, j] = 0
     return alpha_channel
 
 
 def main():
+    # creates a blank image and splits the color channels
     blank_image = np.zeros((image_size,image_size,3))
     b_channel, g_channel, r_channel = cv2.split(blank_image)
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
-
+    # changes the alpha values as necessary
     alpha_channel = create_circle(image_size / 2, convert_distance_to_pixel(9), 4, 8, 180, 360, alpha_channel)
     alpha_channel = create_circle(image_size / 2, convert_distance_to_pixel(21), 4, 8, 0, 180, alpha_channel)
     alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(9), 4, 13, alpha_channel)
     alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
 
+    # writes out the image
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
     cv2.imwrite("../urdf/blended_texture.png", img_RGBA)
 
