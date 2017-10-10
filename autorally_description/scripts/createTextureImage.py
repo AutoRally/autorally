@@ -13,7 +13,7 @@ image_size = 1000
   centerX, centerY: the pixel coordinates that will be the center of the circle
   radiusIn the inner: radius of the arc
   radiusOut the outer: radiius of the arc
-  orientationStart: the starting angle of the arc in degrees, 0 is directly down
+  orientationStart: the starting angle of the arc in degrees starting a 0 to the right and increasing counter clockwise
   orientationEnd: the ending angle of the arc in degrees
   alpha_channel: the array to be modified
 """
@@ -34,7 +34,7 @@ def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orien
                 theta += 180
 
             if distance <= radiusOut and distance >= radiusIn and theta >= orientationStart and theta <= orientationEnd:
-                alpha_channel[i, j] = 0
+                alpha_channel[j, i] = 0
 
     return alpha_channel
 
@@ -71,8 +71,9 @@ def main():
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
     # changes the alpha values as necessary
-    alpha_channel = create_circle(image_size / 2, convert_distance_to_pixel(9), 4, 8, 180, 360, alpha_channel)
-    alpha_channel = create_circle(image_size / 2, convert_distance_to_pixel(21), 4, 8, 0, 180, alpha_channel)
+    alpha_channel = create_circle(convert_distance_to_pixel(9), image_size / 2, 4, 8, 90, 270, alpha_channel)
+    alpha_channel = create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 0, 90, alpha_channel)
+    alpha_channel = create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 270, 360, alpha_channel)
     alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(9), 4, 13, alpha_channel)
     alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
 
