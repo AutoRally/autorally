@@ -7,8 +7,8 @@
           <speed>12</speed>
         </clouds>
       </sky>
-    <ambient>1.0 1.0 1.0 1.0</ambient>
-    <shadows>true</shadows>
+      <ambient>1.0 1.0 1.0 1.0</ambient>
+      <shadows>true</shadows>
     </scene>
 
     <!-- A global light source -->
@@ -19,17 +19,47 @@
     <include>
       <name>blended_plane</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://urdf/models/blended_track</uri>
-      <pose>0 0 0 0 0 2.35619449019</pose>
+      <pose>0 0 0 0 0 0</pose>
     </include>
     <include>
-      <name>grass_plane</name> <!-- THE NAME MUST BE UNIQUE-->
+      <name>grass_plane_1</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://urdf/models/grass_plane</uri>
-      <pose>30 0 0 0 0 2.35619449019</pose>
+      <pose>30 0 0 0 0 0</pose>
     </include>
     <include>
-      <name>dirt_plane</name> <!-- THE NAME MUST BE UNIQUE-->
-      <uri>model://urdf/models/dirt_plane</uri>
-      <pose>-30 0 0 0 0 2.35619449019</pose>
+      <name>grass_plane_2</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>30 30 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>grass_plane_3</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>0 30 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>grass_plane_4</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>-30 30 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>grass_plane_5</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>-30 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>grass_plan_6</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>-30 -30 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>grass_plane_7</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>0 -30 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>grass_plane_8</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/grass_plane</uri>
+      <pose>30 -30 0 0 0 0</pose>
     </include>
   </world>
 </sdf>
