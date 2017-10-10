@@ -11,8 +11,8 @@ image_size = 1000
   alters the array passed in that will be used to generate the alpha of the image
 
   centerX, centerY: the pixel coordinates that will be the center of the circle
-  radiusIn: the inner: radius of the arc
-  radiusOut: the outer: radiius of the arc
+  radiusIn: the inner radius of the arc
+  radiusOut: the outer radiius of the arc
   orientationStart: the starting angle of the arc in degrees starting at 0 to the right and increasing counter clockwise
   orientationEnd: the ending angle of the arc in degrees
   alpha_channel: the array to be modified
@@ -21,7 +21,7 @@ def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orien
     for i in range(centerX - convert_distance_to_pixel(radiusOut), centerX + convert_distance_to_pixel(radiusOut)):
         for j in range(centerY - convert_distance_to_pixel(radiusOut), centerY + convert_distance_to_pixel(radiusOut)):
             distance = convert_pixel_to_distance(centerX, centerY, i, j)
-            # gets angle from our defined zero (down)
+            # gets angle from our defined zero (right)
             theta = -1
             if i - centerX != 0:
                 theta = degrees(atan((float(j) - centerY)/(i - centerX)))
@@ -38,7 +38,7 @@ def create_circle(centerX, centerY, radiusIn, radiusOut, orientationStart, orien
 
     return alpha_channel
 
-# converts the distance between the pixels in meters
+# converts the distance between the two pixels into meters
 def convert_pixel_to_distance(pixel1X, pixel1Y, pixel2X, pixel2Y):
     xDist = (pixel1X - pixel2X) * (float(ground_plane_size) / image_size)
     yDist = (pixel1Y - pixel2Y) * (float(ground_plane_size) / image_size)
