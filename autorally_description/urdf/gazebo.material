@@ -1050,7 +1050,7 @@ material Gazebo/Dirt
   }
 }
 
-material Gazebo/Grass
+material Gazebo/Grass_image
 {
   technique
   {
@@ -1089,7 +1089,7 @@ material Gazebo/Texture_blend
       }
       texture_unit
       {
-        texture Material_alpha_blend.png
+        texture blended_texture.png
         colour_op alpha_blend
       }
       texture_unit

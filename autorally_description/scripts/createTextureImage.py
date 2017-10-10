@@ -57,7 +57,7 @@ def main():
     alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
 
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
-    cv2.imwrite("../urdf/test.png", img_RGBA)
+    cv2.imwrite("../urdf/blended_texture.png", img_RGBA)
 
 if __name__ == '__main__':
     main()
