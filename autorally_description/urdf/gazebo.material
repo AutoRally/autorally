@@ -1056,7 +1056,7 @@ material Gazebo/Grass_image
   {
     pass
     {
-      ambient 0.1 0.1 0.1 1.0
+      ambient 0.45 0.45 0.45 1.0
       diffuse 0.8 0.8 0.8 1.0
       specular 0.01 0.01 0.01 1.0 2.0
 
@@ -1077,7 +1077,7 @@ material Gazebo/Texture_blend
   {
     pass
     {
-      ambient 0.1 0.1 0.1 1.0
+      ambient 0.1 0.1 0.1 0.1
       diffuse 0.8 0.8 0.8 1.0
       specular 0.01 0.01 0.01 1.0 2.0
 
