@@ -8,12 +8,12 @@ ground_plane_size = 30
 # pixel width and height
 image_size = 1000
 """
-  alters the array passed in that will be used to generate the alpha of the image.
+  alters the array passed in that will be used to generate the alpha of the image
 
   centerX, centerY: the pixel coordinates that will be the center of the circle
-  radiusIn the inner: radius of the arc
-  radiusOut the outer: radiius of the arc
-  orientationStart: the starting angle of the arc in degrees starting a 0 to the right and increasing counter clockwise
+  radiusIn: the inner: radius of the arc
+  radiusOut: the outer: radiius of the arc
+  orientationStart: the starting angle of the arc in degrees starting at 0 to the right and increasing counter clockwise
   orientationEnd: the ending angle of the arc in degrees
   alpha_channel: the array to be modified
 """
