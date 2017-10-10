@@ -76,8 +76,8 @@ def main():
     create_circle(convert_distance_to_pixel(9.2), image_size / 2, 4.42, 7.8, 90, 270, alpha_channel)
     create_circle(convert_distance_to_pixel(20.8), image_size / 2, 4.42, 7.8, 0, 90, alpha_channel)
     create_circle(convert_distance_to_pixel(20.8), image_size / 2, 4.42, 7.8, 270, 360, alpha_channel)
-    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(8.8), 3.4, 13, alpha_channel)
-    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21.2), 3.4, 13, alpha_channel)
+    create_line(convert_distance_to_pixel(8.8), convert_distance_to_pixel(8.7), 3.4, 12.2, alpha_channel)
+    create_line(convert_distance_to_pixel(8.8), convert_distance_to_pixel(21.1), 3.4, 12.2, alpha_channel)
 
     # writes out the image
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
