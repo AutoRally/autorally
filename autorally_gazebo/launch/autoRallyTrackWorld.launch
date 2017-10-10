@@ -46,6 +46,6 @@
         args="-file $(find autorally_description)/urdf/autoRallyTrack.urdf -urdf -model track
               -gazebo_namespace /$(arg namespace)/gazebo
               -x 0 -y 0 -z 0.0762
-              -R 0 -P 0 -Y 0"/>
+              -R 0 -P 0 -Y 0.785398"/>
 
 </launch>
