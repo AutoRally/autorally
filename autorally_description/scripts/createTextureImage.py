@@ -71,11 +71,11 @@ def main():
     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255
 
     # changes the alpha values as necessary
-    alpha_channel = create_circle(convert_distance_to_pixel(9), image_size / 2, 4, 8, 90, 270, alpha_channel)
-    alpha_channel = create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 0, 90, alpha_channel)
-    alpha_channel = create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 270, 360, alpha_channel)
-    alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(9), 4, 13, alpha_channel)
-    alpha_channel = create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
+    create_circle(convert_distance_to_pixel(9), image_size / 2, 4, 8, 90, 270, alpha_channel)
+    create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 0, 90, alpha_channel)
+    create_circle(convert_distance_to_pixel(21), image_size / 2, 4, 8, 270, 360, alpha_channel)
+    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(9), 4, 13, alpha_channel)
+    create_line(convert_distance_to_pixel(8.5), convert_distance_to_pixel(21), 4, 13, alpha_channel)
 
     # writes out the image
     img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
