@@ -3,7 +3,6 @@
 <robot name="track">
   <gazebo>
     <static>true</static>
-    <material>Gazebo/Black</material>
   </gazebo>
   <link name="track_link">
     <!-- starts 3 inches up in z direction -->
@@ -13,8 +12,7 @@
         <mesh filename="package://autorally_description/urdf/autoRallyTrack.stl" scale="0.01 0.01 0.01" />
       </geometry>
     </collision>
-    
-    <visual name="track_visual" cast_shadows="false">
+    <visual cast_shadows="false">
       <geometry>
         <mesh filename="package://autorally_description/urdf/autoRallyTrack.stl" scale="0.01 0.01 0.01" />
       </geometry>
@@ -26,7 +24,7 @@
     </inertial>
   </link>
   <gazebo reference="track_link">
-    <material>Gazebo/Grey</material>
+    <material>Gazebo/Black</material>
     <mu1>0.6</mu1>
     <mu2>0.6</mu2>
   </gazebo>
