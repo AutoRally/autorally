@@ -1103,15 +1103,22 @@ material Gazebo/Texture_blend
   }
 }
 
-material Gazebo/Bamboo
+material Gazebo/Dirt
 {
   technique
   {
-    pass ambient
+    pass
     {
-      ambient 0 1 0
-      diffuse 0 1 0
-      specular 0.1 0.1 0.1 1 1
+      ambient 0.1 0.1 0.1 1.0
+      diffuse 0.8 0.8 0.8 1.0
+      specular 0.01 0.01 0.01 1.0 2.0
+
+      texture_unit
+      {
+        texture bamboo.jpg
+        filtering trilinear
+        scale .01 .01
+      }
     }
   }
 }
@@ -1125,6 +1132,26 @@ material Gazebo/Construction_orange
       texture_unit
       {
         colour_op_ex source1 src_manual src_current 1 0.47450980392 0
+      }
+    }
+  }
+}
+
+material Gazebo/Bamboo_image
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.45 0.45 0.45 1.0
+      diffuse 0.8 0.8 0.8 1.0
+      specular 0.01 0.01 0.01 1.0 2.0
+
+      texture_unit
+      {
+        texture bamboo.jpg
+        filtering trilinear
+        scale .01 .01
       }
     }
   }

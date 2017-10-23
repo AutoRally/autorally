@@ -29,8 +29,8 @@
         </geometry>
         <material>
           <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Bamboo</name>
+            <uri>model://urdf/gazebo.material</uri>
+            <name>Gazebo/Grass_image</name>
           </script>
         </material>
       </visual>
