@@ -17,12 +17,37 @@
     </include>
     <!-- A ground plane -->
     <include>
+      <name>tree</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/tree</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>bamboo</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/bamboo</uri>
+      <pose>10 10 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>bush</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/bush</uri>
+      <pose>6.4 -6.67 0.6 0 0 0</pose>
+    </include>
+    <include>
+      <name>fence</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/fence</uri>
+      <pose>3.1 12.8 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>shed</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/shed</uri>
+      <pose>-10 -10 5 0 0 0</pose>
+    </include>
+    <include>
       <name>blended_plane</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://urdf/models/blended_track</uri>
       <pose>0 0 0 0 0 0.785398</pose>
     </include>
     <include>
-      <name>grass_plane_1</name> <!-- THE NAME MUST BE UNIQUE-->
+      <name>grass_plane_1</name>
       <uri>model://urdf/models/grass_plane</uri>
       <pose>21.213 21.213 0 0 0 0.785398</pose>
     </include>

@@ -1156,3 +1156,43 @@ material Gazebo/Bamboo_image
     }
   }
 }
+
+material Gazebo/Shed_image
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.45 0.45 0.45 1.0
+      diffuse 0.8 0.8 0.8 1.0
+      specular 0.01 0.01 0.01 1.0 2.0
+
+      texture_unit
+      {
+        texture bamboo.jpg
+        filtering trilinear
+        scale .01 .01
+      }
+    }
+  }
+}
+
+material Gazebo/Leaf_image
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.45 0.45 0.45 1.0
+      diffuse 0.8 0.8 0.8 1.0
+      specular 0.01 0.01 0.01 1.0 2.0
+
+      texture_unit
+      {
+        texture leaf-veins.jpg
+        filtering trilinear
+        scale .01 .01
+      }
+    }
+  }
+}
