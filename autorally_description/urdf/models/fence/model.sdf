@@ -29,8 +29,8 @@
         </geometry>
         <material>
           <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Orange</name>
+            <uri>model://urdf/gazebo.material</uri>
+            <name>Gazebo/Construction_orange</name>
           </script>
         </material>
       </visual>

@@ -1102,3 +1102,30 @@ material Gazebo/Texture_blend
     }
   }
 }
+
+material Gazebo/Bamboo
+{
+  technique
+  {
+    pass ambient
+    {
+      ambient 0 1 0
+      diffuse 0 1 0
+      specular 0.1 0.1 0.1 1 1
+    }
+  }
+}
+
+material Gazebo/Construction_orange
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 1 0.47450980392 0
+      }
+    }
+  }
+}
