@@ -15,6 +15,11 @@
     <include>
       <uri>model://urdf/models/sun</uri>
     </include>
+    <include>
+      <name>track</name> <!-- THE NAME MUST BE UNIQUE-->
+      <uri>model://urdf/models/track</uri>
+      <pose>0 0 0.0762 0 0 0.785398</pose>
+    </include>
     <!-- A ground plane -->
     <include>
       <name>tree</name> <!-- THE NAME MUST BE UNIQUE-->
@@ -39,7 +44,7 @@
     <include>
       <name>shed</name> <!-- THE NAME MUST BE UNIQUE-->
       <uri>model://urdf/models/shed</uri>
-      <pose>-10 -10 5 0 0 0</pose>
+      <pose>14.1 14.4 0 0 0 1.89</pose>
     </include>
     <include>
       <name>blended_plane</name> <!-- THE NAME MUST BE UNIQUE-->
@@ -136,37 +141,5 @@
       <uri>model://cinder_block_wide</uri>
       <pose>13.35 5.4 0.28 0 0 0</pose>
     </include>
-    <population name="cardboard_box_population1">
-      <model name="cardboard_box_1">
-        <include>
-          <static>true</static>
-          <uri>model://cardboard_box</uri>
-        </include>
-      </model>
-      <pose>12 13 0 0 0 0.785398</pose>
-      <box>
-        <size>1 6 0.01</size>
-      </box>
-      <model_count>10</model_count>
-      <distribution>
-        <type>linear-y</type>
-      </distribution>
-    </population>
-    <population name="cardboard_box_population2">
-      <model name="cardboard_box_2">
-        <include>
-          <static>true</static>
-          <uri>model://cardboard_box</uri>
-        </include>
-      </model>
-      <pose>12 13 0.3 0 0 0.785398</pose>
-      <box>
-        <size>1 6 0.01</size>
-      </box>
-      <model_count>10</model_count>
-      <distribution>
-        <type>linear-y</type>
-      </distribution>
-    </population>
   </world>
 </sdf>
