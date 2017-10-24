@@ -8,7 +8,7 @@ from math import sqrt, atan, degrees
 ground_plane_size = 90
 
 # pixel width and height
-image_size = 2000
+image_size = 4000
 """
   alters the array passed in that will be used to generate the alpha of the image
 
