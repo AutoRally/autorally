@@ -452,43 +452,6 @@ limitations under the License.
 
   </link>
 
-
-  <joint name="side_camera_joint" type="fixed">
-    <axis xyz="0 1 0" />
-    <origin xyz="0 -3 0" rpy="0 0 1.5708"/>
-    <parent link="base_link"/>
-    <child link="side_camera_link"/>
-  </joint>
-
-  <!-- Camera -->
-  <link name="side_camera_link">
-    <!-- <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.05 0.05"/>
-      </geometry>
-    </collision>
-
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.05 0.05"/>
-      </geometry>
-      <material name="red"/>
-    </visual>
-    -->
-    <inertial>
-      <mass value="1e-5" />
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
-    </inertial>
-  </link>
-
-
-
-
-
-
   <!-- camera -->
   <gazebo reference="camera_link">
     <sensor type="multicamera" name="stereo_camera">
@@ -546,51 +509,6 @@ limitations under the License.
       </plugin>
     </sensor>
   </gazebo>
-
-
-   <!-- camera -->
-  <gazebo reference="side_camera_link">
-    <sensor type="camera" name="camera_side">
-      <update_rate>30.0</update_rate>
-      <camera name="side">
-        <horizontal_fov>1.3962634</horizontal_fov>
-        <image>
-          <width>1280</width>
-          <height>1024</height>
-          <format>R8G8B8</format>
-        </image>
-        <clip>
-          <near>0.02</near>
-          <far>50</far>
-        </clip>
-        <noise>
-          <type>gaussian</type>
-          <!-- Noise is sampled independently per pixel on each frame.
-               That pixel's noise value is added to each of its color
-               channels, which at that point lie in the range [0,1]. -->
-          <mean>0.0</mean>
-          <stddev>0.007</stddev>
-        </noise>
-      </camera>
-      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>0.0</updateRate>
-        <cameraName>camera_side</cameraName>
-        <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <frameName>side_camera_link</frameName>
-        <hackBaseline>0.07</hackBaseline>
-        <!-- <distortionK1>0.0</distortionK1>
-        <distortionK2>0.0</distortionK2>
-        <distortionK3>0.0</distortionK3>
-        <distortionT1>0.0</distortionT1>
-        <distortionT2>0.0</distortionT2> -->
-      </plugin>
-    </sensor>
-  </gazebo>
-
-
-
 
   <!-- Wheels -->
   <xacro:front_wheel lr_prefix="left" fr_prefix="front"
