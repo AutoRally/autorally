@@ -1,14 +1,14 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <sdf version="1.5">
-  <model name="ground_plane">
+  <model name="jump22deg">
     <static>true</static>
     <link name="link">
       <collision name="collision">
         <geometry>
-          <plane>
-            <normal>0 0 1</normal>
-            <size>20 30</size>
-          </plane>
+          <mesh>
+            <uri>model://urdf/jump22deg.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
         </geometry>
         <surface>
           <friction>
@@ -22,15 +22,15 @@
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <plane>
-            <normal>0 0 1</normal>
-            <size>20 30</size>
-          </plane>
+          <mesh>
+            <uri>model://urdf/jump22deg.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
         </geometry>
         <material>
           <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <uri>model://urdf/gazebo.material</uri>
+            <name>Gazebo/White</name>
           </script>
         </material>
       </visual>

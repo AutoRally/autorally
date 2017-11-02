@@ -39,7 +39,7 @@ limitations under the License.
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
   <arg name="namespace" default="autorally_platform"/>
-  <arg name="world_name" default="model://urdf/empty_sky_AR.world"/>
+  <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- parameter for other programs to use to know if we are in simulation ro real world-->
@@ -51,23 +51,23 @@ limitations under the License.
   <arg name="z" default="0.3"/>
   <arg name="roll" default="0.0"/>
   <arg name="pitch" default="0.0"/>
-  <arg name="yaw" default="0.785398"/>
+  <arg name="yaw" default="0.785498"/>
 
   <include file="$(find autorally_description)/launch/autoRallyPlatform.launch">
     <arg name="namespace" value="$(arg namespace)"/>
   </include>
-  
+
   <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
   <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
-  
+
   <group ns="$(arg namespace)">
     <!-- Create the world. -->
     <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
       <arg name="world_name" value="$(arg world_name)"/>
       <arg name="namespace" value="$(arg namespace)" />
     </include>
-        
+
     <!-- Spawn the vehicle. -->
     <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
           args="-urdf -param robot_description -model autoRallyPlatform
@@ -87,7 +87,7 @@ limitations under the License.
       <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
       <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
     </node>
-    
+
   </group>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
   <include file="$(find autorally_control)/launch/joystickController.launch" />

@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    <scene>
+      <sky>
+        <clouds>
+          <speed>12</speed>
+        </clouds>
+      </sky>
+      <ambient>1.0 1.0 1.0 1.0</ambient>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://urdf/models/sun</uri>
+    </include>
+    <include>
+      <name>track</name>
+      <uri>model://urdf/models/track</uri>
+      <pose>0 0 0.0762 0 0 0.785398</pose>
+    </include>
+    <include>
+      <name>blended_plane</name>
+      <uri>model://urdf/models/blended_track</uri>
+      <pose>0 0 0 0 0 0.785398</pose>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <name>tree</name>
+      <uri>model://urdf/models/tree</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>bamboo</name>
+      <uri>model://urdf/models/bamboo</uri>
+      <pose>10 10 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>bush</name>
+      <uri>model://urdf/models/bush</uri>
+      <pose>6.4 -6.67 0.6 0 0 0</pose>
+    </include>
+    <include>
+      <name>fence</name>
+      <uri>model://urdf/models/fence</uri>
+      <pose>3.1 12.8 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>shed</name>
+      <uri>model://urdf/models/shed</uri>
+      <pose>14.1 14.4 0 0 0 1.89</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>lamp_post_1</name>
+      <uri>model://lamp_post</uri>
+      <pose>5.7 5.8 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>table_1</name>
+      <uri>model://cafe_table</uri>
+      <pose>-3.9 -4.8 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>stop_sign_1</name>
+      <uri>model://stop_sign</uri>
+      <pose>11.874 -0.7 0 0 0 -1.2106</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>grey_wall_1</name>
+      <uri>model://grey_wall</uri>
+      <pose>-11.428 -15 0 0 0 -0.9276</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>grey_wall_2</name>
+      <uri>model://grey_wall</uri>
+      <pose>-15.9 -9 0 0 0 -0.9276</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cone_1</name>
+      <uri>model://construction_cone</uri>
+      <pose>3.9 -10 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cone_2</name>
+      <uri>model://construction_cone</uri>
+      <pose>3.6 -1.7 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cone_3</name>
+      <uri>model://construction_cone</uri>
+      <pose>-1.3 10.9 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>barrel_1</name>
+      <uri>model://construction_barrel</uri>
+      <pose>-9 10 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>barrel_2</name>
+      <uri>model://construction_barrel</uri>
+      <pose>-13.7 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_1</name>
+      <uri>model://cinder_block</uri>
+      <pose>13.5 6.5 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_2_1</name>
+      <uri>model://cinder_block_2</uri>
+      <pose>13.249 4.946 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_wide_1</name>
+      <uri>model://cinder_block_wide</uri>
+      <pose>13.35 5.4 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_wide_2</name>
+      <uri>model://cinder_block_wide</uri>
+      <pose>13.33 5.6 0.14 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <name>cinder_block_wide_3</name>
+      <uri>model://cinder_block_wide</uri>
+      <pose>13.35 5.4 0.28 0 0 0</pose>
+    </include>
+  </world>
+</sdf>

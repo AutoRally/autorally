@@ -2,7 +2,7 @@
 
 <!-- autoRallyPlatform.urdf.xacro
 
-This file defines a model of the AutoRally autonomous vehicle platform. It is 
+This file defines a model of the AutoRally autonomous vehicle platform. It is
 derived from the ackermann_vehicle_gazebo ROS package available at
 http://wiki.ros.org/ackermann_vehicle_gazebo
 
@@ -67,14 +67,14 @@ limitations under the License.
   <!-- <xacro:property name="axle_length" value="0.03"/> -->
   <!--<xacro:property name="wheel_travel" value="0.1"/>
   <xacro:property name="shock_z_offset" value="0.11"/> -->
-  
+
   <xacro:property name="front_wheel_travel" value="0.1"/>
   <xacro:property name="front_shock_z_offset" value="0.11"/>
   <xacro:property name="rear_wheel_travel" value="0.11"/>
   <xacro:property name="rear_shock_z_offset" value="0.12"/>
 
   <!-- shock_eff_limit is 2 * ((shock_stroke / 2) * shock_spring_constant) N.
-       For shock_spring_constants, refer to 
+       For shock_spring_constants, refer to
        autoRallyPlatformJointCtrlrParams.yaml for spring's constants -->
   <!-- front shock: 2 * ((0.06 / 2) * 3152.28303) = 189.1369818-->
   <!-- rear shock: 2 * ((0.07 / 2) * 4234.88528273) = 296.441969791-->
@@ -95,7 +95,7 @@ limitations under the License.
 
        max_speed = 60mph = 26.82 m/s
        axle_vel_limit = (2 * pi) * (max_speed / (pi * tire_dia)) =
-          2*26.82/0.19 = 282.315789474 rad/s           
+          2*26.82/0.19 = 282.315789474 rad/s
        -->
   <xacro:property name="front_axle_eff_limit" value="2"/>
   <xacro:property name="rear_axle_eff_limit" value="8"/>
@@ -122,7 +122,7 @@ limitations under the License.
     </inertial>
   </xacro:macro>
 
-  
+
   <!-- Inertia of a thick-walled cylindrical tube with open ends. Height is
        measured along the z axis, which is the tube's axis. inner_rad and
        outer_rad are the tube's inner and outer radii, respectively. Pitch
@@ -220,11 +220,11 @@ limitations under the License.
       <dynamics damping="0.001" friction="0.5"/>
 
     </joint>
-    
+
 <!--    <gazebo reference="${lr_prefix}_${fr_prefix}_axle">
       <dampingFactor>0.8</dampingFactor>
     </gazebo>
--->    
+-->
     <transmission name="${lr_prefix}_${fr_prefix}_axle_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${lr_prefix}_${fr_prefix}_axle">
@@ -250,14 +250,14 @@ limitations under the License.
         <origin xyz="0 0 0"/>
         <geometry>
           <mesh filename="${wheel_model}" />
-        </geometry>         
+        </geometry>
       </collision>
 
       <collision name="material">
         <origin xyz="0 0 0"/>
         <geometry>
           <mesh filename="${wheel_model}" />
-        </geometry>         
+        </geometry>
       </collision>
 
       <xacro:thick_walled_tube_inertial
@@ -269,7 +269,7 @@ limitations under the License.
           <ode>
             <soft_cfm>0.000000001</soft_cfm>
             <soft_erp>0.2</soft_erp>
-            <kp>1e+10</kp>      
+            <kp>1e+10</kp>
             <kd>10</kd>
             <max_vel>0.01</max_vel>
             <min_depth>0.005</min_depth>
@@ -354,7 +354,7 @@ limitations under the License.
       <material name="chassis_mat"/>
     </visual>
   </link>
-  
+
   <gazebo reference="base_link">
     <material>Gazebo/Grey</material>
   </gazebo>
@@ -364,7 +364,7 @@ limitations under the License.
     <visual>
       <origin xyz="${-chassis_length/2 + 0.15} 0 ${-chassis_cm_height}"
               rpy="0 0 0"/>
-      
+
       <geometry>
         <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
@@ -373,7 +373,7 @@ limitations under the License.
     <collision>
       <origin xyz="${-chassis_length/2 + 0.2} 0 ${-chassis_cm_height}"
               rpy="0 0 0"/>
-      
+
       <geometry>
         <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
@@ -413,7 +413,7 @@ limitations under the License.
       <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
     </inertial>
   </link>
-  
+
   <joint name="imu_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <parent link="base_link"/>
@@ -451,43 +451,6 @@ limitations under the License.
     </inertial>
 
   </link>
-
-
-  <joint name="side_camera_joint" type="fixed">
-    <axis xyz="0 1 0" />
-    <origin xyz="0 -3 0" rpy="0 0 1.5708"/>
-    <parent link="base_link"/>
-    <child link="side_camera_link"/>
-  </joint>
-
-  <!-- Camera -->
-  <link name="side_camera_link">
-    <!-- <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.05 0.05"/>
-      </geometry>
-    </collision>
-
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.05 0.05"/>
-      </geometry>
-      <material name="red"/>
-    </visual>
-    -->
-    <inertial>
-      <mass value="1e-5" />
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
-    </inertial>
-  </link>
-
-
-
-
-
 
   <!-- camera -->
   <gazebo reference="camera_link">
@@ -547,51 +510,6 @@ limitations under the License.
     </sensor>
   </gazebo>
 
-
-   <!-- camera -->
-  <gazebo reference="side_camera_link">
-    <sensor type="camera" name="camera_side">
-      <update_rate>30.0</update_rate>
-      <camera name="side">
-        <horizontal_fov>1.3962634</horizontal_fov>
-        <image>
-          <width>1280</width>
-          <height>1024</height>
-          <format>R8G8B8</format>
-        </image>
-        <clip>
-          <near>0.02</near>
-          <far>50</far>
-        </clip>
-        <noise>
-          <type>gaussian</type>
-          <!-- Noise is sampled independently per pixel on each frame.
-               That pixel's noise value is added to each of its color
-               channels, which at that point lie in the range [0,1]. -->
-          <mean>0.0</mean>
-          <stddev>0.007</stddev>
-        </noise>
-      </camera>
-      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>0.0</updateRate>
-        <cameraName>camera_side</cameraName>
-        <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <frameName>side_camera_link</frameName>
-        <hackBaseline>0.07</hackBaseline>
-        <!-- <distortionK1>0.0</distortionK1>
-        <distortionK2>0.0</distortionK2>
-        <distortionK3>0.0</distortionK3>
-        <distortionT1>0.0</distortionT1>
-        <distortionT2>0.0</distortionT2> -->
-      </plugin>
-    </sensor>
-  </gazebo>
-
-
-
-
   <!-- Wheels -->
   <xacro:front_wheel lr_prefix="left" fr_prefix="front"
                      lr_reflect="1" fr_reflect="1"
@@ -619,7 +537,7 @@ limitations under the License.
       <robotNamespace>/autorally_platform</robotNamespace>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
     </plugin>
-    
+
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
       <robotNamespace>/</robotNamespace>
       <serviceName>/imu/calibrate</serviceName>
@@ -640,7 +558,7 @@ limitations under the License.
       <headingDriftFrequency>0.0 0.0 0.0</headingDriftFrequency>
       <headingGaussianNoise>0.0 0.0 0.0</headingGaussianNoise>
     </plugin>
-    
+
     <plugin name="gps" filename="libhector_gazebo_ros_gps.so">
       <updateRate>20.0</updateRate>
       <bodyName>base_link</bodyName>

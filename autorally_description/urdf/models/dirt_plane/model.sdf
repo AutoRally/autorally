@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <sdf version="1.5">
-  <model name="ground_plane">
+  <model name="dirt_plane">
     <static>true</static>
     <link name="link">
       <collision name="collision">
@@ -29,8 +29,8 @@
         </geometry>
         <material>
           <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <uri>model://urdf/gazebo.material</uri>
+            <name>Gazebo/Dirt</name>
           </script>
         </material>
       </visual>
