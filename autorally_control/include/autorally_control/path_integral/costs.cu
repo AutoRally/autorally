@@ -291,9 +291,8 @@ inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash)
 {
   float cost = 0;
   if (params_d_->desired_speed < 999.0){
-    float speed = 0;
+    float speed = fabs(s[4]);
     if (s[4] > 0){
-      speed = s[4];
       cost = params_d_->speed_coeff*powf(speed - params_d_->desired_speed, 2);
     }else {
       cost = params_d_->speed_coeff*powf(speed + params_d_->desired_speed, 2);

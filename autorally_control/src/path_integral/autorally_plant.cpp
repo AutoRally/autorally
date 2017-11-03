@@ -48,7 +48,6 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   if (debug_mode_){
     nominal_path_name = "nominal_path_debug";
   }
-  path_pub_ = mppi_node.advertise<nav_msgs::Path>(nominal_path_name, 1);
   delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   //Initialize the pose subscriber.
@@ -129,7 +128,7 @@ void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
   }
 }
 
-void AutorallyPlant::pubPath(float* nominal_traj, int num_timesteps, int hz)
+void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int num_timesteps, int hz)
 {
   path_msg_.poses.clear();
   int i;
