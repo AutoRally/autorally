@@ -2,8 +2,8 @@
 
   <group if="$(env ROSLAUNCH_SSH_UNKNOWN)">
 
-    <machine name="autorally-master" address="$(env MASTER_HOSTNAME)" user="muri" default="true"
-      env-loader="/home/muri/catkin_ws/devel/env.sh"/>
+    <machine name="autorally-master" address="$(env MASTER_HOSTNAME)" user="$(env MASTER_USER)" default="true"
+      env-loader="/home/autorally/catkin_ws/devel/env.sh"/>
 
   </group>
 
