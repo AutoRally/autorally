@@ -1,6 +1,7 @@
 'mppi_controller': 1
-'constantSpeedController': 2
-'waypointFollower': 3
-'joystick': 4
-'OCS': 5
+'twoPointController': 2
+'constantSpeedController': 3
+'waypointFollower': 4
+'joystick': 5
+'OCS': 6
 'RC': 7
