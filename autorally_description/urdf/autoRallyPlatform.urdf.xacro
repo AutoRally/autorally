@@ -534,12 +534,12 @@ limitations under the License.
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/autorally_platform</robotNamespace>
+      <robotNamespace>/autorally_platform/n1</robotNamespace>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
     </plugin>
 
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
-      <robotNamespace>/</robotNamespace>
+      <robotNamespace>/autorally_platform/n1</robotNamespace>
       <serviceName>/imu/calibrate</serviceName>
       <updateRate>200.0</updateRate>
       <bodyName>imu_link</bodyName>
@@ -560,6 +560,7 @@ limitations under the License.
     </plugin>
 
     <plugin name="gps" filename="libhector_gazebo_ros_gps.so">
+      <robotNamespace>/autorally_platform/n1</robotNamespace>
       <updateRate>20.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
@@ -573,7 +574,7 @@ limitations under the License.
       <velocityDrift>0 0 0</velocityDrift>
       <velocityGaussianNoise>0.005 0.005 0.05</velocityGaussianNoise>
     </plugin>
-    <!-- <plugin name="tire_friction" filename="libTireFrictionPlugin.so">
+    <!--<plugin name="tire_friction" filename="libTireFrictionPlugin.so">
       <link_name>left_rear_wheel</link_name>
       <collision_name>collision</collision_name>
       <friction_static>1.1</friction_static>
@@ -581,7 +582,7 @@ limitations under the License.
       <slip_static>0.10</slip_static>
       <slip_dynamic>0.20</slip_dynamic>
       <speed_static>0.50</speed_static>
-    </plugin> -->
+    </plugin>-->
 
   </gazebo>
 

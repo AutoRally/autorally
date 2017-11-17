@@ -53,10 +53,6 @@ limitations under the License.
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
 
-  <include file="$(find autorally_description)/launch/autoRallyPlatform.launch">
-    <arg name="namespace" value="$(arg namespace)"/>
-  </include>
-
   <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
   <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
@@ -68,27 +64,33 @@ limitations under the License.
       <arg name="namespace" value="$(arg namespace)" />
     </include>
 
-    <!-- Spawn the vehicle. -->
-    <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-          args="-urdf -param robot_description -model autoRallyPlatform
-                -gazebo_namespace /$(arg namespace)/gazebo
-                -x $(arg x) -y $(arg y) -z $(arg z)
-                -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+    <group ns="n1">
+      <!--<param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro"/>
 
-    <!-- Load the joint controllers. One of these publishes the joint states
-         to joint_states. -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
-
-    <!-- Control the steering, axle, and shock absorber joints. -->
-    <node name="autorally_controller" pkg="autorally_gazebo"
-          type="autorally_controller.py" output="screen">
-      <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
-      <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-      <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
+    <node name="autoRally_state_publisher" pkg="robot_state_publisher"
+          type="robot_state_publisher">
+      <param name="publish_frequency" value="50.0"/>
     </node>
 
+
+      <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
+            args="-urdf -param robot_description -model autoRallyPlatform
+                  -gazebo_namespace /autorally_platform/gazebo
+                  -x $(arg x) -y $(arg y) -z $(arg z)
+                  -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>-->
+
+
+      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+        <arg name="namespace" value="n1" />
+      </include>
+    </group>
+    <group ns="n2">
+      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+        <arg name="namespace" value="n2" />
+        <arg name="vehicle_name" value="2" />
+        <arg name="y" value="2" />
+        <arg name="x" value="2" />
+      </include>
+    </group>
   </group>
-  <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_control)/launch/joystickController.launch" />
 </launch>
