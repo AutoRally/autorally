@@ -64,7 +64,7 @@ limitations under the License.
       <arg name="namespace" value="$(arg namespace)" />
     </include>
 
-    <group ns="n1">
+    <group ns="_1">
       <!--<param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro"/>
 
     <node name="autoRally_state_publisher" pkg="robot_state_publisher"
@@ -81,15 +81,17 @@ limitations under the License.
 
 
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="namespace" value="n1" />
+        <arg name="namespace" value="_1" />
+        <arg name="vehicle_name" value="1" />
       </include>
     </group>
-    <group ns="n2">
+    <group ns="_2">
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="namespace" value="n2" />
+        <arg name="namespace" value="_2" />
         <arg name="vehicle_name" value="2" />
         <arg name="y" value="2" />
         <arg name="x" value="2" />
+        <arg name="z" value="2" />
       </include>
     </group>
   </group>
