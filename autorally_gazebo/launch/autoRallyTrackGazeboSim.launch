@@ -54,8 +54,8 @@ limitations under the License.
   <arg name="yaw" default="0.785498"/>
 
   <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
-  <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
-  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
+  <!--<remap from="/$(arg namespace)/camera/left" to="/left_camera" />
+  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />-->
 
   <group ns="$(arg namespace)">
     <!-- Create the world. -->
@@ -65,30 +65,15 @@ limitations under the License.
     </include>
 
     <group ns="_1">
-      <!--<param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro"/>
-
-    <node name="autoRally_state_publisher" pkg="robot_state_publisher"
-          type="robot_state_publisher">
-      <param name="publish_frequency" value="50.0"/>
-    </node>
-
-
-      <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-            args="-urdf -param robot_description -model autoRallyPlatform
-                  -gazebo_namespace /autorally_platform/gazebo
-                  -x $(arg x) -y $(arg y) -z $(arg z)
-                  -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>-->
-
-
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
         <arg name="namespace" value="_1" />
-        <arg name="vehicle_name" value="1" />
+        <arg name="vehicle_name" value="_1" />
       </include>
     </group>
     <group ns="_2">
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
         <arg name="namespace" value="_2" />
-        <arg name="vehicle_name" value="2" />
+        <arg name="vehicle_name" value="_2" />
         <arg name="y" value="2" />
         <arg name="x" value="2" />
         <arg name="z" value="2" />

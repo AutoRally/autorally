@@ -55,28 +55,29 @@ limitations under the License.
 
   <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform$(arg namespace).urdf.xacro"/>
 
-    <node name="autoRally_state_publisher" pkg="robot_state_publisher"
-          type="robot_state_publisher">
-      <param name="publish_frequency" value="50.0"/>
-    </node>
+  <node name="autoRally_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher">
+    <param name="publish_frequency" value="50.0"/>
+  </node>
 
 
-    <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-          args="-urdf -param robot_description -model autoRallyPlatform$(arg vehicle_name)
-                -gazebo_namespace /autorally_platform/gazebo
-                -x $(arg x) -y $(arg y) -z $(arg z)
-                -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>x
+  <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -param robot_description -model autoRallyPlatform$(arg vehicle_name)
+              -gazebo_namespace /autorally_platform/gazebo
+              -x $(arg x) -y $(arg y) -z $(arg z)
+              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
 
 
   <!-- load controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
           args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
 
-<!-- Control the steering, axle, and shock absorber joints. -->
-    <node name="autorally_controller" pkg="autorally_gazebo"
-          type="autorally_controller.py" output="screen">
-      <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
-      <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-      <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
-    </node>
+  <!-- Control the steering, axle, and shock absorber joints. -->
+  <node name="autorally_controller" pkg="autorally_gazebo"
+        type="autorally_controller.py" output="screen">
+    <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
+    <param name="namespace" value="_1"/>
+    <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
+    <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
+  </node>
 </launch>
