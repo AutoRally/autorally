@@ -200,8 +200,7 @@ class AutoRallyCtrlr(object):
           self._cmd_timeout = self._DEF_CMD_TIMEOUT
 
       try:
-          self._namespace = rospy.get_param("~namespace",
-                                                    "_1")
+          self._namespace = rospy.get_param("~namespace")
       except:
           rospy.logwarn("The specified namespace value is invalid. "
                         "The default timeout value will be used instead.")
@@ -303,7 +302,7 @@ class AutoRallyCtrlr(object):
       self.chassisCmdSub = dict()
       for cmd, priority in self.commandPriorities:
           self.chassisCmdSub[cmd] = \
-              rospy.Subscriber("/"+cmd+"/chassisCommand", chassisCommand,
+              rospy.Subscriber(self._namespace+"/"+cmd+"/chassisCommand", chassisCommand,
                                self.chassisCmdCb, queue_size=1)
 
       self.runstopSub = rospy.Subscriber("/runstop", runstop, self.runstopCb, queue_size=5)

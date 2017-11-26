@@ -109,6 +109,9 @@ limitations under the License.
   <xacro:property name="servo_stall_torque" value="3.432620346181713"/>
   <xacro:property name="servo_no_load_speed" value="8.05536578"/>
 
+  <!-- property to specify namespace -->
+  <xacro:arg name="prefix" default=""/>
+
   <material name="chassis_mat">
     <color rgba="0.5 0.5 0.5 1"/>
   </material>
@@ -534,12 +537,12 @@ limitations under the License.
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/autorally_platform/_1</robotNamespace>
+      <robotNamespace>/autorally_platform/$(arg prefix)</robotNamespace>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
     </plugin>
 
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
-      <robotNamespace>/autorally_platform/_1</robotNamespace>
+      <robotNamespace>/autorally_platform/$(arg prefix)</robotNamespace>
       <serviceName>/imu/calibrate</serviceName>
       <updateRate>200.0</updateRate>
       <bodyName>imu_link</bodyName>
@@ -560,7 +563,7 @@ limitations under the License.
     </plugin>
 
     <plugin name="gps" filename="libhector_gazebo_ros_gps.so">
-      <robotNamespace>/autorally_platform/_1</robotNamespace>
+      <robotNamespace>/autorally_platform/$(arg prefix)</robotNamespace>
       <updateRate>20.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
