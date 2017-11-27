@@ -44,18 +44,22 @@ JoystickControl::JoystickControl():
 {
   m_joySub = nh_.subscribe("joy", 1, &JoystickControl::joyCallback, this);
 
-  commandPub_ = nh_.advertise
-                 <autorally_msgs::chassisCommand>
-                 ("joystick/chassisCommand", 1);
+  std::string prefix = "";
+  nh_.getParam("joystickController/prefix", prefix);
   runstopPub_ = nh_.advertise
                  <autorally_msgs::runstop>
                  ("runstop", 1);
 
+  commandPub_ = nh_.advertise
+                 <autorally_msgs::chassisCommand>
+                 (prefix + "joystick/chassisCommand", 1);
+
   runstop_.sender = "joystick";
   runstop_.motionEnabled = false;
 
+
   if(!nh_.getParam("joystickController/throttleDamping", throttleDamping_) ||
-     !nh_.getParam("joystickController/steeringDamping", steeringDamping_) || 
+     !nh_.getParam("joystickController/steeringDamping", steeringDamping_) ||
      !nh_.getParam("joystickController/throttleAxis", throttleAxis_) ||
      !nh_.getParam("joystickController/steeringAxis", steeringAxis_) ||
      !nh_.getParam("joystickController/throttleEnableButton", throttleEnableButton_) ||
@@ -89,7 +93,7 @@ void JoystickControl::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
    * is drives as expected.
    */
 
-  //toggle runstop if a runstop toggle button changed from 0 to 1  
+  //toggle runstop if a runstop toggle button changed from 0 to 1
   for(auto vecIt : runstopToggleButtons_)
   {
     if(joy->buttons[vecIt] == 1 && prevJoy_.buttons[vecIt] == 0)
@@ -103,13 +107,13 @@ void JoystickControl::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   {
     throttleEnabled_ = !throttleEnabled_;
   }
-  
+
   //can enable/disable steering control with R2 on game pad, only toggle if button changed from 0 to 1
   if(joy->buttons[steeringEnableButton_] == 1 && prevJoy_.buttons[steeringEnableButton_] == 0)
   {
     steeringEnabled_ = !steeringEnabled_;
   }
-  
+
   if(steeringEnabled_)
   {
     chassis_command_.steering = -steeringDamping_*joy->axes[steeringAxis_];
@@ -117,10 +121,10 @@ void JoystickControl::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   {
     chassis_command_.steering = -10.0;
   }
-  
+
   if(throttleEnabled_)
   {
-    
+
     chassis_command_.throttle = throttleDamping_*joy->axes[throttleAxis_];
 
     if(chassis_command_.throttle < 0.0)
@@ -135,7 +139,7 @@ void JoystickControl::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
     chassis_command_.throttle = -10.0;
     chassis_command_.frontBrake = -10.0;
   }
-  
+
   prevJoy_ = *joy;
   chassis_command_.header.frame_id = "joystick";
   chassis_command_.sender = "joystick";

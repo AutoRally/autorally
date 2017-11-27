@@ -7,7 +7,7 @@
     <param name="autorepeat_rate" value="10" />
     <param name="coalesce_interval" value="0.01" />
   </node>
-  
+
   <node name="joystickController" pkg="autorally_control" type="joystickController" output="screen" machine="autorally-ocs">
     <param name="throttleDamping" value="1.0" />
     <param name="steeringDamping" value="1.0" />
@@ -20,9 +20,10 @@
     <param name="safeSpeedZeroButton2" value="2" />
     <param name="throttleEnableButton" value="4" />
     <param name="steeringEnableButton" value="5" />
-    
+
     <param name="brakeAxis" value="2" />
     <remap from="/safeSpeed" to="/targetSpeed" />
+    <param name="prefix" value="car_2/" />
   </node>
-  
+
 </launch>
