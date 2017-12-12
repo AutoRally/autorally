@@ -23,7 +23,9 @@
 
     <param name="brakeAxis" value="2" />
     <remap from="/safeSpeed" to="/targetSpeed" />
-    <param name="prefix" value="car_2/" />
+
+    <!-- use below parameter to set the prefix for the joystick controller to control two cars in simulation -->
+    <!-- <param name="prefix" value="beta" /> -->
   </node>
 
 </launch>

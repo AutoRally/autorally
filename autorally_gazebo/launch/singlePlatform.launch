@@ -53,7 +53,7 @@ limitations under the License.
 
   <arg name="vehicle_name" default="1"/>
 
-  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg namespace)"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg vehicle_name)"/>
 
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
