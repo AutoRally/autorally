@@ -2,6 +2,9 @@
 Changelog for package autorally_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.5 (2017-07-03)
+------------------
+
 0.2.4 (2017-02-14)
 ------------------
 * Added ground, vehicle, and wheel textures

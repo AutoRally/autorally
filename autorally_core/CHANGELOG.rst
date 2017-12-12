@@ -2,6 +2,11 @@
 Changelog for package autorally_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.5 (2017-07-03)
+------------------
+* Rewritten state estimator that is significanlty more robust with better status info
+* State estimator can now take in wheel odometry in addition to GPS and IMU
+
 0.2.4 (2017-02-14)
 ------------------
 * New camera_trigger Arduino and .cpp code
