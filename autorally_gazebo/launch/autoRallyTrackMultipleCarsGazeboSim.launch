@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 
 <!-- autoRallyTrackGazeboSim.launch
+
 Use Gazebo to simulate a vehicle with Ackermann steering.
+
 Arguments:
     namespace (string, default: auto_rally_platform)
         Vehicle namespace.
@@ -17,11 +19,15 @@ Arguments:
     yaw (float, default: 0.0)
         Vehicle pose. x, y, and z are measured in meters. roll, pitch, and yaw
         are measured in radians.
+
 Copyright (c) 2013 Wunderkammer Laboratory
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
   http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,13 +53,9 @@ limitations under the License.
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
 
-  <include file="$(find autorally_description)/launch/autoRallyPlatform.launch">
-    <arg name="namespace" value="$(arg namespace)"/>
-  </include>
-
   <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
-  <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
-  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
+  <!--<remap from="/$(arg namespace)/camera/left" to="/left_camera" />
+  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />-->
 
   <group ns="$(arg namespace)">
     <!-- Create the world. -->
@@ -62,27 +64,19 @@ limitations under the License.
       <arg name="namespace" value="$(arg namespace)" />
     </include>
 
-    <!-- Spawn the vehicle. -->
-    <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-          args="-urdf -param robot_description -model autoRallyPlatform
-                -gazebo_namespace /$(arg namespace)/gazebo
-                -x $(arg x) -y $(arg y) -z $(arg z)
-                -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
-
-    <!-- Load the joint controllers. One of these publishes the joint states
-         to joint_states. -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
-
-    <!-- Control the steering, axle, and shock absorber joints. -->
-    <node name="autorally_controller" pkg="autorally_gazebo"
-          type="autorally_controller.py" output="screen">
-      <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
-      <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-      <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
-    </node>
-
+    <group ns="alpha">
+      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+        <arg name="namespace" value="alpha" />
+        <arg name="vehicle_name" value="alpha" />
+      </include>
+    </group>
+    <group ns="beta">
+      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+        <arg name="namespace" value="beta" />
+        <arg name="vehicle_name" value="beta" />
+        <arg name="x" value="0.6" />
+        <arg name="y" value="-9" />
+      </include>
+    </group>
   </group>
-  <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_control)/launch/joystickController.launch" />
 </launch>
