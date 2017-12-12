@@ -74,9 +74,8 @@ limitations under the License.
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
         <arg name="namespace" value="beta" />
         <arg name="vehicle_name" value="beta" />
-        <arg name="y" value="2" />
-        <arg name="x" value="2" />
-        <arg name="z" value="2" />
+        <arg name="x" value="0.6" />
+        <arg name="y" value="-9" />
       </include>
     </group>
   </group>
