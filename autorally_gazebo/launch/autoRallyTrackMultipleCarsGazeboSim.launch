@@ -64,6 +64,7 @@ limitations under the License.
       <arg name="namespace" value="$(arg namespace)" />
     </include>
 
+    <!-- uncomment this group tag to make both robots entirely namespaced -->
     <!--<group ns="alpha">-->
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
         <arg name="namespace" value="" />
