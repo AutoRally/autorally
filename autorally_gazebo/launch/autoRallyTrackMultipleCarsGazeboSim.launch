@@ -64,16 +64,14 @@ limitations under the License.
       <arg name="namespace" value="$(arg namespace)" />
     </include>
 
-    <group ns="alpha">
+    <!--<group ns="alpha">-->
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="namespace" value="alpha" />
-        <arg name="vehicle_name" value="alpha" />
+        <arg name="namespace" value="" />
       </include>
-    </group>
+    <!--</group>-->
     <group ns="beta">
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
         <arg name="namespace" value="beta" />
-        <arg name="vehicle_name" value="beta" />
         <arg name="x" value="0.6" />
         <arg name="y" value="-9" />
       </include>

@@ -51,9 +51,7 @@ limitations under the License.
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
 
-  <arg name="vehicle_name" default="1"/>
-
-  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg vehicle_name)"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg namespace)"/>
 
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
@@ -62,7 +60,7 @@ limitations under the License.
 
 
   <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-        args="-urdf -param robot_description -model autoRallyPlatform$(arg vehicle_name)
+        args="-urdf -param robot_description -model autoRallyPlatform$(arg namespace)
               -gazebo_namespace /autorally_platform/gazebo
               -x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
