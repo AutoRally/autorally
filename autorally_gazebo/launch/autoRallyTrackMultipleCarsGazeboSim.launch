@@ -11,15 +11,6 @@ Arguments:
         Gazebo world name.
     cmd_timeout (float, default: 0.5)
         Command timeout passed to the auto_rally_controller.py node.
-    x (float, default: 0.0)
-    y (float, default: 0.0)
-    z (float, default: 0.1)
-    roll (float, default: 0.0)
-    pitch (float, default: 0.0)
-    yaw (float, default: 0.0)
-        Vehicle pose. x, y, and z are measured in meters. roll, pitch, and yaw
-        are measured in radians.
-
 Copyright (c) 2013 Wunderkammer Laboratory
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,14 +36,6 @@ limitations under the License.
   <!-- parameter for other programs to use to know if we are in simulation ro real world-->
   <!--<param name="autorally_simulation" value"true"/> -->
 
-  <!-- Vehicle pose -->
-  <arg name="x" default="0"/>
-  <arg name="y" default="-8.5"/>
-  <arg name="z" default="0.3"/>
-  <arg name="roll" default="0.0"/>
-  <arg name="pitch" default="0.0"/>
-  <arg name="yaw" default="0.785498"/>
-
   <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
   <!--<remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />-->
@@ -67,12 +50,12 @@ limitations under the License.
     <!-- uncomment this group tag to make both robots entirely namespaced -->
     <!--<group ns="alpha">-->
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="namespace" value="" />
+        <arg name="vehicle_name" value="" />
       </include>
     <!--</group>-->
     <group ns="beta">
       <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="namespace" value="beta" />
+        <arg name="vehicle_name" value="beta" />
         <arg name="x" value="0.6" />
         <arg name="y" value="-9" />
       </include>
