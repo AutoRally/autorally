@@ -39,8 +39,7 @@ limitations under the License.
 
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
-  <arg name="namespace" default="autorally_platform"/>
-  <arg name="vehicle_name" default=""/>
+  <arg name="namespace" default=""/>
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
@@ -52,17 +51,18 @@ limitations under the License.
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
 
-  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg vehicle_name)"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg namespace)"/>
 
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
     <param name="publish_frequency" value="50.0"/>
+    <param name="tf_prefix" value="$(arg namespace)"/>
   </node>
 
 
   <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-        args="-urdf -param robot_description -model autoRallyPlatform$(arg vehicle_name)
-              -gazebo_namespace /autorally_platform/gazebo
+        args="-urdf -param robot_description -model $(arg namespace)
+              -gazebo_namespace /gazebo
               -x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
 
@@ -75,11 +75,16 @@ limitations under the License.
   <node name="autorally_controller" pkg="autorally_gazebo"
         type="autorally_controller.py" output="screen">
     <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
-    <param name="vehicle_name" value="$(arg vehicle_name)"/>
+    <param name="vehicle_prefix" value="$(arg namespace)"/>
     <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
     <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
   </node>
 
-  <include file="$(find autorally_core)/launch/stateEstimator.launch">
-  </include>
+  <!--<include file="$(find autorally_core)/launch/stateEstimator.launch">
+    <param name="sim" value="true"/>
+    <arg name="InvertY" value="false"/>
+    <arg name="InvertZ" value="false"/>
+    <arg name="namespace" value="/$(arg namespace)"/>
+    <arg name="FixedInitialPose" value="true"/>
+  </include>-->
 </launch>

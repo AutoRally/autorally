@@ -200,13 +200,13 @@ class AutoRallyCtrlr(object):
           self._cmd_timeout = self._DEF_CMD_TIMEOUT
 
       try:
-          self._vehicle_name = rospy.get_param("~vehicle_name")
-          if self._vehicle_name != "":
-              self._vehicle_name = "/" + self._vehicle_name
+          self._vehicle_prefix = rospy.get_param("~vehicle_prefix")
+          if self._vehicle_prefix != "":
+              self._vehicle_prefix = "/" + self._vehicle_prefix
       except:
           rospy.logwarn("The specified namespace value is invalid. "
                         "The default timeout value will be used instead.")
-          self._vehicle_name = ""
+          self._vehicle_prefix = ""
 
       # Publishing frequency
       try:
@@ -296,20 +296,20 @@ class AutoRallyCtrlr(object):
       self.wheelSpeedFront = 0.0;
 
       #don't set up callback until params are initialized
-      self.wheelSpeedsPub = rospy.Publisher('/autorally_platform' + self._vehicle_name + '/wheelSpeeds', wheelSpeeds, queue_size=1)
+      self.wheelSpeedsPub = rospy.Publisher(self._vehicle_prefix + '/wheelSpeeds', wheelSpeeds, queue_size=1)
       #self.sub = rospy.Subscriber('/autorally_platform/gazebo/link_states', ModelStates, self.callback)
 
-      self.chassisStatePub = rospy.Publisher('/autorally_platform' + self._vehicle_name + "/chassisState", chassisState, queue_size=1)
+      self.chassisStatePub = rospy.Publisher(self._vehicle_prefix + "/chassisState", chassisState, queue_size=1)
 
       self.chassisCmdSub = dict()
       for cmd, priority in self.commandPriorities:
           self.chassisCmdSub[cmd] = \
-              rospy.Subscriber('/autorally_platform' + self._vehicle_name+"/"+cmd+"/chassisCommand", chassisCommand,
+              rospy.Subscriber(self._vehicle_prefix+"/"+cmd+"/chassisCommand", chassisCommand,
                                self.chassisCmdCb, queue_size=1)
 
-      self.runstopSub = rospy.Subscriber('/autorally_platform' + self._vehicle_name + "/runstop", runstop, self.runstopCb, queue_size=5)
+      self.runstopSub = rospy.Subscriber(self._vehicle_prefix + "/runstop", runstop, self.runstopCb, queue_size=5)
 
-      self.wheelSpeedSub = rospy.Subscriber('/autorally_platform' + self._vehicle_name + '/joint_states', JointState, self.wheelSpeedsCb)
+      self.wheelSpeedSub = rospy.Subscriber(self._vehicle_prefix + '/joint_states', JointState, self.wheelSpeedsCb)
 
   def spin(self):
     """Control the vehicle."""
@@ -587,18 +587,18 @@ class AutoRallyCtrlr(object):
 
 
   def getJointStateWheelParams(self, lr_prefix, fr_prefix):
-    dia = rospy.get_param('/autorally_platform' + self._vehicle_name + '/autorally_controller/' + lr_prefix + '_' + fr_prefix + '_wheel/diameter')
+    dia = rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_' + fr_prefix + '_wheel/diameter')
     name = lr_prefix + '_' + fr_prefix + '_axle'
     return name, dia
 
   def getLinkStateFrontWheelParams(self, lr_prefix):
-    dia = rospy.get_param('/autorally_platform' + self._vehicle_name + '/autorally_controller/' + lr_prefix + '_front_wheel/diameter')
-    name = 'autorally_platform::' + rospy.get_param('/autorally_platform' + self._vehicle_name + '/autorally_controller/' + lr_prefix + '_front_wheel/steering_link_name')
+    dia = rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_front_wheel/diameter')
+    name = 'autorally_platform::' + rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_front_wheel/steering_link_name')
     return name, dia
 
   def getLinkStateRearWheelParams(self, lr_prefix):
-    dia = rospy.get_param('/autorally_platform/' + self._vehicle_name + 'autorally_controller/' + lr_prefix + '_rear_wheel/diameter')
-    name = 'autorally_platform::' + rospy.get_param('/autorally_platform' + self._vehicle_name + '/autorally_controller/' + lr_prefix + '_rear_wheel/link_name')
+    dia = rospy.get_param('/autorally_platform/' + self._vehicle_prefix + 'autorally_controller/' + lr_prefix + '_rear_wheel/diameter')
+    name = 'autorally_platform::' + rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_rear_wheel/link_name')
     return name, dia
 
   _DEF_WHEEL_DIA = 0.19    # Default wheel diameter. Unit: meter.

@@ -496,6 +496,7 @@ limitations under the License.
         </noise>
       </camera>
       <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
+        <robotNamespace>$(arg prefix)</robotNamespace>
         <alwaysOn>true</alwaysOn>
         <updateRate>60.0</updateRate>
         <cameraName>camera</cameraName>
@@ -537,17 +538,17 @@ limitations under the License.
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/autorally_platform/$(arg prefix)</robotNamespace>
+      <robotNamespace>$(arg prefix)</robotNamespace>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
     </plugin>
 
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
-      <robotNamespace>/autorally_platform</robotNamespace>
-      <serviceName>$(arg prefix)/imu/calibrate</serviceName>
+      <robotNamespace>$(arg prefix)</robotNamespace>
+      <serviceName>/imu/calibrate</serviceName>
       <updateRate>200.0</updateRate>
       <bodyName>imu_link</bodyName>
       <frameId>imu_link</frameId>
-      <topicName>$(arg prefix)/imu/imu</topicName>
+      <topicName>imu/imu</topicName>
       <rpyOffset>0 0 0</rpyOffset>
       <xyzOffset>0 0 0</xyzOffset>
       <gaussianNoise>0.00000001</gaussianNoise>
@@ -563,12 +564,12 @@ limitations under the License.
     </plugin>
 
     <plugin name="gps" filename="libhector_gazebo_ros_gps.so">
-      <robotNamespace>/autorally_platform</robotNamespace>
+      <robotNamespace>$(arg prefix)</robotNamespace>
       <updateRate>20.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
-      <topicName>$(arg prefix)/gpsRoverStatus</topicName>
-      <velocityTopicName>$(arg prefix)/fix_velocity</velocityTopicName>
+      <topicName>gpsRoverStatus</topicName>
+      <velocityTopicName>fix_velocity</velocityTopicName>
       <referenceLatitude>33.774497</referenceLatitude>
       <referenceLongitude>-84.405001</referenceLongitude>
       <referenceAltitude>309.0</referenceAltitude>

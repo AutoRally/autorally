@@ -29,7 +29,7 @@ limitations under the License.
 <launch>
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
-  <arg name="namespace" default="autorally_platform"/>
+  <arg name="namespace" default="autorally"/>
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
@@ -40,25 +40,23 @@ limitations under the License.
   <!--<remap from="/$(arg namespace)/camera/left" to="/left_camera" />
   <remap from="/$(arg namespace)/camera/right" to="/right_camera" />-->
 
-  <group ns="$(arg namespace)">
-    <!-- Create the world. -->
-    <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
-      <arg name="world_name" value="$(arg world_name)"/>
-      <arg name="namespace" value="$(arg namespace)" />
-    </include>
+  <!-- Create the world. -->
+  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="namespace" value="$(arg namespace)"/>
+  </include>
 
-    <!-- uncomment this group tag to make both robots entirely namespaced -->
-    <!--<group ns="alpha">-->
-      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="vehicle_name" value="" />
-      </include>
-    <!--</group>-->
-    <group ns="beta">
-      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="vehicle_name" value="beta" />
-        <arg name="x" value="0.6" />
-        <arg name="y" value="-9" />
-      </include>
-    </group>
+  <!-- uncomment this group tag to make both robots entirely namespaced -->
+  <!--<group ns="alpha">-->
+  <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+    <arg name="namespace" value="$(arg namespace)" />
+  </include>
+  <!--</group>-->
+  <group ns="beta">
+    <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+      <arg name="namespace" value="$(arg namespace)/beta" />
+      <arg name="x" value="0.6" />
+      <arg name="y" value="-9" />
+    </include>
   </group>
 </launch>
