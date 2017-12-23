@@ -56,7 +56,6 @@ limitations under the License.
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
     <param name="publish_frequency" value="50.0"/>
-    <param name="tf_prefix" value="$(arg namespace)"/>
   </node>
 
 
@@ -80,11 +79,11 @@ limitations under the License.
     <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
   </node>
 
-  <!--<include file="$(find autorally_core)/launch/stateEstimator.launch">
+  <include file="$(find autorally_core)/launch/stateEstimator.launch">
     <param name="sim" value="true"/>
     <arg name="InvertY" value="false"/>
     <arg name="InvertZ" value="false"/>
     <arg name="namespace" value="/$(arg namespace)"/>
     <arg name="FixedInitialPose" value="true"/>
-  </include>-->
+  </include>
 </launch>
