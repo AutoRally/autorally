@@ -544,7 +544,7 @@ limitations under the License.
 
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
       <robotNamespace>$(arg prefix)</robotNamespace>
-      <serviceName>/imu/calibrate</serviceName>
+      <serviceName>$(arg prefix)/imu/calibrate</serviceName>
       <updateRate>200.0</updateRate>
       <bodyName>imu_link</bodyName>
       <frameId>imu_link</frameId>
