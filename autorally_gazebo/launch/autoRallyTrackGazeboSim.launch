@@ -59,7 +59,6 @@ limitations under the License.
     <!-- Create the world. -->
     <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
       <arg name="world_name" value="$(arg world_name)"/>
-      <arg name="namespace" value="$(arg namespace)" />
     </include>
 
     <!-- Spawn the vehicle. -->
