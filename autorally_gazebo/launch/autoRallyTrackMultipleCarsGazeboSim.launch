@@ -45,11 +45,14 @@ limitations under the License.
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
-  <!-- uncomment this group tag to make both robots entirely namespaced -->
+
   <group ns="$(arg namespace)">
-    <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-      <arg name="namespace" value="$(arg namespace)" />
-    </include>
+    <!-- uncomment this group tag and add "/alpha" to arg namepsace to make both robots entirely namespaced -->
+    <!--<group ns="alpha">-->
+      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+        <arg name="namespace" value="$(arg namespace)" />
+      </include>
+    <!--</group>-->
   </group>
   <group ns="$(arg namespace)/beta">
     <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
