@@ -402,6 +402,27 @@ limitations under the License.
     <child link="chassis"/>
   </joint>
 
+
+
+  <link name="gps_link">
+    <collision>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <joint name="gps_joint" type="fixed">
+    <origin xyz="-0.36 0 0.1359" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="gps_link"/>
+  </joint>
+
   <link name="imu_link">
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -409,7 +430,6 @@ limitations under the License.
         <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
-
     <inertial>
       <mass value="1e-5" />
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -418,14 +438,14 @@ limitations under the License.
   </link>
 
   <joint name="imu_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="-0.039 0 0.0859" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="imu_link"/>
   </joint>
 
   <joint name="camera_joint" type="fixed">
     <axis xyz="0 0 -1" />
-    <origin xyz="0.12 0 0.05" rpy="0 0 0"/>
+    <origin xyz="0.127 0 0.2159" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="camera_link"/>
   </joint>
@@ -438,15 +458,13 @@ limitations under the License.
     <box size="0.02 0.02 0.02"/>
       </geometry>
     </collision>
-<!--
-    <visual>
+    <!--<visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
     <box size="0.02 0.02 0.02"/>
       </geometry>
       <material name="red"/>
-    </visual>
--->
+    </visual>-->
     <inertial>
       <mass value="1e-5" />
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -479,7 +497,7 @@ limitations under the License.
       </camera>
       <camera name="right">
         <pose>0.02 -0.07 0 0 0 0</pose>
-        <horizontal_fov>3.0</horizontal_fov>
+        <horizontal_fov>1.3962634</horizontal_fov>
         <image>
           <width>1280</width>
           <height>1024</height>
@@ -566,8 +584,8 @@ limitations under the License.
     <plugin name="gps" filename="libhector_gazebo_ros_gps.so">
       <robotNamespace>$(arg prefix)</robotNamespace>
       <updateRate>20.0</updateRate>
-      <bodyName>base_link</bodyName>
-      <frameId>base_link</frameId>
+      <bodyName>gps_link</bodyName>
+      <frameId>gps_link</frameId>
       <topicName>gpsRoverStatus</topicName>
       <velocityTopicName>fix_velocity</velocityTopicName>
       <referenceLatitude>33.774497</referenceLatitude>
@@ -589,5 +607,4 @@ limitations under the License.
     </plugin>-->
 
   </gazebo>
-
 </robot>
