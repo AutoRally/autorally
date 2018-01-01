@@ -29,7 +29,7 @@ limitations under the License.
 <launch>
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
-  <arg name="namespace" default="autorally"/>
+  <arg name="namespace" default=""/>
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
@@ -39,14 +39,14 @@ limitations under the License.
   </include>
 
 
-  <group ns="$(arg namespace)/alpha">
+  <group ns="$(arg namespace)alpha">
     <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-      <arg name="namespace" value="$(arg namespace)/alpha" />
+      <arg name="namespace" value="$(arg namespace)alpha" />
     </include>
   </group>
-  <group ns="$(arg namespace)/beta">
+  <group ns="$(arg namespace)beta">
     <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-      <arg name="namespace" value="$(arg namespace)/beta" />
+      <arg name="namespace" value="$(arg namespace)beta" />
       <arg name="x" value="0.6" />
       <arg name="y" value="-9" />
     </include>

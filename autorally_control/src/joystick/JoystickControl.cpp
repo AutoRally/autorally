@@ -44,15 +44,13 @@ JoystickControl::JoystickControl():
 {
   m_joySub = nh_.subscribe("joy", 1, &JoystickControl::joyCallback, this);
 
-  std::string prefix = "";
-  nh_.getParam("joystickController/prefix", prefix);
   runstopPub_ = nh_.advertise
                  <autorally_msgs::runstop>
                  ("runstop", 1);
 
   commandPub_ = nh_.advertise
                  <autorally_msgs::chassisCommand>
-                 (prefix + "joystick/chassisCommand", 1);
+                 ("joystick/chassisCommand", 1);
 
   runstop_.sender = "joystick";
   runstop_.motionEnabled = false;
