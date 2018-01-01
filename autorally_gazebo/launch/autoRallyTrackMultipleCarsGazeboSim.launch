@@ -33,26 +33,16 @@ limitations under the License.
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
-  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
-  <!--<param name="autorally_simulation" value"true"/> -->
-
-  <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
-  <!--<remap from="/$(arg namespace)/camera/left" to="/left_camera" />
-  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />-->
-
   <!-- Create the world. -->
   <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
 
-  <group ns="$(arg namespace)">
-    <!-- uncomment this group tag and add "/alpha" to arg namepsace to make both robots entirely namespaced -->
-    <!--<group ns="alpha">-->
-      <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
-        <arg name="namespace" value="$(arg namespace)" />
-      </include>
-    <!--</group>-->
+  <group ns="$(arg namespace)/alpha">
+    <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">
+      <arg name="namespace" value="$(arg namespace)/alpha" />
+    </include>
   </group>
   <group ns="$(arg namespace)/beta">
     <include file="$(find autorally_gazebo)/launch/singlePlatform.launch">

@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 
-
 <!-- singlePlatform.launch
 
 Use Gazebo to simulate a vehicle with Ackermann steering.
@@ -31,9 +30,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
-
-
 
 <launch>
 
