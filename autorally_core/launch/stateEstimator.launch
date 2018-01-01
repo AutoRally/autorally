@@ -6,11 +6,16 @@
 Use Gazebo to simulate a vehicle with Ackermann steering.
 
 Arguments:
-    sim: parameter used to run state estimator in simulation.
-    InvertZ: if the state estimator should invert the Z axis of the imu
-    InvertY: if the state estimator should in the Y axis of the imu
-    namespace: the namespace of the topic published by gazebo
-    FixedInitialPose: if a fixed initial pose should be used
+    sim (boolean, default: false)
+        parameter used to run state estimator in simulation.
+    InvertZ (boolean, default: true)
+        if the state estimator should invert the Z axis of the imu
+    InvertY (boolean, default: true):
+        if the state estimator should in the Y axis of the imu
+    namespace (string, default: "")
+        the namespace of the topic published by gazebo
+    FixedInitialPose (boolean, default: false)
+        if a fixed initial pose should be used
 -->
 
 <launch>

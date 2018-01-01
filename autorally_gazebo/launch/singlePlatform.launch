@@ -5,7 +5,7 @@
 Use Gazebo to simulate a vehicle with Ackermann steering.
 
 Arguments:
-    namespace (string, default: auto_rally_platform)
+    namespace (string, default: "")
         Vehicle namespace.
     x (float, default: 0.0)
     y (float, default: 0.0)
