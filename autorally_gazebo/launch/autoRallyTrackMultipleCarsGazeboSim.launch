@@ -5,9 +5,9 @@
 Use Gazebo to simulate a vehicle with Ackermann steering.
 
 Arguments:
-    namespace (string, default: auto_rally_platform)
+    namespace (string, default: "")
         Vehicle namespace.
-    world_name (string, default: worlds/empty.world)
+    world_name (string, default: model://urdf/populated_AR.world.world)
         Gazebo world name.
     cmd_timeout (float, default: 0.5)
         Command timeout passed to the auto_rally_controller.py node.
