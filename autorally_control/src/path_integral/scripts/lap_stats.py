@@ -161,7 +161,9 @@ if __name__ == "__main__":
 	elif ("marietta" in param_dict["map_path"]):
 		line = marietta_line
 	elif ("ccrf" in param_dict["map_path"]):
-		line = marietta_line
+		line = ccrf_line
+	elif ("SDF_Track" in param_dict["map_path"]):
+		line = ccrf_line
 	else:
 		rospy.signal_shutdown("No start line for the given map.")
 	current_lap = Lap(line, param_dict, prefix)	
