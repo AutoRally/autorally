@@ -158,4 +158,6 @@ More detailed explanations of the controllers and state estimator can be found o
 
 [Controlling the AutoRally platform](https://github.com/AutoRally/autorally/wiki/Controlling%20the%20AutoRally%20Platform) is a tutorial for how your own controller can control the AutoRally platform (in simulation or on hardware).
 
+[Controlling Multiple AutoRally Platforms In Simulation](https://github.com/AutoRally/autorally/wiki/Running-Multiple-Vehicles-In-Simulation-(Gazebo)) is a tutorial on how to launch and control 2 or more platforms in simulation.
+
 If you are configuring a physical AutoRally platform, the next step is to configure the compute box, all of the peripherals, and the launch system. Those instructions are found in the [Platform Configuration Instructions](https://github.com/AutoRally/autorally/wiki/Platform%20Configuration%20Instructions).
