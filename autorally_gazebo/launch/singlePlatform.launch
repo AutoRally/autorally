@@ -76,10 +76,9 @@ limitations under the License.
   </node>
 
   <include file="$(find autorally_core)/launch/stateEstimator.launch">
-    <param name="sim" value="true"/>
+    <arg name="sim" value="true"/>
     <arg name="InvertY" value="false"/>
     <arg name="InvertZ" value="false"/>
-    <arg name="namespace" value="/$(arg namespace)"/>
     <arg name="FixedInitialPose" value="true"/>
   </include>
 </launch>

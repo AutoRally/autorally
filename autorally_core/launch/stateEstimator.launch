@@ -12,8 +12,6 @@ Arguments:
         if the state estimator should invert the Z axis of the imu
     InvertY (boolean, default: true):
         if the state estimator should in the Y axis of the imu
-    namespace (string, default: "")
-        the namespace of the topic published by gazebo
     FixedInitialPose (boolean, default: false)
         if a fixed initial pose should be used
 -->
@@ -25,7 +23,6 @@ Arguments:
   <include file="$(find autorally_core)/launch/hardware.machine" />
   <include file="$(find autorally_core)/launch/wheel_odometry.launch" />
   <arg name="sim" default="false"/>
-  <arg name="namespace" default=""/>
   <arg name="InvertY" default="true"/>
   <arg name="InvertZ" default="true"/>
   <arg name="FixedInitialPose" default="false"/>
@@ -34,14 +31,14 @@ Arguments:
 
 
   <node name="state_estimator" pkg="autorally_core" type="StateEstimator" output="screen" machine="autorally-master">
-      <remap from="$(arg namespace)/state_estimator/gps" to="$(arg namespace)/gpsRoverStatus"/>
-      <remap from="$(arg namespace)/state_estimator/imu" to="$(arg namespace)/imu/imu"/>
-      <remap from="$(arg namespace)/state_estimator/pose" to="$(arg namespace)/pose_estimate"/>
-      <remap from="$(arg namespace)/state_estimator/filter" to="$(arg namespace)/imu/filter"/>
-      <remap from="$(arg namespace)/state_estimator/bias_acc" to="$(arg namespace)/bias_acc"/>
-      <remap from="$(arg namespace)/state_estimator/bias_gyro" to="$(arg namespace)/bias_gyro"/>
-      <remap from="$(arg namespace)/state_estimator/wheel_odom" to="$(arg namespace)/wheel_odom"/>
-      <remap from="$(arg namespace)/state_estimator/status" to="$(arg namespace)/pose_estimate/status"/>
+      <remap from="state_estimator/gps" to="gpsRoverStatus"/>
+      <remap from="state_estimator/imu" to="imu/imu"/>
+      <remap from="state_estimator/pose" to="pose_estimate"/>
+      <remap from="state_estimator/filter" to="imu/filter"/>
+      <remap from="state_estimator/bias_acc" to="bias_acc"/>
+      <remap from="state_estimator/bias_gyro" to="bias_gyro"/>
+      <remap from="state_estimator/wheel_odom" to="wheel_odom"/>
+      <remap from="state_estimator/status" to="pose_estimate/status"/>
 
       <param name="InitialRotationNoise" value="0.25"/>
       <param name="InitialTranslationNoise" value="0.1"/>
