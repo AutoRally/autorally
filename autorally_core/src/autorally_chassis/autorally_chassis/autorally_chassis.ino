@@ -10,8 +10,9 @@
             throttle, and front brake using the Arduino Servo library
 
    @note install tc_lib found here: https://github.com/antodom/tc_lib to compile this program
+   @note make sure to install the Due board into the arduino IDE otherwise the code will not compile
  ***********************************************/
-
+ 
 #include <Servo.h>
 #include "tc_lib.h"
 
@@ -47,7 +48,7 @@ volatile unsigned long leftFrontUpdatetime;  ///< Last update time for wheel0
 
 int pulsesPerRevolution = 6;  ///< Number of magnets on each wheel
 float divisor = 0.0; ///< Divisor calculated to turn absolute pulse   into rps
-float rpsPublishPeriod = 13.0; ///< Period (in ms) for publishing arduinoData messages, 70hz
+float rpsPublishPeriod = 10.0; ///< Period (in ms) for publishing arduinoData messages, 100hz
 time_t rpsPublishTime; ///< Time that the last message was published
 
 //pinout information, also avaialble in the Electronics Box Diagram
