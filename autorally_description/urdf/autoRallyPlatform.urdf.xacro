@@ -109,6 +109,9 @@ limitations under the License.
   <xacro:property name="servo_stall_torque" value="3.432620346181713"/>
   <xacro:property name="servo_no_load_speed" value="8.05536578"/>
 
+  <!-- arg to specify namespace -->
+  <xacro:arg name="prefix" default=""/>
+
   <material name="chassis_mat">
     <color rgba="0.5 0.5 0.5 1"/>
   </material>
@@ -399,7 +402,7 @@ limitations under the License.
     <child link="chassis"/>
   </joint>
 
-  
+
 
   <link name="gps_link">
     <collision>
@@ -511,6 +514,7 @@ limitations under the License.
         </noise>
       </camera>
       <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
+        <robotNamespace>$(arg prefix)</robotNamespace>
         <alwaysOn>true</alwaysOn>
         <updateRate>60.0</updateRate>
         <cameraName>camera</cameraName>
@@ -552,17 +556,17 @@ limitations under the License.
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/autorally_platform</robotNamespace>
+      <robotNamespace>$(arg prefix)</robotNamespace>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
     </plugin>
 
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
-      <robotNamespace>/</robotNamespace>
-      <serviceName>/imu/calibrate</serviceName>
+      <robotNamespace>$(arg prefix)</robotNamespace>
+      <serviceName>$(arg prefix)/imu/calibrate</serviceName>
       <updateRate>200.0</updateRate>
       <bodyName>imu_link</bodyName>
       <frameId>imu_link</frameId>
-      <topicName>/imu/imu</topicName>
+      <topicName>imu/imu</topicName>
       <rpyOffset>0 0 0</rpyOffset>
       <xyzOffset>0 0 0</xyzOffset>
       <gaussianNoise>0.00000001</gaussianNoise>
@@ -578,10 +582,11 @@ limitations under the License.
     </plugin>
 
     <plugin name="gps" filename="libhector_gazebo_ros_gps.so">
+      <robotNamespace>$(arg prefix)</robotNamespace>
       <updateRate>20.0</updateRate>
       <bodyName>gps_link</bodyName>
       <frameId>gps_link</frameId>
-      <topicName>/gpsRoverStatus</topicName>
+      <topicName>gpsRoverStatus</topicName>
       <velocityTopicName>fix_velocity</velocityTopicName>
       <referenceLatitude>33.774497</referenceLatitude>
       <referenceLongitude>-84.405001</referenceLongitude>
@@ -591,7 +596,7 @@ limitations under the License.
       <velocityDrift>0 0 0</velocityDrift>
       <velocityGaussianNoise>0.005 0.005 0.05</velocityGaussianNoise>
     </plugin>
-    <!-- <plugin name="tire_friction" filename="libTireFrictionPlugin.so">
+    <!--<plugin name="tire_friction" filename="libTireFrictionPlugin.so">
       <link_name>left_rear_wheel</link_name>
       <collision_name>collision</collision_name>
       <friction_static>1.1</friction_static>
@@ -599,7 +604,7 @@ limitations under the License.
       <slip_static>0.10</slip_static>
       <slip_dynamic>0.20</slip_dynamic>
       <speed_static>0.50</speed_static>
-    </plugin> -->
+    </plugin>-->
 
   </gazebo>
 </robot>

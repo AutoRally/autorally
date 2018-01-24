@@ -1,19 +1,45 @@
+<?xml version="1.0"?>
+
+
+<!-- singlePlatform.launch
+
+Use Gazebo to simulate a vehicle with Ackermann steering.
+
+Arguments:
+    sim (boolean, default: false)
+        parameter used to run state estimator in simulation.
+    InvertZ (boolean, default: true)
+        if the state estimator should invert the Z axis of the imu
+    InvertY (boolean, default: true):
+        if the state estimator should in the Y axis of the imu
+    FixedInitialPose (boolean, default: false)
+        if a fixed initial pose should be used
+-->
+
 <launch>
+
+
 
   <include file="$(find autorally_core)/launch/hardware.machine" />
   <include file="$(find autorally_core)/launch/wheel_odometry.launch" />
+  <arg name="sim" default="false"/>
+  <arg name="InvertY" default="true"/>
+  <arg name="InvertZ" default="true"/>
+  <arg name="FixedInitialPose" default="false"/>
+
+  <param name="/gps_imu/FixedInitialPose" value="$(arg sim)"/>
 
 
   <node name="state_estimator" pkg="autorally_core" type="StateEstimator" output="screen" machine="autorally-master">
-      <remap from="/state_estimator/gps" to="/gpsRoverStatus"/>
-      <remap from="/state_estimator/imu" to="/imu/imu"/>
-      <remap from="/state_estimator/pose" to="/pose_estimate"/>
-      <remap from="/state_estimator/filter" to="/imu/filter"/>
-      <remap from="/state_estimator/bias_acc" to="/bias_acc"/>
-      <remap from="/state_estimator/bias_gyro" to="/bias_gyro"/>
-      <remap from="/state_estimator/wheel_odom" to="/wheel_odom"/>
-      <remap from="/state_estimator/status" to="/pose_estimate/status"/>
-      
+      <remap from="state_estimator/gps" to="gpsRoverStatus"/>
+      <remap from="state_estimator/imu" to="imu/imu"/>
+      <remap from="state_estimator/pose" to="pose_estimate"/>
+      <remap from="state_estimator/filter" to="imu/filter"/>
+      <remap from="state_estimator/bias_acc" to="bias_acc"/>
+      <remap from="state_estimator/bias_gyro" to="bias_gyro"/>
+      <remap from="state_estimator/wheel_odom" to="wheel_odom"/>
+      <remap from="state_estimator/status" to="pose_estimate/status"/>
+
       <param name="InitialRotationNoise" value="0.25"/>
       <param name="InitialTranslationNoise" value="0.1"/>
       <param name="InitialBiasNoiseAcc" value="2e-1"/>
@@ -32,17 +58,17 @@
       <param name="CarXAngle" value="3.14159265359"/>
       <param name="CarYAngle" value="0"/>
       <param name="CarZAngle" value="0"/>
-      
+
       <!-- To use in sumulation set "rosparam set /gps_imu/FixedInitialPose true" -->
       <!-- and <param name="InvertY" value="false"/> -->
       <!-- and <param name="InvertZ" value="false"/> -->
-      <param name="FixedInitialPose" value="false"/>
+      <param name="FixedInitialPose" value="$(arg FixedInitialPose)"/>
       <param name="initialRoll" value="0"/>
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>
       <param name="InvertX" value="false"/>
-      <param name="InvertY" value="true"/>
-      <param name="InvertZ" value="true"/>
+      <param name="InvertY" value="$(arg InvertY)"/>
+      <param name="InvertZ" value="$(arg InvertZ)"/>
       <param name="GPSX" value="-0.37"/>
       <param name="GPSY" value="0"/>
       <param name="GPSZ" value="-0.06"/>
