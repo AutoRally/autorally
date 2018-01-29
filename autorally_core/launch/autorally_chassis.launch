@@ -3,7 +3,7 @@
 
   <node pkg="nodelet" type="nodelet" name="AutoRallyChassis" args="load autorally_core/AutoRallyChassis autorally_core_manager" machine="autorally-master" output="screen">
 
-    <param name="commandRate" value="300" />
+    <param name="commandRate" value="100" />
     <param name="commandMaxAge" value="0.2" />
     <param name="runstopMaxAge" value="2" />
     <param name="wheelDiameter" value="0.190" />

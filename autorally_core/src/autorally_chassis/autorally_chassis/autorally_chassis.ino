@@ -12,9 +12,11 @@
    @note install tc_lib found here: https://github.com/antodom/tc_lib to compile this program
    @note make sure to install the Due board into the arduino IDE otherwise the code will not compile
  ***********************************************/
- 
+
 #include <Servo.h>
 #include "tc_lib.h"
+
+static_assert(REFRESH_INTERVAL == 3300, "Please set the REFRESH_INTERVAL marco in Servo.h to be 3300");
 
 //input declarations for the RC inputs
 capture_tc6_declaration();
