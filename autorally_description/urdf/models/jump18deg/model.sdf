@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <model name="jump18deg">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://urdf/jump18deg.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>100</mu>
+              <mu2>50</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>model://urdf/jump18deg.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://urdf/gazebo.material</uri>
+            <name>Gazebo/White</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

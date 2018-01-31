@@ -16,7 +16,7 @@
 -->
 <package>
   <name>autorally_core</name>
-  <version>0.2.4</version>
+  <version>0.2.5</version>
   <description>All core software (code specific to hardware on the robot) created for the autorally project resides here</description>
 
   <maintainer email="bgoldfain3@gatech.edu">Brian Goldfain</maintainer>

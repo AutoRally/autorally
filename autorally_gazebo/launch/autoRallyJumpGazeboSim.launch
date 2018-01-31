@@ -40,7 +40,7 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
 
 <launch>
   <arg name="namespace" default="autorally_platform"/>
-  <arg name="world_name" default="worlds/empty_sky.world"/>
+  <arg name="world_name" default="model://urdf/jump_AR.world"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- parameter for other programs to use to know if we are in simulation ro real world-->
@@ -57,7 +57,7 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
   <include file="$(find autorally_description)/launch/autoRallyPlatform.launch">
     <arg name="namespace" value="$(arg namespace)"/>
   </include>
-  
+
   <!-- Remap to same topics as the actual robot -->
   <remap from="/$(arg namespace)/imu" to="/imu/imu" />
   <remap from="/$(arg namespace)/gpsRoverStatus" to="/gpsRoverStatus" />
@@ -68,9 +68,8 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
     <!-- Create the world. -->
     <include file="$(find autorally_gazebo)/launch/autoRallyJumpWorld.launch">
       <arg name="world_name" value="$(arg world_name)"/>
-      <arg name="namespace" value="$(arg namespace)" />
     </include>
-        
+
     <!-- Spawn the vehicle. -->
     <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
           args="-urdf -param robot_description -model autoRallyPlatform
@@ -81,7 +80,7 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
     <!-- Load the joint controllers. One of these publishes the joint states
          to joint_states. -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/> 
+          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
 
     <!-- Control the steering, axle, and shock absorber joints. -->
     <node name="autorally_controller" pkg="autorally_gazebo"
@@ -92,7 +91,7 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
     </node>
 
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find autorally_gazebo)/custom_rosconsole.conf" />
-    
+
     <node name="wheelSpeeds" pkg="autorally_gazebo" type="wheelSpeedsGazebo.py" output="screen" />
   </group>
 
