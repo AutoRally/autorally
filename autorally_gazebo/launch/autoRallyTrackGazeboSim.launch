@@ -32,7 +32,7 @@ limitations under the License.
 <launch>
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
-  <arg name="namespace" default="autorally_platform"/>
+  <arg name="namespace" default=""/>
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
@@ -47,41 +47,44 @@ limitations under the License.
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
 
-  <include file="$(find autorally_description)/launch/autoRallyPlatform.launch">
-    <arg name="namespace" value="$(arg namespace)"/>
+  <!-- Create the world. -->
+  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
-  <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
-  <remap from="/$(arg namespace)/camera/left" to="/left_camera" />
-  <remap from="/$(arg namespace)/camera/right" to="/right_camera" />
+  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/"/>
 
-  <group ns="$(arg namespace)">
-    <!-- Create the world. -->
-    <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
-      <arg name="world_name" value="$(arg world_name)"/>
-    </include>
+  <node name="autoRally_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher">
+    <param name="publish_frequency" value="50.0"/>
+  </node>
 
-    <!-- Spawn the vehicle. -->
-    <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-          args="-urdf -param robot_description -model autoRallyPlatform
-                -gazebo_namespace /$(arg namespace)/gazebo
-                -x $(arg x) -y $(arg y) -z $(arg z)
-                -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
 
-    <!-- Load the joint controllers. One of these publishes the joint states
-         to joint_states. -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner"
+  <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -param robot_description -model $(arg namespace)
+              -gazebo_namespace /gazebo
+              -x $(arg x) -y $(arg y) -z $(arg z)
+              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+
+  <!-- load controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"
           args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
 
-    <!-- Control the steering, axle, and shock absorber joints. -->
-    <node name="autorally_controller" pkg="autorally_gazebo"
-          type="autorally_controller.py" output="screen">
-      <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
-      <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-      <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
-    </node>
+  <!-- Control the steering, axle, and shock absorber joints. -->
+  <node name="autorally_controller" pkg="autorally_gazebo"
+        type="autorally_controller.py" output="screen">
+    <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
+    <param name="vehicle_prefix" value="$(arg namespace)"/>
+    <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
+    <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
+  </node>
 
-  </group>
+  <include file="$(find autorally_core)/launch/stateEstimator.launch">
+    <arg name="sim" value="true"/>
+    <arg name="InvertY" value="false"/>
+    <arg name="InvertZ" value="false"/>
+    <arg name="FixedInitialPose" value="true"/>
+  </include>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_control)/launch/joystickController.launch" />
+  <!--<include file="$(find autorally_control)/launch/joystickController.launch" />-->
 </launch>
