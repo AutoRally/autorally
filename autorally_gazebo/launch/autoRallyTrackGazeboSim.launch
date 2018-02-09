@@ -52,6 +52,10 @@ limitations under the License.
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
+  <!-- Remap to same topics as the actual robot (this doesn't seem to work in Kinetic) -->
+  <remap from="camera/left" to="left_camera"/>
+  <remap from="camera/right" to="right_camera"/>
+
   <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/"/>
 
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
