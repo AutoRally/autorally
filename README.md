@@ -128,10 +128,6 @@ At the end of this section the robot will be driving autonomously in simulation 
 
 Position the robot in the same spot as when the simulation starts and make sure runstop motion should is enabled (set to **true**).
 
-#### State estimator:
-
-The state estimator will be started by default but it has not converged.
-
 #### Start waypoint follower:
 
     roslaunch autorally_control waypointFollower.launch
