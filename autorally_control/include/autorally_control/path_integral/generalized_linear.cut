@@ -95,7 +95,7 @@ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::loadParams(std:
   Eigen::Matrix<float, DYNAMICS_DIM, NUM_BFS, Eigen::RowMajor> theta;
   cnpy::npz_t param_dict = cnpy::npz_load(model_path);
   cnpy::NpyArray theta_raw = param_dict["W"];
-  double* theta_ptr = reinterpret_cast<double*>(theta_raw.data);
+  double* theta_ptr = theta_raw.data<double>();
   for (i = 0; i < DYNAMICS_DIM; i++){
     for (j = 0; j < NUM_BFS; j++){
       theta(i,j) = (float)theta_ptr[i*NUM_BFS + j];
