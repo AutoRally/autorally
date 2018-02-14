@@ -76,8 +76,8 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::loadParams(std:
     weight_name = "dynamics_W" + std::to_string(i);
     cnpy::NpyArray weight_i_raw = param_dict[weight_name];
     cnpy::NpyArray bias_i_raw = param_dict[bias_name];
-    double* weight_i = reinterpret_cast<double*>(weight_i_raw.data);
-    double* bias_i = reinterpret_cast<double*>(bias_i_raw.data);
+    double* weight_i = weight_i_raw.data<double>();
+    double* bias_i = bias_i_raw.data<double>();
     //Copy the data into eigen arrays.
     Eigen::MatrixXf weight_i_mat(net_structure_[i], net_structure_[i-1]);
     Eigen::MatrixXf bias_i_vec(net_structure_[i], 1);

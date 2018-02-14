@@ -9,7 +9,7 @@ Subscribed Topics:
     Actuator command to control all actuators, valid values [-1, 1]
   runstop (autorally_msgs/runstop)
     Whether the vehicle can move or not
-        
+
 Published Topics:
   <left steering controller name>/command (std_msgs/Float64)
     Command for the left steering controller.
@@ -199,6 +199,15 @@ class AutoRallyCtrlr(object):
                         "The default timeout value will be used instead.")
           self._cmd_timeout = self._DEF_CMD_TIMEOUT
 
+      try:
+          self._vehicle_prefix = rospy.get_param("~vehicle_prefix")
+          if self._vehicle_prefix != "":
+              self._vehicle_prefix = "/" + self._vehicle_prefix
+      except:
+          rospy.logwarn("The specified namespace value is invalid. "
+                        "The default timeout value will be used instead.")
+          self._vehicle_prefix = ""
+
       # Publishing frequency
       try:
           pub_freq = float(rospy.get_param("~publishing_frequency",
@@ -213,8 +222,8 @@ class AutoRallyCtrlr(object):
 
       # _last_cmd_time is the time at which the most recent Ackermann
       # driving command was received.
-      self._last_cmd_time = rospy.get_time()        
-      
+      self._last_cmd_time = rospy.get_time()
+
       self._last_steer_ang = 0.0  # Last steering angle
       self._theta_left = 0.0      # Left steering joint angle
       self._theta_right = 0.0     # Right steering joint angle
@@ -254,11 +263,11 @@ class AutoRallyCtrlr(object):
       self.runstops = dict()
       self.runstopLock = threading.Lock()
 
-      self.front_axle_max_effort = 2.5 
+      self.front_axle_max_effort = 2.5
       self.front_axle_brake_effort = 2.5
       self.rear_axle_max_effort = 8
       self.rear_axle_brake_effort = 4
-      
+
       #self.rear_axle_reverse_percent = 0.25 # percent of max_effort applied when reversing
       #self.rear_axle_reverse_effort = self.rear_axle_max_effort*self.rear_axle_reverse_percent
 
@@ -283,24 +292,24 @@ class AutoRallyCtrlr(object):
       self.right_front_name, self.right_front_dia = self.getJointStateWheelParams('right', 'front')
       self.left_rear_name, self.left_rear_dia = self.getJointStateWheelParams('left', 'rear')
       self.right_rear_name, self.right_rear_dia = self.getJointStateWheelParams('right', 'rear')
-    
+
       self.wheelSpeedFront = 0.0;
 
       #don't set up callback until params are initialized
-      self.wheelSpeedsPub = rospy.Publisher('/wheelSpeeds', wheelSpeeds, queue_size=1)
+      self.wheelSpeedsPub = rospy.Publisher(self._vehicle_prefix + '/wheelSpeeds', wheelSpeeds, queue_size=1)
       #self.sub = rospy.Subscriber('/autorally_platform/gazebo/link_states', ModelStates, self.callback)
-      
-      self.chassisStatePub = rospy.Publisher("/chassisState", chassisState, queue_size=1)
 
-      self.chassisCmdSub = dict()             
+      self.chassisStatePub = rospy.Publisher(self._vehicle_prefix + "/chassisState", chassisState, queue_size=1)
+
+      self.chassisCmdSub = dict()
       for cmd, priority in self.commandPriorities:
           self.chassisCmdSub[cmd] = \
-              rospy.Subscriber("/"+cmd+"/chassisCommand", chassisCommand,
+              rospy.Subscriber(self._vehicle_prefix+"/"+cmd+"/chassisCommand", chassisCommand,
                                self.chassisCmdCb, queue_size=1)
 
-      self.runstopSub = rospy.Subscriber("/runstop", runstop, self.runstopCb, queue_size=5)
+      self.runstopSub = rospy.Subscriber(self._vehicle_prefix + "/runstop", runstop, self.runstopCb, queue_size=5)
 
-      self.wheelSpeedSub = rospy.Subscriber('/autorally_platform/joint_states', JointState, self.wheelSpeedsCb)
+      self.wheelSpeedSub = rospy.Subscriber(self._vehicle_prefix + '/joint_states', JointState, self.wheelSpeedsCb)
 
   def spin(self):
     """Control the vehicle."""
@@ -332,7 +341,7 @@ class AutoRallyCtrlr(object):
           steer_ang_vel = 0.0
           foundSteering = False
           accel = 0.0
-          
+
           if not chassisSt.runstopMotionEnabled:
             chassisSt.throttle = 0.0;
             chassisSt.throttleCommander = 'runstop';
@@ -362,19 +371,19 @@ class AutoRallyCtrlr(object):
                   speed = self.rear_axle_max_effort*self.chassisCmds[cmd].throttle
                 else:
                   speed = self.rear_axle_brake_effort*self.chassisCmds[cmd].throttle
-                
+
                 accel = 0.0
                 chassisSt.throttle = self.chassisCmds[cmd].throttle
                 chassisSt.throttleCommander = self.chassisCmds[cmd].sender
                 foundThrottle = True
 
-              
+
               if self.chassisCmds[cmd].frontBrake >= 0.0 and \
                  self.chassisCmds[cmd].frontBrake <= 1.0 and \
                  (rospy.Time.now()-self.chassisCmds[cmd].header.stamp) < \
                     rospy.Duration.from_sec(0.2) and\
                  not foundFrontBrake:
-                
+
                 #the brake acts to slow any movement
                 frontBrake = numpy.sign(self.wheelSpeedFront)*(-self.front_axle_brake_effort*self.chassisCmds[cmd].frontBrake)
                 chassisSt.frontBrake = self.chassisCmds[cmd].frontBrake
@@ -383,7 +392,7 @@ class AutoRallyCtrlr(object):
 
               else:
                 frontBrake = 0
-              
+
           steer_ang_changed, center_y = self._ctrl_steering(steer_ang, steer_ang_vel, delta_t)
           self._ctrl_axles(speed, accel, delta_t, steer_ang_changed, center_y)
 
@@ -401,7 +410,7 @@ class AutoRallyCtrlr(object):
           self._left_rear_axle_cmd_pub.publish(speed)
         if self._right_rear_axle_cmd_pub:
           self._right_rear_axle_cmd_pub.publish(speed)
-            
+
         try:
           self._sleep_timer.sleep()
         except rospy.exceptions.ROSTimeMovedBackwardsException:
@@ -555,41 +564,41 @@ class AutoRallyCtrlr(object):
     except IndexError:
       rospy.logerror('modelStates does not contain ' + name)
       return 0.0
-    
 
-  def wheelSpeedsCb(self, data):    
+
+  def wheelSpeedsCb(self, data):
     ws = wheelSpeeds()
     ws.header.stamp = rospy.Time.now()
     ws.header.frame_id = 'gazeboSim'
-    
+
     #print data
     ws.lfSpeed = self.getWheelSpeed(data, self.left_front_name, self.left_front_dia)
     ws.rfSpeed = self.getWheelSpeed(data, self.right_front_name, self.right_front_dia)
     self.wheelSpeedFront = (ws.lfSpeed+ws.rfSpeed)/2.0
-    
+
     #published speeds can't be negative so data mimics the physical platform
     ws.lfSpeed = abs(ws.lfSpeed)
     ws.rfSpeed = abs(ws.rfSpeed)
     ws.lbSpeed = abs(self.getWheelSpeed(data, self.left_rear_name, self.left_rear_dia))
     ws.rbSpeed = abs(self.getWheelSpeed(data, self.right_rear_name, self.right_rear_dia))
-    
+
     if self.wheelSpeedsPub:
       self.wheelSpeedsPub.publish(ws)
-      
+
 
   def getJointStateWheelParams(self, lr_prefix, fr_prefix):
-    dia = rospy.get_param('/autorally_platform/autorally_controller/' + lr_prefix + '_' + fr_prefix + '_wheel/diameter')
+    dia = rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_' + fr_prefix + '_wheel/diameter')
     name = lr_prefix + '_' + fr_prefix + '_axle'
     return name, dia
-    
+
   def getLinkStateFrontWheelParams(self, lr_prefix):
-    dia = rospy.get_param('/autorally_platform/autorally_controller/' + lr_prefix + '_front_wheel/diameter')
-    name = 'autorally_platform::' + rospy.get_param('/autorally_platform/autorally_controller/' + lr_prefix + '_front_wheel/steering_link_name')
+    dia = rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_front_wheel/diameter')
+    name = 'autorally_platform::' + rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_front_wheel/steering_link_name')
     return name, dia
 
   def getLinkStateRearWheelParams(self, lr_prefix):
-    dia = rospy.get_param('/autorally_platform/autorally_controller/' + lr_prefix + '_rear_wheel/diameter')
-    name = 'autorally_platform::' + rospy.get_param('/autorally_platform/autorally_controller/' + lr_prefix + '_rear_wheel/link_name')
+    dia = rospy.get_param('/autorally_platform/' + self._vehicle_prefix + 'autorally_controller/' + lr_prefix + '_rear_wheel/diameter')
+    name = 'autorally_platform::' + rospy.get_param(self._vehicle_prefix + '/autorally_controller/' + lr_prefix + '_rear_wheel/link_name')
     return name, dia
 
   _DEF_WHEEL_DIA = 0.19    # Default wheel diameter. Unit: meter.

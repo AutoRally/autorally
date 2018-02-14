@@ -1,14 +1,12 @@
 <?xml version="1.0"?>
 
-<!-- autoRallyTrackGazeboSim.launch
+<!-- singlePlatform.launch
+
 Use Gazebo to simulate a vehicle with Ackermann steering.
+
 Arguments:
-    namespace (string, default: auto_rally_platform)
+    namespace (string, default: "")
         Vehicle namespace.
-    world_name (string, default: worlds/empty.world)
-        Gazebo world name.
-    cmd_timeout (float, default: 0.5)
-        Command timeout passed to the auto_rally_controller.py node.
     x (float, default: 0.0)
     y (float, default: 0.0)
     z (float, default: 0.1)
@@ -17,11 +15,15 @@ Arguments:
     yaw (float, default: 0.0)
         Vehicle pose. x, y, and z are measured in meters. roll, pitch, and yaw
         are measured in radians.
+
 Copyright (c) 2013 Wunderkammer Laboratory
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
   http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,14 +32,12 @@ limitations under the License.
 -->
 
 <launch>
+
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
   <arg name="namespace" default=""/>
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
   <arg name="cmd_timeout" default="0.5"/>
-
-  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
-  <!--<param name="autorally_simulation" value"true"/> -->
 
   <!-- Vehicle pose -->
   <arg name="x" default="0"/>
@@ -47,12 +47,7 @@ limitations under the License.
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
 
-  <!-- Create the world. -->
-  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
-    <arg name="world_name" value="$(arg world_name)"/>
-  </include>
-
-  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=$(arg namespace)"/>
 
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
@@ -65,6 +60,7 @@ limitations under the License.
               -gazebo_namespace /gazebo
               -x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+
 
   <!-- load controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
@@ -86,5 +82,4 @@ limitations under the License.
     <arg name="FixedInitialPose" value="true"/>
   </include>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_control)/launch/joystickController.launch" />
 </launch>

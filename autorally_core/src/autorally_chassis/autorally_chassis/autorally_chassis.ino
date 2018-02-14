@@ -63,6 +63,12 @@ int frontBrakePin = 8;
 int throttlePin = 9;
 int steerPin = 10;
 
+int buzzerPin = 7;
+int buzzerState = 0; 
+float buzzerDutyCycle = 0.10; //in %
+int timeOfLastBuzz = 0;
+int buzzerPeriod = 2000;
+
 int rightRearRotationPin = 18;
 int leftRearRotationPin = 19;
 int rightFrontRotationPin = 20;
@@ -99,10 +105,12 @@ void setup()
   pinMode(leftRearRotationPin, INPUT);
   pinMode(rightFrontRotationPin, INPUT);
   pinMode(leftFrontRotationPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
   digitalWrite(rightRearRotationPin, HIGH);
   digitalWrite(leftRearRotationPin, HIGH);
   digitalWrite(rightFrontRotationPin, HIGH);
   digitalWrite(leftFrontRotationPin, HIGH);
+  digitalWrite(buzzerPin, LOW);
 
   //setup the runstop detect pin
   pinMode(runStopPin, INPUT);
@@ -193,6 +201,31 @@ void loop()
     }
   }
 
+  if(buzzerState >= 2) {
+    if(timeOfLastBuzz + ((buzzerDutyCycle * buzzerPeriod) / 6) > millis()) {
+      digitalWrite(buzzerPin, HIGH);
+    } else if(timeOfLastBuzz + (buzzerPeriod / 6) > millis()) {
+      digitalWrite(buzzerPin, LOW);
+    } else if(buzzerState >= 5) {
+      digitalWrite(buzzerPin, LOW);
+      if(timeOfLastBuzz + buzzerPeriod < millis()) {
+        buzzerState = 0;
+        timeOfLastBuzz = millis();
+      }
+    } else {
+      buzzerState++;
+      timeOfLastBuzz = millis();
+    }
+  } else if(!digitalRead(runStopPin)) {
+    if(timeOfLastBuzz + buzzerDutyCycle * buzzerPeriod > millis()) {
+      digitalWrite(buzzerPin, HIGH);
+    } else if(timeOfLastBuzz + buzzerPeriod > millis()) {
+      digitalWrite(buzzerPin, LOW);
+    } else {
+      timeOfLastBuzz = millis();
+    }
+  }
+
   //if no servo msg has been received in a while, set them to neutral
   if (timeOfLastServo + servoTimeoutMs < millis())
   {
@@ -249,6 +282,7 @@ void loop()
   //send any error text up to the compute box, the message may contain multiple, concatenated errors
   if (errorMsg.length())
   {
+    buzzerState =  buzzerState >= 2 ? buzzerState : 2;
     Serial.print("#e");
     Serial.print(errorMsg);
     Serial.print('\n');

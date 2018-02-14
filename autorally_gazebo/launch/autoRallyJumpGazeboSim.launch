@@ -68,7 +68,6 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
     <!-- Create the world. -->
     <include file="$(find autorally_gazebo)/launch/autoRallyJumpWorld.launch">
       <arg name="world_name" value="$(arg world_name)"/>
-      <arg name="namespace" value="$(arg namespace)" />
     </include>
 
     <!-- Spawn the vehicle. -->
