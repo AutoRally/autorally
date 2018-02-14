@@ -16,7 +16,7 @@
 #include <Servo.h>
 #include "tc_lib.h"
 
-static_assert(REFRESH_INTERVAL == 3300, "Please set the REFRESH_INTERVAL marco in Servo.h to be 3300");
+static_assert(REFRESH_INTERVAL == 4500, "Please set the REFRESH_INTERVAL marco in Servo.h to be 4500");
 
 //input declarations for the RC inputs
 capture_tc6_declaration();
@@ -64,10 +64,6 @@ int throttlePin = 9;
 int steerPin = 10;
 
 int buzzerPin = 7;
-int buzzerState = 0; 
-float buzzerDutyCycle = 0.10; //in %
-int timeOfLastBuzz = 0;
-int buzzerPeriod = 2000;
 
 int rightRearRotationPin = 18;
 int leftRearRotationPin = 19;
@@ -78,6 +74,11 @@ int steerSrvNeutralUs = 1500; ///< default neutral value for steering
 int throttleSrvNeutralUs = 1500; ///< default neutral value for throttle
 int frontBrakeSrvNeutralUs = 1500; ///< default neutral value for front brake
 unsigned long timeOfLastServo = 0; ///< time that the last command message was received from the compute box
+
+int buzzerState = 0; // state of the buzzer 0 is on off and 2+ is error
+float buzzerDutyCycle = 0.10; //in %
+int buzzerPeriod = 2000; // Period (in ms) for starting a buzz
+int timeOfLastBuzz = 0; // time that the last buzz happened
 
 ///< have to receive actuator commants at at least 10Hz to control the platform (50-60Hz recommended)
 unsigned long servoTimeoutMs = 100;
@@ -90,6 +91,7 @@ char castlLinkDeviceID = 0; ///< ESC Device ID (set to default)
 int castleLinkPeriod = 200; ///< query ESC info at 5 Hz
 char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; ///< ESC data registers to query, details in Castle Serial Link
 ///< documentation
+int castleLinkCurrentRegister = 0; // current register if even writing query, if odd reading. castleLinkCurrentRegister / 2 is the current register number
 char castleLinkData[2 * sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
 unsigned long timeOfCastleLinkData = 0; ///< last time the ESC was queried
 
@@ -271,12 +273,7 @@ void loop()
   if (timeOfCastleLinkData + castleLinkPeriod < millis())
   {
     timeOfCastleLinkData = millis();
-    if(getCastleSerialLinkData())
-    {
-      Serial.print("#c");
-      Serial.write(castleLinkData, sizeof(castleLinkData));
-      Serial.print('\n');
-    }
+    getCastleSerialLinkData();
   }
 
   //send any error text up to the compute box, the message may contain multiple, concatenated errors
@@ -420,45 +417,55 @@ bool getCastleSerialLinkData()
   char request[5];
   char response[3];
   //int count = 0;
+ 
 
-  request[0] = (0x1 << 7) + castlLinkDeviceID;
-  request[2] = 0;
-  request[3] = 0;
+  if(castleLinkCurrentRegister > sizeof(castleLinkRegisters)/sizeof(char) + 1) {
+     castleLinkCurrentRegister = 0; 
+     Serial.print("#c");
+     Serial.write(castleLinkData, sizeof(castleLinkData));
+     Serial.print('\n');
+  } 
 
-  for (int i = 0; i < sizeof(castleLinkRegisters); i++)
-  {
-    request[1] = castleLinkRegisters[i];
+  if(castleLinkCurrentRegister % 2 == 0) {
+    request[0] = (0x1 << 7) + castlLinkDeviceID;
+    request[2] = 0;
+    request[3] = 0;
+
+    request[1] = castleLinkRegisters[castleLinkCurrentRegister];
     request[4] = castleChecksum(request);
 
     Serial3.write(request, 5);
 
+    return true;
+  } else {
     //read 3 byte responses
-    int bytesRead = Serial3.readBytes(response, 3);
-    if (bytesRead == 3)
-    {
+  int bytesRead = Serial3.readBytes(response, 3);
+  if (bytesRead == 3)
+  {
 
-      if ( (char)(response[0] + response[1] + response[2]) == 0)
+    if ( (char)(response[0] + response[1] + response[2]) == 0)
+    {
+      if (response[0] == 255 && response[1] == 255) // error from serial link indicated by 0xFFFF
       {
-        if (response[0] == 255 && response[1] == 255) // error from serial link indicated by 0xFFFF
-        {
-          errorMsg += "castle link comm error on register " + ('0' + response[0]) + ',';
-          //invalid register of corrupted command
-        } else
-        {
-          castleLinkData[2 * i] = response[0];
-          castleLinkData[2 * i + 1] = response[1];
-        }
+        errorMsg += "castle link comm error on register " + ('0' + response[0]) + ',';
+        //invalid register of corrupted command
       } else
       {
-        errorMsg += "castle link comm failed checksum,";
-        return false;
+        castleLinkData[2 * castleLinkCurrentRegister] = response[0];
+        castleLinkData[2 * castleLinkCurrentRegister + 1] = response[1];
       }
     } else
     {
-      errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(i) + ",";
+      errorMsg += "castle link comm failed checksum,";
       return false;
     }
+  } else
+  {
+    errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(castleLinkCurrentRegister) + ",";
+    return false;
   }
+  }
+  castleLinkCurrentRegister++;
   return true;
 }
 
