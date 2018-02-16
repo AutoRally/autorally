@@ -204,7 +204,7 @@ void loop()
   }
 
   if(buzzerState >= 2) {
-    if(timeOfLastBuzz + ((buzzerDutyCycle * buzzerPeriod) / 6) > millis()) {
+    if(timeOfLastBuzz + ((buzzerDutyCycle * 2 * buzzerPeriod) / 6) > millis()) {
       digitalWrite(buzzerPin, HIGH);
     } else if(timeOfLastBuzz + (buzzerPeriod / 6) > millis()) {
       digitalWrite(buzzerPin, LOW);
@@ -245,7 +245,7 @@ void loop()
     //getrps(leftFront, rightFront, leftBack, rightBack);
     getrps(rightRear, leftRear, rightFront, leftFront);
 
-    Serial.print("#w");
+    /*Serial.print("#w");
     Serial.print(leftFront, 3);
     Serial.print(",");
     Serial.print(rightFront, 3);
@@ -253,12 +253,12 @@ void loop()
     Serial.print(leftRear, 3);
     Serial.print(",");
     Serial.print(rightRear, 3);
-    Serial.print('\n');
+    Serial.print('\n');*/
 
     uint32_t rc_steer, rc_throttle, rc_frontBrake;
     getRcWidths(rc_steer, rc_throttle, rc_frontBrake);
 
-    Serial.print("#r");
+    /*Serial.print("#r");
     Serial.print(rc_steer);
     Serial.print(",");
     Serial.print(rc_throttle);
@@ -266,14 +266,21 @@ void loop()
     Serial.print(rc_frontBrake);
     Serial.print(",");
     Serial.print(digitalRead(runStopPin));
-    Serial.print('\n');
+    Serial.print('\n');*/
   }
 
   //query ESC data and send it to the compute box
   if (timeOfCastleLinkData + castleLinkPeriod < millis())
   {
-    timeOfCastleLinkData = millis();
-    getCastleSerialLinkData();
+    if(castleLinkCurrentRegister >= sizeof(castleLinkRegisters)/sizeof(char)) {
+       castleLinkCurrentRegister = 0; 
+       timeOfCastleLinkData = millis();
+       Serial.print("#c");
+       Serial.write(castleLinkData, sizeof(castleLinkData));
+       Serial.print('\n');
+    } else {
+      getCastleSerialLinkData();
+    }
   }
 
   //send any error text up to the compute box, the message may contain multiple, concatenated errors
@@ -416,29 +423,17 @@ bool getCastleSerialLinkData()
 {
   char request[5];
   char response[3];
-  //int count = 0;
- 
 
-  if(castleLinkCurrentRegister > sizeof(castleLinkRegisters)/sizeof(char) + 1) {
-     castleLinkCurrentRegister = 0; 
-     Serial.print("#c");
-     Serial.write(castleLinkData, sizeof(castleLinkData));
-     Serial.print('\n');
-  } 
+  request[0] = (0x1 << 7) + castlLinkDeviceID;
+  request[2] = 0;
+  request[3] = 0;
 
-  if(castleLinkCurrentRegister % 2 == 0) {
-    request[0] = (0x1 << 7) + castlLinkDeviceID;
-    request[2] = 0;
-    request[3] = 0;
+  request[1] = castleLinkRegisters[castleLinkCurrentRegister];
+  request[4] = castleChecksum(request);
 
-    request[1] = castleLinkRegisters[castleLinkCurrentRegister];
-    request[4] = castleChecksum(request);
+  Serial3.write(request, 5);
 
-    Serial3.write(request, 5);
-
-    return true;
-  } else {
-    //read 3 byte responses
+  //read 3 byte responses
   int bytesRead = Serial3.readBytes(response, 3);
   if (bytesRead == 3)
   {
@@ -457,13 +452,14 @@ bool getCastleSerialLinkData()
     } else
     {
       errorMsg += "castle link comm failed checksum,";
+      castleLinkCurrentRegister++;
       return false;
     }
   } else
   {
     errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(castleLinkCurrentRegister) + ",";
+    castleLinkCurrentRegister++;
     return false;
-  }
   }
   castleLinkCurrentRegister++;
   return true;
