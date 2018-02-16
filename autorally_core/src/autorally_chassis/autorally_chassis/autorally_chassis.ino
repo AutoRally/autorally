@@ -208,7 +208,7 @@ void loop()
       digitalWrite(buzzerPin, HIGH);
     } else if(timeOfLastBuzz + (buzzerPeriod / 6) > millis()) {
       digitalWrite(buzzerPin, LOW);
-    } else if(buzzerState >= 5) {
+    } else if(buzzerState >= 4) {
       digitalWrite(buzzerPin, LOW);
       if(timeOfLastBuzz + buzzerPeriod < millis()) {
         buzzerState = 0;
@@ -226,6 +226,8 @@ void loop()
     } else {
       timeOfLastBuzz = millis();
     }
+  } else {
+    digitalWrite(buzzerPin, LOW);
   }
 
   //if no servo msg has been received in a while, set them to neutral
@@ -245,7 +247,7 @@ void loop()
     //getrps(leftFront, rightFront, leftBack, rightBack);
     getrps(rightRear, leftRear, rightFront, leftFront);
 
-    /*Serial.print("#w");
+    Serial.print("#w");
     Serial.print(leftFront, 3);
     Serial.print(",");
     Serial.print(rightFront, 3);
@@ -253,12 +255,12 @@ void loop()
     Serial.print(leftRear, 3);
     Serial.print(",");
     Serial.print(rightRear, 3);
-    Serial.print('\n');*/
+    Serial.print('\n');
 
     uint32_t rc_steer, rc_throttle, rc_frontBrake;
     getRcWidths(rc_steer, rc_throttle, rc_frontBrake);
 
-    /*Serial.print("#r");
+    Serial.print("#r");
     Serial.print(rc_steer);
     Serial.print(",");
     Serial.print(rc_throttle);
@@ -266,7 +268,7 @@ void loop()
     Serial.print(rc_frontBrake);
     Serial.print(",");
     Serial.print(digitalRead(runStopPin));
-    Serial.print('\n');*/
+    Serial.print('\n');
   }
 
   //query ESC data and send it to the compute box
