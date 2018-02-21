@@ -38,7 +38,7 @@ char s0[ ] = "#estopstate:RED";
 char s2[ ] = "#estopstate:GREEN";
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
   pinMode(0,INPUT); //red mushroom button
   pinMode(1,INPUT); // green momentary button
   pinMode(2,INPUT); // red momentary button
@@ -49,16 +49,17 @@ void loop() {
   int green = digitalRead(1);
   int red = digitalRead(2);
 
-  if (kill == LOW || red == LOW || initial == 0) {     //Kill Switch or red button or initial state
+  if (kill == LOW || red == LOW || initial == 0) { //red mushroom or red button or initial state
     state = 0;
     initial = 1;
-  }else if(green == HIGH){      //Green Button
+  }else if(green == HIGH){ //Green Button
     state = 2;
   }
 
-  if (state == 0) {     //Kill Switch or red button or initial state
+  if (state == 0) {     //red mushroom or red button or initial state
      Serial.println(s0);
      initial = 1;
+  } else if (state == 2) { //green momentary is pressed
      Serial.println(s2);
   }
   delay(50);
