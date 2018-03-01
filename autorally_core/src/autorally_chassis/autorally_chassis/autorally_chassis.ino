@@ -91,7 +91,7 @@ char castlLinkDeviceID = 0; ///< ESC Device ID (set to default)
 int castleLinkPeriod = 200; ///< query ESC info at 5 Hz
 char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; ///< ESC data registers to query, details in Castle Serial Link
 ///< documentation
-int castleLinkCurrentRegister = 0; // current register if even writing query, if odd reading. castleLinkCurrentRegister / 2 is the current register number
+int castleLinkCurrentRegister = 0; // current register to query
 char castleLinkData[2 * sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
 unsigned long timeOfCastleLinkData = 0; ///< last time the ESC was queried
 
@@ -275,7 +275,7 @@ void loop()
   if (timeOfCastleLinkData + castleLinkPeriod < millis())
   {
     if(castleLinkCurrentRegister >= sizeof(castleLinkRegisters)/sizeof(char)) {
-       castleLinkCurrentRegister = 0; 
+       castleLinkCurrentRegister = 0;
        timeOfCastleLinkData = millis();
        Serial.print("#c");
        Serial.write(castleLinkData, sizeof(castleLinkData));
