@@ -114,7 +114,7 @@ Verify runstop motion is enabled by looking at the `runstopMotionEnabled` paramt
 
 If you aren't using a gamepad, you will have to configure another source of runstop information for the platform to move:
 
-- Comment out line 93 of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
+- Comment out line 89 of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
 
 - ```rosrun rqt_publisher rqt_publisher```
 
@@ -127,13 +127,6 @@ and configure rqt_publisher to publish a message to topic `/runstop` of type `au
 At the end of this section the robot will be driving autonomously in simulation using controllers available in `autorally_control`.
 
 Position the robot in the same spot as when the simulation starts and make sure runstop motion should is enabled (set to **true**).
-
-#### Start state estimator:
-
-In `autorally_core/launch/state_estimator.launch` change `InvertY` and `InvertZ` to **false**, then:
-
-    rosparam set /gps_imu/FixedInitialPose true
-    roslaunch autorally_core state_estimator.launch
 
 #### Start waypoint follower:
 
