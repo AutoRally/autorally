@@ -79,6 +79,7 @@ int buzzerState = 0; // state of the buzzer 0 is on off and 2+ is error
 float buzzerDutyCycle = 0.10; //in %
 int buzzerPeriod = 2000; // Period (in ms) for starting a buzz
 int timeOfLastBuzz = 0; // time that the last buzz happened
+int errorCount = 0;
 
 ///< have to receive actuator commants at at least 10Hz to control the platform (50-60Hz recommended)
 unsigned long servoTimeoutMs = 100;
@@ -288,7 +289,9 @@ void loop()
   //send any error text up to the compute box, the message may contain multiple, concatenated errors
   if (errorMsg.length())
   {
-    buzzerState =  buzzerState >= 2 ? buzzerState : 2;
+    if(errorCount >= 3) {
+      buzzerState =  buzzerState >= 2 ? buzzerState : 2;
+    }
     Serial.print("#e");
     Serial.print(errorMsg);
     Serial.print('\n');
@@ -454,16 +457,19 @@ bool getCastleSerialLinkData()
     } else
     {
       errorMsg += "castle link comm failed checksum,";
-      castleLinkCurrentRegister++;
+      castleLinkCurrentRegister = 0;
+      errorCount++;
       return false;
     }
   } else
   {
     errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(castleLinkCurrentRegister) + ",";
-    castleLinkCurrentRegister++;
+    castleLinkCurrentRegister = 0;
+    errorCount++;
     return false;
   }
   castleLinkCurrentRegister++;
+  errorCount = 0;
   return true;
 }
 
