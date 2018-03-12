@@ -38,15 +38,13 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 
    _Recommended Tools_
 
-   The following tools are useful, but not necessary for this project.
+   The following tools are useful, but not required for this project.
    * cutecom
    * cmake-curses-gui
    * synaptic
-   * arduino (latest version of [Arduino IDE](https://www.arduino.cc/en/Main/Software))
    * python-termcolor
-   * coriander
    
-   ```sudo apt-get install cutecom cmake-curses-gui synaptic arduino python-termcolor```
+   ```sudo apt-get install cutecom cmake-curses-gui synaptic python-termcolor```
 
 3. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
 
