@@ -58,7 +58,6 @@
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/navigation/ImuBias.h>
 #include <gtsam/geometry/Pose3.h>
-#include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 
 using namespace gtsam;
 // Convenience for named keys
@@ -68,8 +67,6 @@ using symbol_shorthand::B;
 using symbol_shorthand::G; // GPS pose
 
 
-// macro for getting the time stamp of a ros message
-#define TIME(msg) ( (msg)->header.stamp.toSec() )
 
 namespace autorally_core
 {
@@ -236,7 +233,6 @@ namespace autorally_core
              initialBiasNoiseGyro,
              initialBiasNoiseGyro).finished());
 
-     std::cout<<"checkpoint"<<std::endl;
 
      Vector sigma_acc_bias_c(3), sigma_gyro_bias_c(3);
      sigma_acc_bias_c << accelBiasSigma_,  accelBiasSigma_,  accelBiasSigma_;
@@ -246,6 +242,7 @@ namespace autorally_core
      gpsSub_ = nh_.subscribe("gps", 300, &StateEstimator::GpsCallback, this);
      imuSub_ = nh_.subscribe("imu", 600, &StateEstimator::ImuCallback, this);
      odomSub_ = nh_.subscribe("wheel_odom", 300, &StateEstimator::WheelOdomCallback, this);
+     voSub_ = nh_.subscribe("vo", 200, &StateEstimator::VOCallback, this);
 
      boost::thread optimizer(&StateEstimator::GpsHelper,this);
   }
@@ -303,7 +300,7 @@ namespace autorally_core
       if (!gotFirstFix)
       {
         sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
-        startTime = TIME(fix);
+        startTime = ROS_TIME(fix);
         lastOdom_ = odomOptQ_.popBlocking();
 
         NonlinearFactorGraph newFactors;
@@ -357,10 +354,10 @@ namespace autorally_core
         //Read IMU measurements up to the first GPS measurement
         lastIMU_ = imuOptQ_.popBlocking();
         //If we only pop one, we need some dt
-        lastImuTgps_ = TIME(lastIMU_) - 0.005;
-        while(TIME(lastIMU_) < TIME(fix))
+        lastImuTgps_ = ROS_TIME(lastIMU_) - 0.005;
+        while(ROS_TIME(lastIMU_) < ROS_TIME(fix))
         {
-          lastImuTgps_ = TIME(lastIMU_);
+          lastImuTgps_ = ROS_TIME(lastIMU_);
           lastIMU_ = imuOptQ_.popBlocking();
         }
 
@@ -373,16 +370,16 @@ namespace autorally_core
 
 
         // add IMU measurements
-        while (imuOptQ_.size() > 0 && (TIME(imuOptQ_.back()) > (startTime + imuKey * 0.1)))
+        while (imuOptQ_.size() > 0 && (ROS_TIME(imuOptQ_.back()) > (startTime + imuKey * 0.1)))
         {
           double curTime = startTime + imuKey * 0.1;
           PreintegratedImuMeasurements pre_int_data(preintegrationParams_, previousBias_);
-          while(TIME(lastIMU_) < curTime)
+          while(ROS_TIME(lastIMU_) < curTime)
           {
             Vector3 acc, gyro;
             GetAccGyro(lastIMU_, acc, gyro);
-            double imuDT = TIME(lastIMU_) - lastImuTgps_;
-            lastImuTgps_ = TIME(lastIMU_);
+            double imuDT = ROS_TIME(lastIMU_) - lastImuTgps_;
+            lastImuTgps_ = ROS_TIME(lastIMU_);
             pre_int_data.integrateMeasurement(acc, gyro, imuDT);
             lastIMU_ = imuOptQ_.popBlocking();
           }
@@ -407,10 +404,10 @@ namespace autorally_core
 
 
         // add GPS measurements that are not ahead of the imu messages
-        while (optimize && gpsOptQ_.size() > 0 && TIME(gpsOptQ_.front()) < (startTime + (imuKey-1)*0.1 + 1e-2))
+        while (optimize && gpsOptQ_.size() > 0 && ROS_TIME(gpsOptQ_.front()) < (startTime + (imuKey-1)*0.1 + 1e-2))
         {
           sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
-          double timeDiff = (TIME(fix) - startTime) / 0.1;
+          double timeDiff = (ROS_TIME(fix) - startTime) / 0.1;
           int key = round(timeDiff);
           if (std::abs(timeDiff - key) < 1e-4)
           {
@@ -449,12 +446,12 @@ namespace autorally_core
 
 
         // if only using odom with no GPS, then remove old messages from queue
-        while (!usingOdom_ && odomOptQ_.size() > 0 && TIME(odomOptQ_.front()) < (odomKey*0.1 + startTime))
+        while (!usingOdom_ && odomOptQ_.size() > 0 && ROS_TIME(odomOptQ_.front()) < (odomKey*0.1 + startTime))
           lastOdom_ = odomOptQ_.popBlocking();
 
         // if available, add any odom factors that are not ahead of the imu messages
         while ((usingOdom_ || latestGPSKey < imuKey-2) && optimize && odomKey < imuKey && odomOptQ_.size() > 0
-            && (TIME(odomOptQ_.back()) > (startTime + odomKey * 0.1)))
+            && (ROS_TIME(odomOptQ_.back()) > (startTime + odomKey * 0.1)))
         {
           double prevTime = startTime + (odomKey-1) * 0.1;
           newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
@@ -532,9 +529,9 @@ namespace autorally_core
   {
     double dt;
     if (lastImuT_ == 0) dt = 0.005;
-    else dt = TIME(imu) - lastImuT_;
+    else dt = ROS_TIME(imu) - lastImuT_;
 
-    lastImuT_ = TIME(imu);
+    lastImuT_ = ROS_TIME(imu);
     ros::Time before = ros::Time::now();
 
     // Push the IMU measurement to the optimization thread
@@ -564,9 +561,9 @@ namespace autorally_core
     int numImuDiscarded = 0;
     double imuQPrevTime;
     Vector3 acc, gyro;
-    while (!imuMeasurements_.empty() && (TIME(imuMeasurements_.front()) < optimizedTime))
+    while (!imuMeasurements_.empty() && (ROS_TIME(imuMeasurements_.front()) < optimizedTime))
     {
-      imuQPrevTime = TIME(imuMeasurements_.front());
+      imuQPrevTime = ROS_TIME(imuMeasurements_.front());
       imuMeasurements_.pop_front();
       newMeasurements = true;
       numImuDiscarded++;
@@ -579,8 +576,8 @@ namespace autorally_core
       int numMeasurements = 0;
       for (auto it=imuMeasurements_.begin(); it!=imuMeasurements_.end(); ++it)
       {
-        double dt_temp =  TIME(*it) - imuQPrevTime;
-        imuQPrevTime = TIME(*it);
+        double dt_temp =  ROS_TIME(*it) - imuQPrevTime;
+        imuQPrevTime = ROS_TIME(*it);
         GetAccGyro(*it, acc, gyro);
         imuPredictor_->integrateMeasurement(acc, gyro, dt_temp);
         numMeasurements++;
@@ -626,9 +623,9 @@ namespace autorally_core
 
     ros::Time after = ros::Time::now();
     geometry_msgs::Point delays;
-    delays.x = TIME(imu);
+    delays.x = ROS_TIME(imu);
     delays.y = (ros::Time::now() - imu->header.stamp).toSec();
-    delays.z = TIME(imu) - optimizedTime;
+    delays.z = ROS_TIME(imu) - optimizedTime;
     timePub_.publish(delays);
 
     // publish the status of the estimate - set in the gpsHelper thread
@@ -641,8 +638,14 @@ namespace autorally_core
 
   void StateEstimator::WheelOdomCallback(nav_msgs::OdometryConstPtr odom)
   {
-      if (!odomOptQ_.pushNonBlocking(odom))
-        ROS_WARN("Dropping an wheel odometry measurement due to full queue!!");
+    if (!odomOptQ_.pushNonBlocking(odom))
+      ROS_WARN("Dropping a wheel odometry measurement due to full queue!!");
+  }
+
+  void StateEstimator::VOCallback(geometry_msgs::PoseStampedPtr vo)
+  {
+    if (!voOptQ_.pushNonBlocking(vo))
+      ROS_WARN("Dropping a vo message due to full queue!!");
   }
 
 
@@ -652,11 +655,11 @@ namespace autorally_core
 
     while (lastTimeUsed != stopTime)
     {
-      if (odomOptQ_.size() != 0 && TIME(odomOptQ_.front()) < stopTime)
+      if (odomOptQ_.size() != 0 && ROS_TIME(odomOptQ_.front()) < stopTime)
       {
         lastOdom_ = odomOptQ_.popBlocking();
-        dt = TIME(lastOdom_) - lastTimeUsed;
-        lastTimeUsed = TIME(lastOdom_);
+        dt = ROS_TIME(lastOdom_) - lastTimeUsed;
+        lastTimeUsed = ROS_TIME(lastOdom_);
       }
       else
       {

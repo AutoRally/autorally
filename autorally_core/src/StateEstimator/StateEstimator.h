@@ -42,7 +42,6 @@
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/navigation/ImuBias.h>
 #include <gtsam/geometry/Pose3.h>
-#include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 #include <gtsam/base/timing.h>
 #include <GeographicLib/LocalCartesian.hpp>
 #include <gtsam/nonlinear/ISAM2.h>
@@ -58,6 +57,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include "autorally_core/Diagnostics.h"
 #include "BlockingQueue.h"
@@ -70,8 +70,6 @@
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#define PI 3.14159265358979323846264338
-
 
 namespace autorally_core
 {
@@ -79,11 +77,11 @@ namespace autorally_core
   {
   private:
     ros::NodeHandle nh_;
-    ros::Subscriber gpsSub_, imuSub_, odomSub_;
+    ros::Subscriber gpsSub_, imuSub_, odomSub_, voSub_;
     ros::Publisher  posePub_;
     ros::Publisher  biasAccPub_, biasGyroPub_;
     ros::Publisher  timePub_;
-    ros::Publisher statusPub_;
+    ros::Publisher  statusPub_;
 
     double lastImuT_, lastImuTgps_;
     unsigned char status_;
@@ -94,6 +92,7 @@ namespace autorally_core
     BlockingQueue<sensor_msgs::NavSatFixConstPtr> gpsOptQ_;
     BlockingQueue<sensor_msgs::ImuConstPtr> imuOptQ_;
     BlockingQueue<nav_msgs::OdometryConstPtr> odomOptQ_;
+    BlockingQueue<geometry_msgs::PoseStampedPtr> voOptQ_;
 
     boost::mutex optimizedStateMutex_;
     gtsam::NavState optimizedState_;
@@ -130,12 +129,16 @@ namespace autorally_core
     void GpsCallback(sensor_msgs::NavSatFixConstPtr fix);
     void ImuCallback(sensor_msgs::ImuConstPtr imu);
     void WheelOdomCallback(nav_msgs::OdometryConstPtr odom);
+    void VOCallback(geometry_msgs::PoseStampedPtr vo);
     void GpsHelper();
-    void GpsHelper_1();
     void diagnosticStatus(const ros::TimerEvent& time);
     gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime, int curFactor);
     void GetAccGyro(sensor_msgs::ImuConstPtr imu, gtsam::Vector3 &acc, gtsam::Vector3 &gyro);
   };
+
+
+  template<typename T>
+  inline double ROS_TIME(T msg) { return msg->header.stamp.toSec(); }
 };
 
 #endif /* StateEstimator_H_ */
