@@ -31,6 +31,11 @@
  * @brief Main file model predictive path integral control.
  *
  ***********************************************/
+
+//Some versions of boost require __CUDACC_VER__, which is no longer defined in CUDA 9. This is
+//the old expression for how it was defined, so should work for CUDA 9 and under.
+#define __CUDACC_VER__ __CUDACC_VER_MAJOR__ * 10000 + __CUDACC_VER_MINOR__ * 100 + __CUDACC_VER_BUILD__ 
+
 #include <autorally_control/path_integral/meta_math.h>
 #include <autorally_control/path_integral/param_getter.h>
 
@@ -78,6 +83,8 @@ int main(int argc, char** argv) {
   //Ros node initialization
   ros::init(argc, argv, "mppi_controller");
   ros::NodeHandle mppi_node("~");
+
+  std::cout << __CUDACC_VER_MAJOR__ << ", " << __CUDACC_VER_MINOR__ << ", " << __CUDACC_VER__ << std::endl; 
 
   //Load setup parameters
   SystemParams params;

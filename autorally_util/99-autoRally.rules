@@ -1,3 +1,6 @@
+# All the serial ports to low latency mode
+ACTION=="add", SUBSYSTEM=="usb-serial", DRIVER=="ftdi_sio", ATTR{latency_timer}="1"
+
 # GPS Base
 # Replace "PORT_*_SERIAL" with the serial number for the USB-to-serial adapter for each port
 SUBSYSTEM=="tty", ATTRS{serial}=="PORT_A_SERIAL", MODE="0666", SYMLINK+="arGPSBasePortA"
