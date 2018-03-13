@@ -66,7 +66,7 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
   ros::Time last_pose_update = robot.getLastPoseTime();
 
   ros::Publisher path_pub; ///< Publisher of nav_mags::Path on topic nominalPath.
-  ros::Publisher ips_pub; ///< Publisher of nav_mags::Path on topic nominalPath.
+  ros::Publisher ips_pub; ///< Publisher of nav_mags::Path on topic importance sampler.
 
   path_pub = mppi_node.advertise<nav_msgs::Path>("nominal_path_debug", 1);
   ips_pub = mppi_node.advertise<nav_msgs::Path>("importance_sampler", 1);

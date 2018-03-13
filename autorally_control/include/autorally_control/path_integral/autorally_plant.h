@@ -126,6 +126,7 @@ public:
   */
 	void runstopCall(autorally_msgs::runstop safe_msg);
 
+  void pubPath(float* nominal_traj, int num_timesteps, int hz);
   /**
   * @brief Publishes the controller's nominal path.
   */
@@ -191,6 +192,7 @@ private:
   ros::Publisher control_pub_; ///< Publisher of autorally_msgs::chassisCommand type on topic servoCommand.
   ros::Publisher status_pub_; ///< Publishes the status (0 good, 1 neutral, 2 bad) of the controller
   ros::Publisher delay_pub_; ///< Publisher of geometry::msgs::Point on topic mppiTimeDelay.
+  ros::Publisher default_path_pub_; ///< Publisher of nav_mags::Path on topic nominalPath.
   ros::Subscriber pose_sub_; ///< Subscriber to /pose_estimate.
   ros::Subscriber servo_sub_;
 

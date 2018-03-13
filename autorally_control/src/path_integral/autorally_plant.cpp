@@ -44,10 +44,11 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   mppi_node.getParam("debug_mode", debug_mode_);
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
-  std::string nominal_path_name = "nominal_path";
+  std::string nominal_path_name = "planned_trajectory";
   if (debug_mode_){
-    nominal_path_name = "nominal_path_debug";
+    nominal_path_name = "planned_trajectory_debug";
   }
+  default_path_pub_ = mppi_node.advertise<nav_msgs::Path>(nominal_path_name, 1);
   delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   //Initialize the pose subscriber.
@@ -126,6 +127,11 @@ void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
   if (safe_msg.motionEnabled == false){
     safe_speed_zero_ = true;
   }
+}
+
+void AutorallyPlant::pubPath(float* nominal_traj, int num_timesteps, int hz)
+{
+  pubPath(nominal_traj, default_path_pub_, num_timesteps, hz);
 }
 
 void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int num_timesteps, int hz)
