@@ -32,18 +32,21 @@
  *
  ***********************************************/
 
-//Some versions of boost require __CUDACC_VER__, which is no longer defined in CUDA 9. This is
-//the old expression for how it was defined, so should work for CUDA 9 and under.
-#define __CUDACC_VER__ __CUDACC_VER_MAJOR__ * 10000 + __CUDACC_VER_MINOR__ * 100 + __CUDACC_VER_BUILD__ 
-
 #include <autorally_control/path_integral/meta_math.h>
 #include <autorally_control/path_integral/param_getter.h>
 
-#include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/costs.cuh>
 #include <autorally_control/path_integral/generalized_linear.cuh>
+
+//Including neural net model
+#ifdef MPPI_NNET_USING_CONSTANT_MEM__
+__device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
+#endif
+#include <autorally_control/path_integral/neural_net_model.cuh>
+
 #include <autorally_control/path_integral/car_bfs.cuh>
 #include <autorally_control/path_integral/car_kinematics.cuh>
+#include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/run_control_loop.cuh>
 
 #include <ros/ros.h>
@@ -51,12 +54,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
-#ifdef MPPI_NNET_USING_CONSTANT_MEM__
-__device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
-#endif
-
-#include <autorally_control/path_integral/neural_net_model.cuh>
 
 using namespace autorally_control;
 
