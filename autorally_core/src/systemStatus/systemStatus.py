@@ -62,7 +62,7 @@ class WirelessStatus:
         self.maxQuality = 0
     ##  Retrieves wireless signal strength and stores it in the MSG format.
     def getValues(self):
-        outputString = commands.getoutput("iwconfig | grep 'Link Quality='")
+        outputString = commands.getoutput("sudo iwconfig | grep 'Link Quality='")
         linkQualityLocation = outputString.find("Link Quality=")
         if linkQualityLocation >= 0 and outputString[linkQualityLocation+13:linkQualityLocation+15].isdigit() and outputString[linkQualityLocation+16:linkQualityLocation+18].isdigit():
             self.linkQuality = int(outputString[linkQualityLocation+13:linkQualityLocation+15])
@@ -309,7 +309,7 @@ if __name__ == '__main__':
     tempStatusPublisher = TempStatus()
     powerSupplyHandler = M4ATXPowerStatus()
     #uncomment line below to disable m4ATX status updates
-    #powerSupplyHandler.valid=False
+    powerSupplyHandler.valid=False
 
     gpuHandler = GpuStatus()
 
