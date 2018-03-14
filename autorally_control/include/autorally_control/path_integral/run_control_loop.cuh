@@ -65,6 +65,12 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
   int num_iter = 0;
   ros::Time last_pose_update = robot.getLastPoseTime();
 
+  ros::Publisher path_pub; ///< Publisher of nav_mags::Path on topic nominalPath.
+  ros::Publisher ips_pub; ///< Publisher of nav_mags::Path on topic importance sampler.
+
+  path_pub = mppi_node.advertise<nav_msgs::Path>("nominal_path_debug", 1);
+  ips_pub = mppi_node.advertise<nav_msgs::Path>("importance_sampler", 1);
+
   //Start the control loop.
   while (ros::ok()) {
     if (params.debug_mode){ //Display the debug window.
@@ -82,7 +88,8 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
     controller.model_->updateState(state, u); //Update the state using motion model.
     
     robot.pubControl(u(0), u(1)); //Publish steering u(0) and throttle u(1)
-    robot.pubPath(controller.nominal_traj_, controller.num_timesteps_, params.hz); //Publish the planned path.
+    robot.pubPath(controller.nominal_traj_, path_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
+    robot.pubPath(controller.importance_sampler_, ips_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
 
     //Check system status: 0 -> good, 1-> not active, 2-> bad
     if (!params.debug_mode){ //In simulation/debug mode everything is always ok.
