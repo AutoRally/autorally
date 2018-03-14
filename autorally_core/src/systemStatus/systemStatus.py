@@ -137,142 +137,142 @@ class M4ATXPowerStatus:
 #
 #  Uses sensors to retrieve CPU temperature and then publishes it.
 class TempStatus:
-    ##  Initializes tempStatusMSG
-    def __init__(self):
-        self.cpuTemp = 0
-        self.fanSpeed = 0
-    ##  Retrieves CPU temperature and fan speed and stores it in the MSG format.
-    def getValues(self):
-        outputString = commands.getoutput("sensors | grep \"Core 0:\"")
-        cpuTempLocation = outputString.find("+")
-        if cpuTempLocation >= 0:
-            try:
-                self.cpuTemp1 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
-            except ValueError:
-                self.cpuTemp1 = -1.0
-        else:
-            self.cpuTemp1 = 0.0
-        outputString = commands.getoutput("sensors | grep \"Core 1:\"")
-        cpuTempLocation = outputString.find("+")
-        if cpuTempLocation >= 0:
-            try:
-                self.cpuTemp2 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
-            except ValueError:
-                self.cpuTemp2 = -1.0
-        else:
-            self.cpuTemp2 = 0.0
-        outputString = commands.getoutput("sensors | grep \"Core 2:\"")
-        cpuTempLocation = outputString.find("+")
-        if cpuTempLocation >= 0:
-            try:
-                self.cpuTemp3 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
-            except ValueError:
-                self.cpuTemp3 = -1.0
-        else:
-            self.cpuTemp3 = 0.0
-        outputString = commands.getoutput("sensors | grep \"Core 3:\"")
-        cpuTempLocation = outputString.find("+")
-        if cpuTempLocation >= 0:
-            try:
-                self.cpuTemp4 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
-            except ValueError:
-                self.cpuTemp4 = -1.0
-        else:
-            self.cpuTemp4 = 0.0
-        self.cpuTemp = max(self.cpuTemp1, self.cpuTemp2, self.cpuTemp3, self.cpuTemp4)
+  ##  Initializes tempStatusMSG
+  def __init__(self):
+      self.cpuTemp = 0
+      self.fanSpeed = 0
+  ##  Retrieves CPU temperature and fan speed and stores it in the MSG format.
+  def getValues(self):
+    outputString = commands.getoutput("sensors | grep \"Core 0:\"")
+    cpuTempLocation = outputString.find("+")
+    if cpuTempLocation >= 0:
+      try:
+        self.cpuTemp1 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
+      except ValueError:
+        self.cpuTemp1 = -1.0
+    else:
+      self.cpuTemp1 = 0.0
+    outputString = commands.getoutput("sensors | grep \"Core 1:\"")
+    cpuTempLocation = outputString.find("+")
+    if cpuTempLocation >= 0:
+      try:
+          self.cpuTemp2 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
+      except ValueError:
+          self.cpuTemp2 = -1.0
+    else:
+      self.cpuTemp2 = 0.0
+    outputString = commands.getoutput("sensors | grep \"Core 2:\"")
+    cpuTempLocation = outputString.find("+")
+    if cpuTempLocation >= 0:
+      try:
+          self.cpuTemp3 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
+      except ValueError:
+          self.cpuTemp3 = -1.0
+    else:
+      self.cpuTemp3 = 0.0
+    outputString = commands.getoutput("sensors | grep \"Core 3:\"")
+    cpuTempLocation = outputString.find("+")
+    if cpuTempLocation >= 0:
+      try:
+        self.cpuTemp4 = float(outputString[cpuTempLocation+1:cpuTempLocation+5])
+      except ValueError:
+        self.cpuTemp4 = -1.0
+    else:
+      self.cpuTemp4 = 0.0
+    self.cpuTemp = max(self.cpuTemp1, self.cpuTemp2, self.cpuTemp3, self.cpuTemp4)
 
-        outputString = commands.getoutput("sensors | grep \"fan1:\"")
-        split = outputString.split()
-        if(len(split) >= 2):
-          self.fanSpeed = split[1]
-        else:
-          self.fanSpeed = " "
+    outputString = commands.getoutput("sensors | grep \"fan1:\"")
+    split = outputString.split()
+    if(len(split) >= 2):
+      self.fanSpeed = split[1]
+    else:
+      self.fanSpeed = " "
 
-        outputString = commands.getoutput("sensors | grep \"fan2:\"")
-        split = outputString.split()
-        if(len(split) >= 2):
-          self.fanSpeed += "/" + split[1]
-        else:
-          self.fanSpeed += "/ "
+    outputString = commands.getoutput("sensors | grep \"fan2:\"")
+    split = outputString.split()
+    if(len(split) >= 2):
+      self.fanSpeed += "/" + split[1]
+    else:
+      self.fanSpeed += "/ "
 
 
-        outputString = commands.getoutput("sensors | grep \"fan3:\"")
-        split = outputString.split()
-        if(len(split) >= 2):
-          self.fanSpeed += "/" + split[1]
-        else:
-          self.fanSpeed += "/ "
+    outputString = commands.getoutput("sensors | grep \"fan3:\"")
+    split = outputString.split()
+    if(len(split) >= 2):
+      self.fanSpeed += "/" + split[1]
+    else:
+      self.fanSpeed += "/ "
 
 class GpuStatus:
-    def __init__(self):
-      self.gpuInstalled = True      
-      if gpuInstalled==True:
+  def __init__(self):
+    self.gpuInstalled = True      
+    if gpuInstalled==True:
+      try:
+        nvmlInit()
+      except NVMLError as e:
+        self.gpuInstalled=False
+    self.device = "N/A"
+    self.driver = "N/A"
+    self.memory = "N/A"
+    self.fan = "N/A"
+    self.temp = "N/A"
+    self.utilization = "N/A"
+    self.power = "N/A"
+  def convert_size(self, size_bytes):
+   if size_bytes == 0:
+     return "0B"
+   size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+   i = int(math.floor(math.log(size_bytes, 1024)))
+   p = math.pow(1024, i)
+   s = round(size_bytes / p, 2)
+   return "%s%s" % (s, size_name[i])
+
+  def getValues(self):
+      #only try to query GPU if nvml was sucessfully init
+      if self.gpuInstalled==True:
+        # assumes only 1 GPU installed, at index 0          
+        handle = nvmlDeviceGetHandleByIndex(0)
+        
         try:
-          nvmlInit()
+          self.device = nvmlDeviceGetName(handle)
         except NVMLError as e:
-          self.gpuInstalled=False
-      self.device = "N/A"
-      self.driver = "N/A"
-      self.memory = "N/A"
-      self.fan = "N/A"
-      self.temp = "N/A"
-      self.utilization = "N/A"
-      self.power = "N/A"
-    def convert_size(self, size_bytes):
-     if size_bytes == 0:
-       return "0B"
-     size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-     i = int(math.floor(math.log(size_bytes, 1024)))
-     p = math.pow(1024, i)
-     s = round(size_bytes / p, 2)
-     return "%s%s" % (s, size_name[i])
+          self.device = str(e)
 
-    def getValues(self):
-        #only try to query GPU if nvml was sucessfully init
-        if self.gpuInstalled==True:
-          # assumes only 1 GPU installed, at index 0          
-          handle = nvmlDeviceGetHandleByIndex(0)
-          
-          try:
-            self.device = nvmlDeviceGetName(handle)
-          except NVMLError as e:
-            self.device = str(e)
+        try:
+          self.driver = nvmlSystemGetDriverVersion()
+        except NVMLError as e:
+          self.driver = str(e)
 
-          try:
-            self.driver = nvmlSystemGetDriverVersion()
-          except NVMLError as e:
-            self.driver = str(e)
+        try:
+          memory = nvmlDeviceGetMemoryInfo(handle)
+          self.memory = self.convert_size(memory.used)+"/"+self.convert_size(memory.free)+"/"+self.convert_size(memory.total)
+        except NVMLError as e:
+          self.memory = str(e)
 
-          try:
-            memory = nvmlDeviceGetMemoryInfo(handle)
-            self.memory = self.convert_size(memory.used)+"/"+self.convert_size(memory.free)+"/"+self.convert_size(memory.total)
-          except NVMLError as e:
-            self.memory = str(e)
+        try:
+          fanSpeed = nvmlDeviceGetFanSpeed(handle)
+          self.fan = str(fanSpeed)+"%"
+        except NVMLError as e:
+          self.fan = str(e)
 
-          try:
-            fanSpeed = nvmlDeviceGetFanSpeed(handle)
-            self.fan = str(fanSpeed)+"%"
-          except NVMLError as e:
-            self.fan = str(e)
+        try:
+          temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
+          self.temp  = str(temp)+"C"
+        except NVMLError as e:
+          self.temp = str(e)
 
-          try:
-            temp = nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU)
-            self.temp  = str(temp)+"C"
-          except NVMLError as e:
-            self.temp = str(e)
-
-          try:
-            utilization = nvmlDeviceGetUtilizationRates(handle)
-            self.utilization = str(utilization.gpu)+"%"
-          except NVMLError as e:
-            self.utilization = str(e)
-          
-          try:
-            power = nvmlDeviceGetPowerUsage(handle)
-            #convert reading in milliwatt to W
-            self.power = str(power/1000.0)+"W"
-          except NVMLError as e:
-            self.power = str(e)
+        try:
+          utilization = nvmlDeviceGetUtilizationRates(handle)
+          self.utilization = str(utilization.gpu)+"%"
+        except NVMLError as e:
+          self.utilization = str(e)
+        
+        try:
+          power = nvmlDeviceGetPowerUsage(handle)
+          #convert reading in milliwatt to W
+          self.power = str(power/1000.0)+"W"
+        except NVMLError as e:
+          self.power = str(e)
           
 
 if __name__ == '__main__':
@@ -341,12 +341,12 @@ if __name__ == '__main__':
         status.values.append(KeyValue(key='Power Supply 12v Rail', value=str(powerSupplyHandler.V12)))
         status.values.append(KeyValue(key='Power Supply Temp', value=str(powerSupplyHandler.temp)))
             
-        status.values.append(KeyValue(key='CPU Temp', value=str(tempStatusPublisher.cpuTemp)))
-        if tempStatusPublisher.cpuTemp >= rospy.get_param('/systemStatus/cpuTempCrit'):
-          status.values.append(KeyValue(key='CPU CRITICALLY HOT', value=chr(2)))
-        elif tempStatusPublisher.cpuTemp >= rospy.get_param('/systemStatus/cpuTempHigh'):
-          status.values.append(KeyValue(key='CPU HOT', value=chr(1)))
-        status.values.append(KeyValue(key='Fan 1/2/3 (case/CPU/case) Speeds', value=tempStatusPublisher.fanSpeed))
+      status.values.append(KeyValue(key='CPU Temp', value=str(tempStatusPublisher.cpuTemp)))
+      if tempStatusPublisher.cpuTemp >= rospy.get_param('/systemStatus/cpuTempCrit'):
+        status.values.append(KeyValue(key='CPU CRITICALLY HOT', value=chr(2)))
+      elif tempStatusPublisher.cpuTemp >= rospy.get_param('/systemStatus/cpuTempHigh'):
+        status.values.append(KeyValue(key='CPU HOT', value=chr(1)))
+      status.values.append(KeyValue(key='Fan 1/2/3 (case/CPU/case) Speeds', value=tempStatusPublisher.fanSpeed))
 
       # WiFi status is not currently published by our driver
       status.values.append(KeyValue(key='WiFi Quality', value=str(wirelessStatusPublisher.linkQuality)))
