@@ -65,6 +65,7 @@ using symbol_shorthand::X;
 using symbol_shorthand::V;
 using symbol_shorthand::B;
 using symbol_shorthand::G; // GPS pose
+using symbol_shorthand::S; // visual slam/odometery
 
 
 
@@ -259,29 +260,22 @@ namespace autorally_core
   void StateEstimator::GetAccGyro(sensor_msgs::ImuConstPtr imu, Vector3 &acc, Vector3 &gyro)
   {
     double accx, accy, accz;
-    if (invertx_) accx = -imu->linear_acceleration.x;
-    else accx = imu->linear_acceleration.x;
-    if (inverty_) accy = -imu->linear_acceleration.y;
-    else accy = imu->linear_acceleration.y;
-    if (invertz_) accz = -imu->linear_acceleration.z;
-    else accz = imu->linear_acceleration.z;
+    accx = (invertx_) ? -imu->linear_acceleration.x : imu->linear_acceleration.x;
+    accy = (inverty_) ? -imu->linear_acceleration.y : imu->linear_acceleration.y;
+    accz = (invertz_) ? -imu->linear_acceleration.z : imu->linear_acceleration.z;
     acc = Vector3(accx, accy, accz);
 
     double gx, gy, gz;
-    if (invertx_) gx = -imu->angular_velocity.x;
-    else gx = imu->angular_velocity.x;
-    if (inverty_) gy = -imu->angular_velocity.y;
-    else gy = imu->angular_velocity.y;
-    if (invertz_) gz = -imu->angular_velocity.z;
-    else gz = imu->angular_velocity.z;
-
+    gx = (invertx_) ? -imu->angular_velocity.x : imu->angular_velocity.x;
+    gy = (inverty_) ? -imu->angular_velocity.y : imu->angular_velocity.y;
+    gz = (invertz_) ? -imu->angular_velocity.z : imu->angular_velocity.z;
     gyro = Vector3(gx, gy, gz);
   }
 
 
   void StateEstimator::GpsHelper()
   {
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(15);
     bool gotFirstFix = false;
     double startTime;
     int odomKey = 1;
@@ -291,6 +285,11 @@ namespace autorally_core
     Vector3 prevVel = (Vector(3) << 0.0,0.0,0.0).finished();
     Pose3 prevPose;
     unsigned char status = autorally_msgs::stateEstimatorStatus::OK;
+
+    double lastGPSTime;
+    int gpsKey = 1;
+    Key lastPositionKey = X(0);
+    double lastTime;
 
 
     while (ros::ok())
@@ -302,6 +301,9 @@ namespace autorally_core
         sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
         startTime = ROS_TIME(fix);
         lastOdom_ = odomOptQ_.popBlocking();
+
+        lastGPSTime = ROS_TIME(fix);
+        lastTime = lastGPSTime;
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
@@ -330,7 +332,9 @@ namespace autorally_core
             Point3(E, N, U));
         prevPose = x0;
         PriorFactor<Pose3> priorPose(X(0), x0, priorNoisePose_);
+        //PriorFactor<Pose3> priorPoseVO(S(0), x0, priorNoisePose_);
         newFactors.add(priorPose);
+        //newFactors.add(priorPoseVO);
         PriorFactor<Vector3> priorVel(V(0), Vector3(0, 0, 0), priorNoiseVel_);
         newFactors.add(priorVel);
         Vector biases((Vector(6) << 0, 0, 0, initialPose_.bias.x,
@@ -344,8 +348,13 @@ namespace autorally_core
             noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
         newFactors.add(imuPgpsFactor);
 
+        // we assume identity transform between the first vo and position variables
+        newFactors.add( BetweenFactor<Pose3>(X(0), S(0), Pose3::identity(),
+              noiseModel::Diagonal::Sigmas( (Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished() )) );
+
         // add prior values on pose, vel and bias
         newVariables.insert(X(0), x0);
+        newVariables.insert(S(0), x0); // adding first VO based symbol tied to 
         newVariables.insert(V(0), Vector3(0, 0, 0));
         newVariables.insert(B(0), imuBias::ConstantBias(biases));
         newVariables.insert(G(0), x0.compose(imuPgps_));
@@ -362,19 +371,84 @@ namespace autorally_core
         }
 
         loop_rate.sleep();
+        loop_rate.sleep();
+        loop_rate.sleep();
+        loop_rate.sleep();
+        loop_rate.sleep();
       }
       else
       {
         NonlinearFactorGraph newFactors;
         Values newVariables;
 
+        //std::vector< std::pair<double,Key> > interpolateTimes{}; // timestamps that imu/odom measurements must interpolate between
+        std::vector< std::tuple<double,Key,int> > interpolateTimes{}; // timestamps that imu/odom measurements must interpolate between
 
-        // add IMU measurements
-        while (imuOptQ_.size() > 0 && (ROS_TIME(imuOptQ_.back()) > (startTime + imuKey * 0.1)))
+
+
+        // add all vo messages that are available and behind in time of the latest imu message
+        while (voOptQ_.size() > 0 && imuOptQ_.size() > 0 && (ROS_TIME(voOptQ_.front()) < ROS_TIME(imuOptQ_.back())))
         {
-          double curTime = startTime + imuKey * 0.1;
+          geometry_msgs::PoseStampedPtr incrementalPose = voOptQ_.popBlocking();
+          // parse the frame_id
+          std::string frame_id = incrementalPose->header.frame_id;
+          int ind = frame_id.find("T");
+          int key1 = std::stoi( frame_id.substr(0,ind) );
+          int key2 = std::stoi( frame_id.substr(ind+1,frame_id.size()) );
+          Rot3 incrementalRotation( incrementalPose->pose.orientation.x, incrementalPose->pose.orientation.y,
+                                    incrementalPose->pose.orientation.z, incrementalPose->pose.orientation.w );
+          Point3 incrementalPosition( incrementalPose->pose.position.x, incrementalPose->pose.position.y,
+                                      incrementalPose->pose.position.z );
+          newFactors.add( BetweenFactor<Pose3>( S(key1), S(key2), Pose3(incrementalRotation, incrementalPosition),
+              noiseModel::Diagonal::Sigmas( (Vector(6) << 0.1,0.1,0.1,0.25,0.25,0.25).finished() ) ));
+
+          interpolateTimes.push_back(std::make_tuple( ROS_TIME(incrementalPose), S(key2), -1 ));
+
+          std::cout << "adding vo message from " << key1 << " to " << key2 << std::endl << incrementalPosition << std::endl;
+        }
+
+
+        // pull all gps messages we want to add to the graph - messages spaced ~.1s apart
+        // do not add them until we have checked them against imu factors for errors
+        std::vector< std::pair<sensor_msgs::NavSatFixConstPtr, int> > gpsMessages{};
+        std::cout << "in loop - gpsQ size: " << gpsOptQ_.size() << " imu Q size: " << imuOptQ_.size();
+        if (gpsOptQ_.size() != 0 && imuOptQ_.size() != 0)
+          std::cout << " time diff+: " << (ROS_TIME(imuOptQ_.back()) - ROS_TIME(gpsOptQ_.front()));
+        std::cout << std::endl;
+
+        while (gpsOptQ_.size() > 0 && imuOptQ_.size() > 0 && ROS_TIME(gpsOptQ_.front()) < ROS_TIME(imuOptQ_.back()))
+        {
+          sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
+          if ((ROS_TIME(fix) - lastGPSTime) > 0.09)
+          {
+            // add gps message
+            gpsMessages.push_back( std::pair<sensor_msgs::NavSatFixConstPtr, Key>(fix, gpsKey) );
+            // imu will interpolate to the X key and GPS will add constraint between G and X
+            interpolateTimes.push_back( std::make_tuple( ROS_TIME(fix), X(gpsKey), gpsKey ));
+            lastGPSTime = ROS_TIME(fix);
+
+            std::cout << "adding gps message " << gpsKey << std::endl;
+            ++gpsKey;
+          }
+        }
+
+        // sort the time key pairs in reverse order - we will pop them off and interpolate between one at a time
+        std::sort(interpolateTimes.begin(), interpolateTimes.end(), [](const std::tuple<double,Key,int> &l, const std::tuple<double,Key,int> &r) {
+            return std::get<0>(l) > std::get<0>(r);
+        });
+
+
+
+        // add IMU measurements - interpolation
+        while (interpolateTimes.size() != 0)
+        {
+          double time = std::get<0>(interpolateTimes.back());
+          Key currentPositionKey = std::get<1>(interpolateTimes.back());
+          int tempGPSKey = std::get<2>(interpolateTimes.back());
+          interpolateTimes.pop_back();
+
           PreintegratedImuMeasurements pre_int_data(preintegrationParams_, previousBias_);
-          while(ROS_TIME(lastIMU_) < curTime)
+          while(ROS_TIME(lastIMU_) < time)
           {
             Vector3 acc, gyro;
             GetAccGyro(lastIMU_, acc, gyro);
@@ -384,67 +458,69 @@ namespace autorally_core
             lastIMU_ = imuOptQ_.popBlocking();
           }
           // adding the integrated IMU measurements to the factor graph
-          ImuFactor imuFactor(X(imuKey-1), V(imuKey-1), X(imuKey), V(imuKey), B(imuKey-1), pre_int_data);
+          ImuFactor imuFactor(lastPositionKey, V(imuKey-1), currentPositionKey, V(imuKey), B(imuKey-1), pre_int_data);
           newFactors.add(imuFactor);
           newFactors.add(BetweenFactor<imuBias::ConstantBias>(B(imuKey-1), B(imuKey), imuBias::ConstantBias(),
-              noiseModel::Diagonal::Sigmas( sqrt(pre_int_data.deltaTij()) * noiseModelBetweenBias_sigma_)));
+              noiseModel::Diagonal::Sigmas( sqrt(pre_int_data.deltaTij()) * noiseModelBetweenBias_sigma_ )));
+
+
+
+          // add wheel odom factor
+          //newFactors.add( integrateWheelOdom(lastTime, time, lastPositionKey, currentPositionKey) );
 
           // Predict forward to get an initial estimate for the pose and velocity
           NavState curNavState(prevPose, prevVel);
           NavState nextNavState = pre_int_data.predict(curNavState, prevBias);
-          newVariables.insert(X(imuKey), nextNavState.pose());
+          newVariables.insert(currentPositionKey, nextNavState.pose());
           newVariables.insert(V(imuKey), nextNavState.v());
           newVariables.insert(B(imuKey), previousBias_);
-          newVariables.insert(G(imuKey), nextNavState.pose().compose(imuPgps_));
+          if (tempGPSKey > 0)
+            newVariables.insert(G(tempGPSKey), nextNavState.pose().compose(imuPgps_));
           prevPose = nextNavState.pose();
           prevVel = nextNavState.v();
           ++imuKey;
+          lastPositionKey = currentPositionKey;
+          lastTime = time;
           optimize = true;
         }
 
 
-        // add GPS measurements that are not ahead of the imu messages
-        while (optimize && gpsOptQ_.size() > 0 && ROS_TIME(gpsOptQ_.front()) < (startTime + (imuKey-1)*0.1 + 1e-2))
+        while (gpsMessages.size() != 0)
         {
-          sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
-          double timeDiff = (ROS_TIME(fix) - startTime) / 0.1;
-          int key = round(timeDiff);
-          if (std::abs(timeDiff - key) < 1e-4)
+          sensor_msgs::NavSatFixConstPtr fix = gpsMessages.back().first;
+          int keyNumber = gpsMessages.back().second;
+          gpsMessages.pop_back();
+
+          double E,N,U;
+          enu_.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
+          
+          // check if the GPS message is close to our expected position
+          Pose3 expectedState;
+          if (newVariables.exists(X(keyNumber)))
+            expectedState = (Pose3) newVariables.at<Pose3>(X(keyNumber));
+          else
+            expectedState = isam_->calculateEstimate<Pose3>(X(keyNumber));
+
+          double dist = std::sqrt( std::pow(expectedState.x() - E, 2) + std::pow(expectedState.y() - N, 2) );
+          if (dist < maxGPSError_)
           {
-            // this is a gps message for a factor
-            latestGPSKey = key;
-            double E,N,U;
-            enu_.Forward(fix->latitude, fix->longitude, fix->altitude, E, N, U);
-
-            // check if the GPS message is close to our expected position
-            Pose3 expectedState;
-            if (newVariables.exists(X(key)))
-              expectedState = (Pose3) newVariables.at<Pose3>(X(key));
-            else
-              expectedState = isam_->calculateEstimate<Pose3>(X(key));
-
-            double dist = std::sqrt( std::pow(expectedState.x() - E, 2) + std::pow(expectedState.y() - N, 2) );
-            if (dist < maxGPSError_ || latestGPSKey < imuKey-2)
-            {
-              SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
-              GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
-              newFactors.add(gpsFactor);
-              BetweenFactor<Pose3> imuPgpsFactor(X(key), G(key), imuPgps_,
-                  noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
-              newFactors.add(imuPgpsFactor);
-
-              if (!usingOdom_)
-                odomKey = key+1;
-            }
-            else
-            {
-              ROS_WARN("Received bad GPS message");
-              diag_warn("Received bad GPS message");
-            }
+            SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
+            GPSFactor gpsFactor(G(keyNumber), Point3(E, N, U), gpsNoise);
+            newFactors.add(gpsFactor);
+            BetweenFactor<Pose3> imuPgpsFactor(X(keyNumber), G(keyNumber), imuPgps_,
+                noiseModel::Diagonal::Sigmas((Vector(6) << 0.001,0.001,0.001,0.03,0.03,0.03).finished()));
+            newFactors.add(imuPgpsFactor);
+          }
+          else
+          {
+            ROS_WARN("Received bad GPS message");
+            diag_warn("Received bad GPS message");
           }
         }
 
 
+
+        /*
         // if only using odom with no GPS, then remove old messages from queue
         while (!usingOdom_ && odomOptQ_.size() > 0 && ROS_TIME(odomOptQ_.front()) < (odomKey*0.1 + startTime))
           lastOdom_ = odomOptQ_.popBlocking();
@@ -455,7 +531,7 @@ namespace autorally_core
         {
           double prevTime = startTime + (odomKey-1) * 0.1;
           newFactors.add(integrateWheelOdom(prevTime, prevTime+0.1, odomKey++));
-        }
+        } */
 
 
         // if we processed imu - then we can optimize the state
@@ -463,13 +539,22 @@ namespace autorally_core
         {
           try
           {
+            std::cout << "new factors" << std::endl;
+            newFactors.print();
+            std::cout << "new variables" << std::endl;
+            newVariables.print();
+
+            //std::cout<< "old factors" << std::endl;
+            //isam_->print();
+
             isam_->update(newFactors, newVariables);
-            Pose3 nextState = isam_->calculateEstimate<Pose3>(X(imuKey-1));
+            Pose3 nextState = isam_->calculateEstimate<Pose3>(lastPositionKey);
 
             prevPose = nextState;
             prevVel = isam_->calculateEstimate<Vector3>(V(imuKey-1));
             prevBias = isam_->calculateEstimate<imuBias::ConstantBias>(B(imuKey-1));
 
+            /*
             // if we haven't added gps data for 2 message (0.2s) then change status
             if (latestGPSKey + 3 < imuKey)
             {
@@ -480,20 +565,17 @@ namespace autorally_core
             {
               status = autorally_msgs::stateEstimatorStatus::OK;
               diag_ok("Still ok!");
-            }
+            }*/
 
-            double curTime = startTime + (imuKey-1) * 0.1;
 
             {
               boost::mutex::scoped_lock guard(optimizedStateMutex_);
               optimizedState_ = NavState(prevPose, prevVel);
               optimizedBias_ = prevBias;
-              optimizedTime_ = curTime;
+              optimizedTime_ = lastTime;
               status_ = status;
             }
 
-            nav_msgs::Odometry poseNew;
-            poseNew.header.stamp = ros::Time(curTime);
 
             geometry_msgs::Point ptAcc;
             ptAcc.x = prevBias.vector()[0];
@@ -649,7 +731,7 @@ namespace autorally_core
   }
 
 
-  BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime, int curKey)
+  BetweenFactor<Pose3> StateEstimator::integrateWheelOdom(double prevTime, double stopTime, Key previousKey, Key currentKey)
   {
     double x=0, y=0, theta=0, xVar=0, yVar=0, zVar=0, thetaVariance=0, dt=0, lastTimeUsed=prevTime;
 
@@ -681,7 +763,7 @@ namespace autorally_core
     }
 
     Pose3 betweenPose = Pose3(Rot3::Rz(theta), Point3(x, y, 0.0));
-    return BetweenFactor<Pose3>(X(curKey-1), X(curKey), betweenPose, noiseModel::Diagonal::Sigmas(
+    return BetweenFactor<Pose3>(previousKey, currentKey, betweenPose, noiseModel::Diagonal::Sigmas(
           (Vector(6) << thetaVariance*2,thetaVariance*2,thetaVariance,xVar,yVar,zVar).finished()));
   }
 

@@ -132,7 +132,7 @@ namespace autorally_core
     void VOCallback(geometry_msgs::PoseStampedPtr vo);
     void GpsHelper();
     void diagnosticStatus(const ros::TimerEvent& time);
-    gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime, int curFactor);
+    gtsam::BetweenFactor<gtsam::Pose3> integrateWheelOdom(double prevTime, double stopTime, gtsam::Key previousKey, gtsam::Key currentKey);
     void GetAccGyro(sensor_msgs::ImuConstPtr imu, gtsam::Vector3 &acc, gtsam::Vector3 &gyro);
   };
 
