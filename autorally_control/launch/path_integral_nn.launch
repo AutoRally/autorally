@@ -50,6 +50,8 @@
     <param name="crash_coeff" value="10000.0" />
     <param name="steering_coeff" value="0.0" />
     <param name="throttle_coeff" value="0.0" />
+    <param name="boundary_threshold" value="0.65" />
+    <param name="discount" value = "0.1" />
     <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo/" />
   </node>
 

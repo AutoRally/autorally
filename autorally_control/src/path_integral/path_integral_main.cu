@@ -62,7 +62,7 @@ using namespace autorally_control;
 const int MPPI_NUM_ROLLOUTS__ = 1200;
 const int BLOCKSIZE_X = 8;
 const int BLOCKSIZE_Y = 16;
-typedef NeuralNetModel<7,2,CarKinematics,3,6,32,32,4> DynamicsModel;
+typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsModel;
 
 #elif USE_BASIS_FUNC_MODEL__ /*Use the basis function model*/
 
@@ -80,8 +80,6 @@ int main(int argc, char** argv) {
   //Ros node initialization
   ros::init(argc, argv, "mppi_controller");
   ros::NodeHandle mppi_node("~");
-
-  std::cout << __CUDACC_VER_MAJOR__ << ", " << __CUDACC_VER_MINOR__ << ", " << __CUDACC_VER__ << std::endl; 
 
   //Load setup parameters
   SystemParams params;
