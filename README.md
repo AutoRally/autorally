@@ -48,7 +48,7 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 
 3. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
 
-4. __Install MPPI Dependencies (only if you have a GPU and will run MPPI)__
+4. __Install MPPI Dependencies (if you have a GPU and will run MPPI)__
 
     The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
 

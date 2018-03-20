@@ -23,6 +23,11 @@ SUBSYSTEM=="tty", ATTRS{serial}=="XBEE_ADAPTER_SERIAL", MODE="0666", SYMLINK+="a
 # Arduino Due in the chassis
 SUBSYSTEM=="tty", ATTRS{manufacturer}=="Arduino (www.arduino.org)", ATTRS{idProduct}=="003d", ATTRS{product}=="Arduino Due Prog. Port", MODE="0666", SYMLINK+="arChassis"
 
+#Teensy rules if using a Teensy-LC as the compute box microcontroller and runstop box, and the Teensy 3.6 in the electronics box
+SUBSYSTEM=="tty", ATTRS{serial}=="3426320", MODE="0666", SYMLINK+="arComputeBoxArduino"
+SUBSYSTEM=="tty", ATTRS{serial}=="3426328", MODE="0666", SYMLINK+="arRunStop"
+SUBSYSTEM=="tty", ATTRS{serial}=="3826328", MODE="0666", SYMLINK+="arChassis"
+
 #
 # The following rules do not need to be customized
 #
