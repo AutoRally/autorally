@@ -28,6 +28,7 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 4. [Compilation/Running](#4-compilation-running)
 5. [Generate Documentation](#5-generate-documentation)
 6. [Test Setup in Simulation](#6-test-setup-in-simulation)
+7. [Autonomous Driving in Simulation](#7-autonomous-driving-in-simulation)
 
 ### 1. Install Prerequisites
 1. __Install [Ubuntu 16.04 64-bit](http://www.ubuntu.com)__
@@ -37,23 +38,23 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 
    _Recommended Tools_
 
-   The following tools are useful, but not necessary for this project.
-   * feh
+   The following tools are useful, but not required for this project.
    * cutecom
    * cmake-curses-gui
-   * coriander
    * synaptic
-   * arduino (latest version of [Arduino IDE](https://www.arduino.cc/en/Main/Software))
    * python-termcolor
+   
+   ```sudo apt-get install cutecom cmake-curses-gui synaptic python-termcolor```
 
-3. __Install MPPI Dependencies (only if you have a GPU and will run MPPI)__
+3. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
+
+4. __Install MPPI Dependencies (if you have a GPU and will run MPPI)__
 
     The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
 
     * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
     * [Install CNPY](https://github.com/rogersce/cnpy)
 
-4. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
 5. __Install gtsam__
 
 

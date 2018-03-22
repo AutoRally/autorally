@@ -1,11 +1,11 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
   <node pkg="autorally_core" type="systemStatus.py" name="systemStatus" machine="autorally-master" output="screen">
-    <param name="cpuTempHigh" value="77" />
-    <param name="cpuTempCrit" value="90" />
+    <param name="cpuTempHigh" value="85" />
+    <param name="cpuTempCrit" value="95" />
     <param name="batteryLow" value="50" />
     <param name="batteryCrit" value="20" />
-    <param name="wirelessLow" value="0" />
+    <param name="wirelessLow" value="10" />
     <param name="wirelessCrit" value="0" />
     <param name="dataDrive" value="/media/data" />
     <param name="dataDriveSpaceHighPercent" value="75" />

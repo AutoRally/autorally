@@ -32,18 +32,21 @@
  *
  ***********************************************/
 
-//Some versions of boost require __CUDACC_VER__, which is no longer defined in CUDA 9. This is
-//the old expression for how it was defined, so should work for CUDA 9 and under.
-#define __CUDACC_VER__ __CUDACC_VER_MAJOR__ * 10000 + __CUDACC_VER_MINOR__ * 100 + __CUDACC_VER_BUILD__ 
-
 #include <autorally_control/path_integral/meta_math.h>
 #include <autorally_control/path_integral/param_getter.h>
 
-#include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/costs.cuh>
 #include <autorally_control/path_integral/generalized_linear.cuh>
+
+//Including neural net model
+#ifdef MPPI_NNET_USING_CONSTANT_MEM__
+__device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
+#endif
+#include <autorally_control/path_integral/neural_net_model.cuh>
+
 #include <autorally_control/path_integral/car_bfs.cuh>
 #include <autorally_control/path_integral/car_kinematics.cuh>
+#include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/run_control_loop.cuh>
 
 #include <ros/ros.h>
@@ -52,12 +55,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifdef MPPI_NNET_USING_CONSTANT_MEM__
-__device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
-#endif
-
-#include <autorally_control/path_integral/neural_net_model.cuh>
-
 using namespace autorally_control;
 
 #ifdef USE_NEURAL_NETWORK_MODEL__ /*Use neural network dynamics model*/
@@ -65,7 +62,7 @@ using namespace autorally_control;
 const int MPPI_NUM_ROLLOUTS__ = 1200;
 const int BLOCKSIZE_X = 8;
 const int BLOCKSIZE_Y = 16;
-typedef NeuralNetModel<7,2,CarKinematics,3,6,32,32,4> DynamicsModel;
+typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsModel;
 
 #elif USE_BASIS_FUNC_MODEL__ /*Use the basis function model*/
 
@@ -83,8 +80,6 @@ int main(int argc, char** argv) {
   //Ros node initialization
   ros::init(argc, argv, "mppi_controller");
   ros::NodeHandle mppi_node("~");
-
-  std::cout << __CUDACC_VER_MAJOR__ << ", " << __CUDACC_VER_MINOR__ << ", " << __CUDACC_VER__ << std::endl; 
 
   //Load setup parameters
   SystemParams params;

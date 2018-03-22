@@ -12,7 +12,7 @@
 * this list of conditions and the following disclaimer in the documentation
 * and/or other materials provided with the distribution.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+3* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
@@ -30,11 +30,11 @@
  * @copyright 2017 Georgia Institute of Technology
  * @brief MPPICosts class implementation
  ***********************************************/
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "gpu_err_chk.h"
 #include "debug_kernels.cuh"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace autorally_control {
 
@@ -128,7 +128,8 @@ inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsCo
 inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
 {
   double desired_speed, speed_coeff, track_coeff, max_slip_ang, 
-          slip_penalty, track_slop, crash_coeff, steering_coeff, throttle_coeff;
+          slip_penalty, track_slop, crash_coeff, steering_coeff, throttle_coeff, 
+          boundary_threshold, discount;
   int num_timesteps;
   //Read parameters from the ROS parameter server
   mppi_node.getParam("desired_speed", desired_speed);
@@ -141,6 +142,9 @@ inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
   mppi_node.getParam("steering_coeff", steering_coeff);
   mppi_node.getParam("throttle_coeff", throttle_coeff);
   mppi_node.getParam("num_timesteps", num_timesteps);
+  mppi_node.getParam("boundary_threshold", boundary_threshold);
+  mppi_node.getParam("discount", discount);
+
 
   //Transfer to the cost params struct
   params_.desired_speed = (float)desired_speed;
@@ -152,7 +156,9 @@ inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
   params_.crash_coeff = (float)crash_coeff;
   params_.steering_coeff = (float)steering_coeff;
   params_.throttle_coeff = (float)throttle_coeff;
-  params_.num_timesteps = num_timesteps;
+  params_.boundary_threshold = (float)boundary_threshold;
+  params_.discount = (float)discount;
+  params_.num_timesteps = (int)num_timesteps;
   //Move the updated parameters to gpu memory
   paramsToDevice();
 }
@@ -182,8 +188,8 @@ inline std::vector<float> MPPICosts::loadTrackData(const char* costmap_path, Eig
   strcat(file_path, "track_data.txt");
   track_data_file=fopen(file_path, "r");
   if (track_data_file == NULL) {
-  	ROS_INFO("Error opening track data file: No such file or directory: %s \n", file_path);
-  	ros::shutdown();
+    ROS_INFO("Error opening track data file: No such file or directory: %s \n", file_path);
+    ros::shutdown();
   }
   //Read the parameters from the file
   float x_min, x_max, y_min, y_max, resolution;
@@ -199,8 +205,8 @@ inline std::vector<float> MPPICosts::loadTrackData(const char* costmap_path, Eig
   std::vector<float> track_costs(width_*height_);
   //Scan the result of the file to load track parameters
   for (i = 0; i < width_*height_; i++) {
-  	success = success && fscanf(track_data_file, "%f", &p);
-  	track_costs[i] = p;
+    success = success && fscanf(track_data_file, "%f", &p);
+    track_costs[i] = p;
   }
   if (!success){
     ROS_INFO("Warning track parameters not read succesfully.");
@@ -294,9 +300,8 @@ inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash)
 {
   float cost = 0;
   if (params_d_->desired_speed < 999.0){
-    float speed = 0;
+    float speed = fabs(s[4]);
     if (s[4] > 0){
-      speed = s[4];
       cost = params_d_->speed_coeff*powf(speed - params_d_->desired_speed, 2);
     }else {
       cost = params_d_->speed_coeff*powf(speed + params_d_->desired_speed, 2);
@@ -333,7 +338,7 @@ inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s)
     stabilizing_cost = params_d_->slip_penalty*powf(slip,2);
     if (fabs(-atan(s[5]/fabs(s[4]))) > params_d_->max_slip_ang) {
       //If the slip angle is above the max slip angle kill the trajectory.
-      stabilizing_cost += 100000.0;
+      stabilizing_cost += params_d_->crash_coeff;
     }
   }
   return stabilizing_cost;
@@ -374,7 +379,7 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
   else {
     track_cost = params_d_->track_coeff*track_cost;
   }
-  if (fabs(track_cost_front) >= .95 || fabs(track_cost_back) >= .95) {
+  if (track_cost_front >= params_d_->boundary_threshold || track_cost_back >= params_d_->boundary_threshold) {
     crash[0] = 1;
   }
   return track_cost;
@@ -387,7 +392,7 @@ inline __device__ float MPPICosts::computeCost(float* s, float* u, float* du,
   float control_cost = getControlCost(u, du, vars);
   float track_cost = getTrackCost(s, crash);
   float speed_cost = getSpeedCost(s, crash);
-  float crash_cost = powf(DISCOUNT, timestep)*getCrashCost(s, crash, timestep); //Time decaying crash penalty
+  float crash_cost = (1.0 - params_.discount)*getCrashCost(s, crash, timestep);
   float stabilizing_cost = getStabilizingCost(s);            
   float cost = control_cost + speed_cost + crash_cost + track_cost + stabilizing_cost;
   if (cost > 1e9 || isnan(cost)) {
@@ -402,4 +407,5 @@ inline __device__ float MPPICosts::terminalCost(float* s)
 }
 
 }
+
 

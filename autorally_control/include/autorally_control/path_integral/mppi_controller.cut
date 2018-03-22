@@ -287,6 +287,7 @@ MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DY
   traj_costs_ = new float[NUM_ROLLOUTS];
   //Initialize the recording arrays
   nominal_traj_ = new float[num_timesteps_*STATE_DIM];
+  importance_sampler_ = new float[num_timesteps_*STATE_DIM];
   //Initialize the random number generator.
   curandCreateGenerator(&gen_, CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen_, 1234ULL);
@@ -380,7 +381,7 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::savitskyGola
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state)
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state, float* traj)
 {
   int i,j;
   Eigen::MatrixXf s(7,1);
@@ -389,7 +390,7 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeNomin
   for (i = 0; i < num_timesteps_; i++){
     for (j = 0; j < STATE_DIM; j++){
       int k = 0;
-      nominal_traj_[i*STATE_DIM + j] = s(j);
+      traj[i*STATE_DIM + j] = s(j);
     }
     u << U_[2*i], U_[2*i + 1];
     model_->updateState(s,u);
@@ -401,6 +402,8 @@ Eigen::MatrixXf MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::c
 {
   int i,j,opt_iter;
   clock_t startTime = clock();
+  //Compute the importance sampling trajectory
+  computeNominalTraj(state, importance_sampler_);
   //First transfer the state and current control sequence to the device.
   HANDLE_ERROR( cudaMemcpy(state_d_, state.data(), STATE_DIM*sizeof(float), cudaMemcpyHostToDevice));
   for (opt_iter = 0; opt_iter < num_iters_; opt_iter++) {
@@ -443,7 +446,7 @@ Eigen::MatrixXf MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::c
     savitskyGolay();
   }
   //Compute the planned trajectory
-  computeNominalTraj(state);
+  computeNominalTraj(state, nominal_traj_);
   //Slide the control sequence down
   for (i = 0; i < num_timesteps_- 1; i++) {
     for (j = 0; j < CONTROL_DIM; j++) {

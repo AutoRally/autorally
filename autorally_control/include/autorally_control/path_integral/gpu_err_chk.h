@@ -36,6 +36,10 @@
 
 #include <cuda_runtime.h>
 
+//Some versions of boost require __CUDACC_VER__, which is no longer defined in CUDA 9. This is
+//the old expression for how it was defined, so should work for CUDA 9 and under.
+#define __CUDACC_VER__ __CUDACC_VER_MAJOR__ * 10000 + __CUDACC_VER_MINOR__ * 100 + __CUDACC_VER_BUILD__ 
+
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess) 

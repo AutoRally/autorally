@@ -10,10 +10,13 @@
             throttle, and front brake using the Arduino Servo library
 
    @note install tc_lib found here: https://github.com/antodom/tc_lib to compile this program
+   @note make sure to install the Due board into the arduino IDE otherwise the code will not compile
  ***********************************************/
 
 #include <Servo.h>
 #include "tc_lib.h"
+
+static_assert(REFRESH_INTERVAL == 4500, "Please set the REFRESH_INTERVAL marco in Servo.h to be 4500");
 
 //input declarations for the RC inputs
 capture_tc6_declaration();
@@ -47,7 +50,7 @@ volatile unsigned long leftFrontUpdatetime;  ///< Last update time for wheel0
 
 int pulsesPerRevolution = 6;  ///< Number of magnets on each wheel
 float divisor = 0.0; ///< Divisor calculated to turn absolute pulse   into rps
-float rpsPublishPeriod = 13.0; ///< Period (in ms) for publishing arduinoData messages, 70hz
+float rpsPublishPeriod = 10.0; ///< Period (in ms) for publishing arduinoData messages, 100hz
 time_t rpsPublishTime; ///< Time that the last message was published
 
 //pinout information, also avaialble in the Electronics Box Diagram
@@ -60,6 +63,8 @@ int frontBrakePin = 8;
 int throttlePin = 9;
 int steerPin = 10;
 
+int buzzerPin = 7;
+
 int rightRearRotationPin = 18;
 int leftRearRotationPin = 19;
 int rightFrontRotationPin = 20;
@@ -69,6 +74,12 @@ int steerSrvNeutralUs = 1500; ///< default neutral value for steering
 int throttleSrvNeutralUs = 1500; ///< default neutral value for throttle
 int frontBrakeSrvNeutralUs = 1500; ///< default neutral value for front brake
 unsigned long timeOfLastServo = 0; ///< time that the last command message was received from the compute box
+
+int buzzerState = 0; // state of the buzzer 0 is on off and 2+ is error
+float buzzerDutyCycle = 0.10; //in %
+int buzzerPeriod = 2000; // Period (in ms) for starting a buzz
+int timeOfLastBuzz = 0; // time that the last buzz happened
+int errorCount = 0;
 
 ///< have to receive actuator commants at at least 10Hz to control the platform (50-60Hz recommended)
 unsigned long servoTimeoutMs = 100;
@@ -81,6 +92,7 @@ char castlLinkDeviceID = 0; ///< ESC Device ID (set to default)
 int castleLinkPeriod = 200; ///< query ESC info at 5 Hz
 char castleLinkRegisters[] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; ///< ESC data registers to query, details in Castle Serial Link
 ///< documentation
+int castleLinkCurrentRegister = 0; // current register to query
 char castleLinkData[2 * sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
 unsigned long timeOfCastleLinkData = 0; ///< last time the ESC was queried
 
@@ -96,10 +108,12 @@ void setup()
   pinMode(leftRearRotationPin, INPUT);
   pinMode(rightFrontRotationPin, INPUT);
   pinMode(leftFrontRotationPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
   digitalWrite(rightRearRotationPin, HIGH);
   digitalWrite(leftRearRotationPin, HIGH);
   digitalWrite(rightFrontRotationPin, HIGH);
   digitalWrite(leftFrontRotationPin, HIGH);
+  digitalWrite(buzzerPin, LOW);
 
   //setup the runstop detect pin
   pinMode(runStopPin, INPUT);
@@ -190,6 +204,33 @@ void loop()
     }
   }
 
+  if(buzzerState >= 2) {
+    if(timeOfLastBuzz + ((buzzerDutyCycle * 2 * buzzerPeriod) / 6) > millis()) {
+      digitalWrite(buzzerPin, HIGH);
+    } else if(timeOfLastBuzz + (buzzerPeriod / 6) > millis()) {
+      digitalWrite(buzzerPin, LOW);
+    } else if(buzzerState >= 4) {
+      digitalWrite(buzzerPin, LOW);
+      if(timeOfLastBuzz + buzzerPeriod < millis()) {
+        buzzerState = 0;
+        timeOfLastBuzz = millis();
+      }
+    } else {
+      buzzerState++;
+      timeOfLastBuzz = millis();
+    }
+  } else if(!digitalRead(runStopPin)) {
+    if(timeOfLastBuzz + buzzerDutyCycle * buzzerPeriod > millis()) {
+      digitalWrite(buzzerPin, HIGH);
+    } else if(timeOfLastBuzz + buzzerPeriod > millis()) {
+      digitalWrite(buzzerPin, LOW);
+    } else {
+      timeOfLastBuzz = millis();
+    }
+  } else {
+    digitalWrite(buzzerPin, LOW);
+  }
+
   //if no servo msg has been received in a while, set them to neutral
   if (timeOfLastServo + servoTimeoutMs < millis())
   {
@@ -234,18 +275,23 @@ void loop()
   //query ESC data and send it to the compute box
   if (timeOfCastleLinkData + castleLinkPeriod < millis())
   {
-    timeOfCastleLinkData = millis();
-    if(getCastleSerialLinkData())
-    {
-      Serial.print("#c");
-      Serial.write(castleLinkData, sizeof(castleLinkData));
-      Serial.print('\n');
+    if(castleLinkCurrentRegister >= sizeof(castleLinkRegisters)/sizeof(char)) {
+       castleLinkCurrentRegister = 0;
+       timeOfCastleLinkData = millis();
+       Serial.print("#c");
+       Serial.write(castleLinkData, sizeof(castleLinkData));
+       Serial.print('\n');
+    } else {
+      getCastleSerialLinkData();
     }
   }
 
   //send any error text up to the compute box, the message may contain multiple, concatenated errors
   if (errorMsg.length())
   {
+    if(errorCount >= 3) {
+      buzzerState =  buzzerState >= 2 ? buzzerState : 2;
+    }
     Serial.print("#e");
     Serial.print(errorMsg);
     Serial.print('\n');
@@ -382,46 +428,48 @@ bool getCastleSerialLinkData()
 {
   char request[5];
   char response[3];
-  //int count = 0;
 
   request[0] = (0x1 << 7) + castlLinkDeviceID;
   request[2] = 0;
   request[3] = 0;
 
-  for (int i = 0; i < sizeof(castleLinkRegisters); i++)
+  request[1] = castleLinkRegisters[castleLinkCurrentRegister];
+  request[4] = castleChecksum(request);
+
+  Serial3.write(request, 5);
+
+  //read 3 byte responses
+  int bytesRead = Serial3.readBytes(response, 3);
+  if (bytesRead == 3)
   {
-    request[1] = castleLinkRegisters[i];
-    request[4] = castleChecksum(request);
 
-    Serial3.write(request, 5);
-
-    //read 3 byte responses
-    int bytesRead = Serial3.readBytes(response, 3);
-    if (bytesRead == 3)
+    if ( (char)(response[0] + response[1] + response[2]) == 0)
     {
-
-      if ( (char)(response[0] + response[1] + response[2]) == 0)
+      if (response[0] == 255 && response[1] == 255) // error from serial link indicated by 0xFFFF
       {
-        if (response[0] == 255 && response[1] == 255) // error from serial link indicated by 0xFFFF
-        {
-          errorMsg += "castle link comm error on register " + ('0' + response[0]) + ',';
-          //invalid register of corrupted command
-        } else
-        {
-          castleLinkData[2 * i] = response[0];
-          castleLinkData[2 * i + 1] = response[1];
-        }
+        errorMsg += "castle link comm error on register " + ('0' + response[0]) + ',';
+        //invalid register of corrupted command
       } else
       {
-        errorMsg += "castle link comm failed checksum,";
-        return false;
+        castleLinkData[2 * castleLinkCurrentRegister] = response[0];
+        castleLinkData[2 * castleLinkCurrentRegister + 1] = response[1];
       }
     } else
     {
-      errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(i) + ",";
+      errorMsg += "castle link comm failed checksum,";
+      castleLinkCurrentRegister = 0;
+      errorCount++;
       return false;
     }
+  } else
+  {
+    errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(castleLinkCurrentRegister) + ",";
+    castleLinkCurrentRegister = 0;
+    errorCount++;
+    return false;
   }
+  castleLinkCurrentRegister++;
+  errorCount = 0;
   return true;
 }
 

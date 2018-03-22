@@ -15,6 +15,7 @@ from autorally_msgs.msg import pathIntegralStats
 #Slope, Offset, X min, X max
 gazebo_line = [1.0, 5.0, -13, -9]
 marietta_line = [1.0, -13, -3, 0]
+ccrf_line = [1.0, -26.4, -2, 2.25]
 
 def convert_quat_to_euler(quat):
 	q0 = quat.w
@@ -159,6 +160,10 @@ if __name__ == "__main__":
 		line = gazebo_line
 	elif ("marietta" in param_dict["map_path"]):
 		line = marietta_line
+	elif ("ccrf" in param_dict["map_path"]):
+		line = ccrf_line
+	elif ("SDF_Track" in param_dict["map_path"]):
+		line = ccrf_line
 	else:
 		rospy.signal_shutdown("No start line for the given map.")
 	current_lap = Lap(line, param_dict, prefix)	

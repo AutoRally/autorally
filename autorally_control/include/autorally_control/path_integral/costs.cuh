@@ -33,19 +33,17 @@
 #ifndef MPPI_COSTS_CUH_
 #define MPPI_COSTS_CUH_
 
+#include "managed.cuh"
+#include <autorally_control/PathIntegralParamsConfig.h>
+
 #include <ros/ros.h>
 #include <dynamic_reconfigure/server.h>
 
-#include <autorally_control/PathIntegralParamsConfig.h>
-
+#include <cuda_runtime.h>
 #include <vector>
 #include <eigen3/Eigen/Dense>
-
-#include <cuda_runtime.h>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "managed.cuh"
 
 namespace autorally_control {
 
@@ -79,6 +77,8 @@ public:
     float crash_coeff;
     float steering_coeff;
     float throttle_coeff;
+    float boundary_threshold;
+    float discount;
     int num_timesteps;
     int grid_res;
     float3 r_c1;
