@@ -70,7 +70,7 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 
 ### 2. Clone or Fork Repositories
 
-Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We forking over cloning if you will be working with the code.
+Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking over cloning if you will be working with the code.
 
 Also clone the IMU code into the same catkin workspace:
 
