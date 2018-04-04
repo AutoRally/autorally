@@ -33,6 +33,8 @@
 #include "gpu_err_chk.h"
 #include "debug_kernels.cuh"
 
+#include <opencv2/core/core.hpp>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -53,6 +55,7 @@ inline MPPICosts::MPPICosts(int width, int height)
 
 inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
 {
+  std::cout << "Correct" << std::endl;
   //Transform from world coordinates to normalized grid coordinates
   Eigen::Matrix3f R;
   Eigen::Array3f trs;
@@ -60,11 +63,19 @@ inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
   //Get the map path
   std::string map_path;
   mppi_node.getParam("map_path", map_path);
-  std::vector<float> track_costs = loadTrackData(map_path.c_str(), R, trs); //R and trs passed by reference
+  bool carla_map;
+  mppi_node.param("carla_map", carla_map, false);
+  if (carla_map) {
+    std::cout << "Loading Carla Data" << std::endl;
+    loadTrackDataCarla(map_path.c_str(), R, trs);
+  }
+  else {
+    std::vector<float> track_costs = loadTrackData(map_path.c_str(), R, trs); //R and trs passed by reference
+    allocateTexMem();
+    costmapToTexture(track_costs.data());
+  }
   updateTransform(R, trs);
   updateParams(mppi_node);
-  allocateTexMem();
-  costmapToTexture(track_costs.data());
   debugging_ = false;
 
   callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
@@ -220,6 +231,78 @@ inline std::vector<float> MPPICosts::loadTrackData(const char* costmap_path, Eig
   return track_costs;
 }
 
+inline void MPPICosts::loadTrackDataCarla(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs)
+{
+  int i;
+  float p;
+  FILE *track_data_file;
+  char file_path[256];
+  file_path[0] = 0;
+  strcat(file_path, costmap_path);
+  strcat(file_path, "Town01.txt");
+  track_data_file=fopen(file_path, "r");
+  if (track_data_file == NULL) {
+    ROS_INFO("Error opening track data file: No such file or directory: %s \n", file_path);
+    ros::shutdown();
+  }
+  //Read the parameters from the file
+    //Read the parameters from the file
+  bool success = true;
+
+  float world_x, world_y, world_z, map_x, map_y, map_z;
+  float angle_x, angle_y, angle_z;
+  success = success && fscanf(track_data_file, "%f,%f,%f\n", &world_x, &world_y, &world_z);
+  success = success && fscanf(track_data_file, "%f,%f,%f\n", &angle_x, &angle_y, &angle_z);
+  success = success && fscanf(track_data_file, "%f,%f,%f\n", &map_x, &map_y, &map_z);
+
+  cv::Mat image, temp, final_im;
+  file_path[0] = 0;
+  strcat(file_path, costmap_path);
+  strcat(file_path, "Town01LaneMap.png");
+  std::cout << file_path << std::endl;
+  temp = cv::imread(file_path, CV_LOAD_IMAGE_GRAYSCALE);   // Read the file
+  temp.convertTo(image, CV_32FC1);
+  image = image / 255.0;
+  cv::flip(image, final_im, 0);
+  width_ = final_im.size().width;
+  height_ = final_im.size().height;
+
+  std::cout << "Width: " << width_ << " Height: " << height_ << std::endl;
+  
+  allocateTexMem();
+  costmapToTexture((float*)final_im.data);
+
+  float x_min, x_max, y_min, y_max, resolution;
+  // x_min = (-map_x+world_x)*22;
+  // y_min = (-map_y+world_y)*22;
+  // x_max = (width_/(22/16.43*))+(-map_x+world_x)*22;
+  // y_max = (height_/(22/16.43))+(-map_y+world_y)*22;
+  // Hard coded for Town1, 2600x2200 image
+  x_min = -16.4;
+  y_min = -16.4;
+  x_max = 398+16.4;
+  y_max = 328+16.4;
+  std::cout << x_min << " " << y_min << " " << x_max << " " << y_max << " " << std::endl;
+  // //Save width_ and height_ parameters
+  // width_ = int((x_max - x_min)*resolution);
+  // height_ = int((y_max - y_min)*resolution);
+  // std::vector<float> track_costs(width_*height_);
+  // //Scan the result of the file to load track parameters
+  // for (i = 0; i < width_*height_; i++) {
+  //   success = success && fscanf(track_data_file, "%f", &p);
+  //   track_costs[i] = p;
+  // }
+  if (!success){
+    ROS_INFO("Warning track parameters not read succesfully.");
+  }
+  //Save the scaling and offset
+  R << 1./(x_max - x_min), 0,                  0,
+       0,                  1./(y_max - y_min), 0,
+       0,                  0,                  1;
+  trs << -x_min/(x_max - x_min), -y_min/(y_max - y_min), 1;
+  fclose(track_data_file);
+}
+
 inline void MPPICosts::paramsToDevice()
 {
   HANDLE_ERROR( cudaMemcpy(params_d_, &params_, sizeof(CostParams), cudaMemcpyHostToDevice) );
@@ -242,7 +325,7 @@ inline void MPPICosts::setDesiredSpeed(float desired_speed)
 
 inline void MPPICosts::debugDisplayInit()
 {
-  debugDisplayInit(10, 10, 50);
+  debugDisplayInit(125, 125, 4);
 }
 
 inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
@@ -261,6 +344,14 @@ inline void MPPICosts::debugDisplay(float x, float y)
   if (!debugging_){
     debugDisplayInit();
   }
+  std::cout << x << " " << y << " " << debug_img_width_ << " " << debug_img_height_ << " " << debug_img_ppm_ << std::endl;
+  float x_pos = x;
+  float y_pos = y;
+  float u = params_.r_c1.x*x_pos + params_.r_c2.x*y_pos + params_.trs.x;
+  float v = params_.r_c1.y*x_pos + params_.r_c2.y*y_pos + params_.trs.y;
+  float w = params_.r_c1.z*x_pos + params_.r_c2.z*y_pos + params_.trs.z;
+
+  std::cout << u/w*width_ << " " << v/w*height_ << std::endl;
   launchDebugCostKernel(x, y, debug_img_width_, debug_img_height_, debug_img_ppm_, 
                         costmap_tex_, debug_data_d_, params_.r_c1, params_.r_c2, params_.trs);
   //Now we just have to display debug_data_d_

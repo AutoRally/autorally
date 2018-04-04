@@ -144,6 +144,14 @@ public:
   std::vector<float> loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
 
   /*
+  * @brief Loads track data from Carla's track map format.
+  * @param C-string representing the path to the costmap data file.
+  * @param h Matrix representing a transform from world to (offset) costmap coordinates.
+  * @param trs Array representing the offset.
+  */
+  void loadTrackDataCarla(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
+
+  /*
   * @brief Copy the params_ struct to the gpu.
   */
   void paramsToDevice();

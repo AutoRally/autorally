@@ -23,7 +23,7 @@
 
     <param name="brakeAxis" value="2" />
     <remap from="/safeSpeed" to="/targetSpeed" />
-    <remap from="/joystick/chassisCommand" to="/mppi_controller/chassisCommand" />
+    <!-- <remap from="/joystick/chassisCommand" to="/mppi_controller/chassisCommand" /> -->
   </node>
 
 </launch>
