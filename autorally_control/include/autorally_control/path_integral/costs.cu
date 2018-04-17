@@ -279,9 +279,9 @@ inline void MPPICosts::loadTrackDataCarla(const char* costmap_path, Eigen::Matri
   // y_max = (height_/(22/16.43))+(-map_y+world_y)*22;
   // Hard coded for Town1, 2600x2200 image
   x_min = -16.4;
-  y_min = -16.4;
+  y_min = -328-16.4;
   x_max = 398+16.4;
-  y_max = 328+16.4;
+  y_max = 16.4;
   std::cout << x_min << " " << y_min << " " << x_max << " " << y_max << " " << std::endl;
   // //Save width_ and height_ parameters
   // width_ = int((x_max - x_min)*resolution);
