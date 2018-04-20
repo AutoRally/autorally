@@ -117,6 +117,8 @@ public:
   * @param costmap Pointer to and array of floats of size width*height. 
   */
   void costmapToTexture(float* costmap);
+  
+  void update(Eigen::MatrixXf state);
 
   /*
   * @brief Updates cost parameters by reading from the rosparam server
