@@ -21,7 +21,7 @@
     <param name="heading" value="2.35" />
 
     <!--Model parameters-->
-    <param name="model_path" value="$(find autorally_control)/src/path_integral/params/models/gazebo_nnet.npz" />
+    <param name="model_path" value="/home/paul/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/torcs_model_multistep.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".12" />
@@ -30,17 +30,17 @@
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />
     <param name="init_throttle" value="-.01" />
-    <param name="steering_std" value="0.175" />
-    <param name="throttle_std" value="0.175" />
+    <param name="steering_std" value="0.275" />
+    <param name="throttle_std" value="0.275" />
 
     <!-- Control Constraints -->
-    <param name="max_throttle" value=".5" />
+    <param name="max_throttle" value=".65" />
     <param name="min_throttle" value="-.99" />
     <param name="max_steering" value="0.99" />
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="desired_speed" value="7.0" />
+    <param name="desired_speed" value="12.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />
     <param name="max_slip_angle" value="1.25" />
