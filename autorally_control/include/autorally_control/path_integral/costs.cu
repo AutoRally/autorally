@@ -333,7 +333,7 @@ inline void MPPICosts::setDesiredSpeed(float desired_speed)
 
 inline void MPPICosts::debugDisplayInit()
 {
-  debugDisplayInit(10, 10, 50);
+  debugDisplayInit(100, 100, 5);
 }
 
 inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
