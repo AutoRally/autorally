@@ -469,6 +469,18 @@ short AutoRallyChassis::actuatorCmdToMs(double actuatorValue, std::string actuat
 
   //don't need to check if actuatorValue is on [-1, 1] because it was already done
   short val = actuatorConfig_[actuator].center;
+  if(actuatorConfig_[actuator].reverse)
+  {
+    if(actuator == "frontBrake")
+    {
+      // flip range but still keep it in [0,1]
+      actuatorValue = 1.0-actuatorValue;
+    } else
+    {
+      // flip entire range for throttle and steering
+      actuatorValue = -actuatorValue;
+    }
+  }
   if(actuatorValue < 0)
   {
     val += (short)((actuatorConfig_[actuator].center-actuatorConfig_[actuator].min)*actuatorValue);
