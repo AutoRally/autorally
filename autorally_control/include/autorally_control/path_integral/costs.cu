@@ -138,7 +138,7 @@ inline void MPPICosts::costmapToTexture(float4* costmap)
   memset(&texDesc, 0, sizeof(texDesc));
   texDesc.addressMode[0] = cudaAddressModeClamp;
   texDesc.addressMode[1] = cudaAddressModeClamp;
-  texDesc.filterMode = cudaFilterModeLinear;
+  texDesc.filterMode = cudaFilterModePoint;
   texDesc.readMode = cudaReadModeElementType;
   texDesc.normalizedCoords = 1;
 

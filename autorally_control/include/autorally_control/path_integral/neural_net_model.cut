@@ -330,6 +330,7 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynam
   float* curr_act;
   float* next_act;
   float* tmp_act;
+  float tmp;
   float* W;
   float* b;
   int tdx = threadIdx.x;
@@ -354,15 +355,16 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynam
     b = &theta_d_[stride_idcs_d_[2*i + 1]];
   #endif
     for (j = tdy; j < net_structure_d_[i+1]; j += blockDim.y) {
-      next_act[j] = 0;
+      tmp = 0;
       for (k = 0; k < net_structure_d_[i]; k++){
         //No atomic add necessary.
-        next_act[j] += W[j*net_structure_d_[i] + k]*curr_act[k];
+        tmp += W[j*net_structure_d_[i] + k]*curr_act[k];
       }
-      next_act[j] += b[j];
+      tmp += b[j];
       if (i < NUM_LAYERS - 2){
-        next_act[j] = tanh(next_act[j]);
+        tmp = tanhf(tmp);
       }
+      next_act[j] = tmp;
     }
     //Swap the two pointers
     tmp_act = curr_act;
