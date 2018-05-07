@@ -25,6 +25,10 @@ def gen_costmap(input_img, config_file, output_name):
 	for i in range(4):
 		costmap[:,:,config_dict["channelMap"][i]] = data[:,:,i]
 
+	if (config_dict["flip"]):
+		for i in range(4):
+			costmap[:,:,i] = np.flipud(costmap[:,:,i])
+
 	#Save data to numpy array, each channel is saved individually as an array in row major order.
 	track_dict = {"xBounds":np.array(config_dict["xBounds"], dtype = np.float32), 
 				  "yBounds":np.array(config_dict["yBounds"], dtype = np.float32),
