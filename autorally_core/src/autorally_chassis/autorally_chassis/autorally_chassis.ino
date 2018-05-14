@@ -72,7 +72,7 @@ int leftFrontRotationPin = 21;
 
 int steerSrvNeutralUs = 1500; ///< default neutral value for steering
 int throttleSrvNeutralUs = 1500; ///< default neutral value for throttle
-int frontBrakeSrvNeutralUs = 1500; ///< default neutral value for front brake
+int frontBrakeSrvNeutralUs = 1950; ///< default neutral value for front brake (set this way since we have the reverse flag set to "True")
 unsigned long timeOfLastServo = 0; ///< time that the last command message was received from the compute box
 
 int buzzerState = 0; // state of the buzzer 0 is on off and 2+ is error
