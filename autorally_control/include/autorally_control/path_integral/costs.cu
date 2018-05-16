@@ -265,51 +265,51 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
 
 
 
-inline std::vector<float4> MPPICosts::loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs)
-{
-  int i;
-  float p;
-  FILE *track_data_file;
-  char file_path[256];
-  file_path[0] = 0;
-  strcat(file_path, costmap_path);
-  strcat(file_path, "track_data.txt");
-  track_data_file=fopen(file_path, "r");
-  if (track_data_file == NULL) {
-    ROS_INFO("Error opening track data file: No such file or directory: %s \n", file_path);
-    ros::shutdown();
-  }
-  //Read the parameters from the file
-  float x_min, x_max, y_min, y_max, resolution;
-  bool success = true;
-  success = success && fscanf(track_data_file, "%f", &x_min);
-  success = success && fscanf(track_data_file, "%f", &x_max);
-  success = success && fscanf(track_data_file, "%f", &y_min);
-  success = success && fscanf(track_data_file, "%f", &y_max);
-  success = success && fscanf(track_data_file, "%f", &resolution);
-  //Save width_ and height_ parameters
-  width_ = int((x_max - x_min)*resolution);
-  height_ = int((y_max - y_min)*resolution);
-  std::vector<float4> track_costs(width_*height_);
-  //Scan the result of the file to load track parameters
-  for (i = 0; i < width_*height_; i++) {
-    success = success && fscanf(track_data_file, "%f", &p);
-    track_costs[i].x = p;
-    track_costs[i].y = 5.0;
-    track_costs[i].z = -2.3;
-    track_costs[i].w = 4;
-  }
-  if (!success){
-    ROS_INFO("Warning track parameters not read succesfully.");
-  }
-  //Save the scaling and offset
-  R << 1./(x_max - x_min), 0,                  0,
-       0,                  1./(y_max - y_min), 0,
-       0,                  0,                  1;
-  trs << -x_min/(x_max - x_min), -y_min/(y_max - y_min), 1;
-  fclose(track_data_file);
-  return track_costs;
-}
+// inline std::vector<float4> MPPICosts::loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs)
+// {
+//   int i;
+//   float p;
+//   FILE *track_data_file;
+//   char file_path[256];
+//   file_path[0] = 0;
+//   strcat(file_path, costmap_path);
+//   strcat(file_path, "track_data.txt");
+//   track_data_file=fopen(file_path, "r");
+//   if (track_data_file == NULL) {
+//     ROS_INFO("Error opening track data file: No such file or directory: %s \n", file_path);
+//     ros::shutdown();
+//   }
+//   //Read the parameters from the file
+//   float x_min, x_max, y_min, y_max, resolution;
+//   bool success = true;
+//   success = success && fscanf(track_data_file, "%f", &x_min);
+//   success = success && fscanf(track_data_file, "%f", &x_max);
+//   success = success && fscanf(track_data_file, "%f", &y_min);
+//   success = success && fscanf(track_data_file, "%f", &y_max);
+//   success = success && fscanf(track_data_file, "%f", &resolution);
+//   //Save width_ and height_ parameters
+//   width_ = int((x_max - x_min)*resolution);
+//   height_ = int((y_max - y_min)*resolution);
+//   std::vector<float4> track_costs(width_*height_);
+//   //Scan the result of the file to load track parameters
+//   for (i = 0; i < width_*height_; i++) {
+//     success = success && fscanf(track_data_file, "%f", &p);
+//     track_costs[i].x = p;
+//     track_costs[i].y = 5.0;
+//     track_costs[i].z = -2.3;
+//     track_costs[i].w = 4;
+//   }
+//   if (!success){
+//     ROS_INFO("Warning track parameters not read succesfully.");
+//   }
+//   //Save the scaling and offset
+//   R << 1./(x_max - x_min), 0,                  0,
+//        0,                  1./(y_max - y_min), 0,
+//        0,                  0,                  1;
+//   trs << -x_min/(x_max - x_min), -y_min/(y_max - y_min), 1;
+//   fclose(track_data_file);
+//   return track_costs;
+// }
 
 inline void MPPICosts::paramsToDevice()
 {
