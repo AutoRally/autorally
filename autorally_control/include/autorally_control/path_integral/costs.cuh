@@ -256,6 +256,7 @@ protected:
   cudaChannelFormatDesc channelDesc_; ///< Cuda texture channel description.
   cudaTextureObject_t costmap_tex_; ///< Cuda texture object.
   float4* costmap_;
+  std::vector<float4> track_costs_;
 
   //Debugging variables
   float* debug_data_; ///< Host array for holding debug info.

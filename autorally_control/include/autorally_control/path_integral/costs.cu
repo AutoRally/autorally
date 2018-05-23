@@ -61,11 +61,11 @@ inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
   //Get the map path
   std::string map_path;
   mppi_node.getParam("map_path", map_path);
-  std::vector<float4> track_costs = loadTrackData(map_path, R, trs); //R and trs passed by reference
+  track_costs_ = loadTrackData(map_path, R, trs); //R and trs passed by reference
   updateTransform(R, trs);
   updateParams(mppi_node);
   allocateTexMem();
-  costmapToTexture(track_costs.data());
+  costmapToTexture(track_costs_.data());
   debugging_ = false;
 
   callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
@@ -98,22 +98,22 @@ inline void MPPICosts::initCostmap()
 inline void MPPICosts::costmapToTexture(float* costmap, int channel)
 {
     switch(channel){
-      case 0: 
+    case 0: 
       for (int i = 0; i < width_*height_; i++){
         costmap_[i].x = costmap[i];
       } 
       break;
-      case 1: 
+    case 1: 
       for (int i = 0; i < width_*height_; i++){
         costmap_[i].y = costmap[i];
       } 
       break;
-      case 2: 
+    case 2: 
       for (int i = 0; i < width_*height_; i++){
         costmap_[i].z = costmap[i];
       } 
       break;
-      case 3: 
+    case 3: 
       for (int i = 0; i < width_*height_; i++){
         costmap_[i].w = costmap[i];
       } 
@@ -236,6 +236,8 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
 
   width_ = int((x_max - x_min)*ppm);
   height_ = int((y_max - y_min)*ppm);
+
+  initCostmap();
 
   std::vector<float4> track_costs(width_*height_);  
   
