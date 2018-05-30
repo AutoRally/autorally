@@ -65,7 +65,7 @@ inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
   updateTransform(R, trs);
   updateParams(mppi_node);
   allocateTexMem();
-  costmapToTexture(track_costs_.data());
+  costmapToTexture();
   debugging_ = false;
 
   callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
@@ -85,13 +85,13 @@ inline void MPPICosts::allocateTexMem()
 
 inline void MPPICosts::initCostmap()
 {
-  costmap_ = new float4[width_*height_];
+  track_costs_ = std::vector<float4>(width_*height_);
   //Initialize costmap to zeros
   for (int i = 0; i < width_*height_; i++){
-    costmap_[i].x = 0;
-    costmap_[i].y = 0;
-    costmap_[i].z = 0;
-    costmap_[i].w = 0;
+    track_costs_[i].x = 0;
+    track_costs_[i].y = 0;
+    track_costs_[i].z = 0;
+    track_costs_[i].w = 0;
   }
 }
 
@@ -100,32 +100,33 @@ inline void MPPICosts::costmapToTexture(float* costmap, int channel)
     switch(channel){
     case 0: 
       for (int i = 0; i < width_*height_; i++){
-        costmap_[i].x = costmap[i];
+        track_costs_[i].x = costmap[i];
       } 
       break;
     case 1: 
       for (int i = 0; i < width_*height_; i++){
-        costmap_[i].y = costmap[i];
+        track_costs_[i].y = costmap[i];
       } 
       break;
     case 2: 
       for (int i = 0; i < width_*height_; i++){
-        costmap_[i].z = costmap[i];
+        track_costs_[i].z = costmap[i];
       } 
       break;
     case 3: 
       for (int i = 0; i < width_*height_; i++){
-        costmap_[i].w = costmap[i];
+        track_costs_[i].w = costmap[i];
       } 
       break;
   }
 }
 
-inline void MPPICosts::costmapToTexture(float4* costmap)
+inline void MPPICosts::costmapToTexture()
 {
-  costmap_ = costmap;
+  //costmap_ = costmap;
   //Transfer CPU mem to GPU
-  HANDLE_ERROR(cudaMemcpyToArray(costmapArray_d_, 0, 0, costmap_, width_*height_*sizeof(float4), cudaMemcpyHostToDevice));
+  float4* costmap_ptr = track_costs_.data();
+  HANDLE_ERROR(cudaMemcpyToArray(costmapArray_d_, 0, 0, costmap_ptr, width_*height_*sizeof(float4), cudaMemcpyHostToDevice));
 
   //Specify texture
   struct cudaResourceDesc resDesc;

@@ -123,10 +123,10 @@ public:
   void costmapToTexture(float* costmap, int channel = 0);
 
   /**
-  * @brief Takes a pointer to CPU memory and binds it to a CUDA texture.
-  * @param costmap Pointer to and array of floats of size width*height. 
+  * @brief Binds the member variable costmap to a CUDA texture.
+  * 
   */
-  void costmapToTexture(float4* costmap);
+  void costmapToTexture();
   
   void update(Eigen::MatrixXf state);
 
@@ -255,7 +255,7 @@ protected:
   cudaArray *costmapArray_d_; ///< Cuda array for texture binding.
   cudaChannelFormatDesc channelDesc_; ///< Cuda texture channel description.
   cudaTextureObject_t costmap_tex_; ///< Cuda texture object.
-  float4* costmap_;
+  //float4* costmap_;
   std::vector<float4> track_costs_;
 
   //Debugging variables
