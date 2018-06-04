@@ -55,10 +55,11 @@ public:
   static const int CONTROL_DIM = C_DIM;
   static const int DYNAMICS_DIM = STATE_DIM - K_DIM;
   static const int NUM_LAYERS = layer_counter(layer_args...); ///< Total number of layers (including in/out layer)
-  static const int LARGEST_LAYER = neuron_counter(layer_args...); ///< Number of neurons in the largest layer(including in/out neurons)
+  static const int PRIME_PADDING = 1; ///< Extra padding to largest layer to avoid shared mem bank conflicts  
+  static const int LARGEST_LAYER = neuron_counter(layer_args...) + PRIME_PADDING; ///< Number of neurons in the largest layer(including in/out neurons)
   static const int NUM_PARAMS = param_counter(layer_args...); ///< Total number of model parameters;
   static const int SHARED_MEM_REQUEST_GRD = 0; ///< Amount of shared memory we need per BLOCK.
-  static const int SHARED_MEM_REQUEST_BLK = 2*neuron_counter(layer_args...); ///< Amount of shared memory we need per ROLLOUT.
+  static const int SHARED_MEM_REQUEST_BLK = 2*LARGEST_LAYER; ///< Amount of shared memory we need per ROLLOUT.
 
   float* theta_d_; ///< GPU memory parameter array.
   int* stride_idcs_d_; ///< GPU memory for keeping track of parameter strides
