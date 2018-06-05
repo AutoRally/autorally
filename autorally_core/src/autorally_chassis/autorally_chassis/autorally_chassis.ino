@@ -72,7 +72,7 @@ int leftFrontRotationPin = 21;
 
 int steerSrvNeutralUs = 1500; ///< default neutral value for steering
 int throttleSrvNeutralUs = 1500; ///< default neutral value for throttle
-int frontBrakeSrvNeutralUs = 1500; ///< default neutral value for front brake
+int frontBrakeSrvNeutralUs = 1950; ///< default neutral value for front brake (set this way since we have the reverse flag set to "True")
 unsigned long timeOfLastServo = 0; ///< time that the last command message was received from the compute box
 
 int buzzerState = 0; // state of the buzzer 0 is on off and 2+ is error
@@ -96,13 +96,14 @@ int castleLinkCurrentRegister = 0; // current register to query
 char castleLinkData[2 * sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
 unsigned long timeOfCastleLinkData = 0; ///< last time the ESC was queried
 
-String errorMsg = ""; ///< error message periodically sent up to the compute box
+char errorMsg[128] = ""; ///< error message periodically sent up to the compute box
 /**
   @brief Sets up all parameters, attaches interrupts, and initializes Servo objects
 */
 void setup()
 {
-
+  //Start with a null-terminated string
+  errorMsg[0] = 0;
   //setup rotation sensor input pins
   pinMode(rightRearRotationPin, INPUT);
   pinMode(leftRearRotationPin, INPUT);
@@ -176,7 +177,7 @@ void setup()
 void loop()
 {
   //if enough data is available (a command msg is 9 bytes)
-  if (Serial.available() >= 9)
+  while (Serial.available() >= 9)
   {
     //make sure we are framed at the beginning of a message
     if (Serial.read() == '#')
@@ -287,7 +288,7 @@ void loop()
   }
 
   //send any error text up to the compute box, the message may contain multiple, concatenated errors
-  if (errorMsg.length())
+  if (errorMsg[0] != 0)
   {
     if(errorCount >= 3) {
       buzzerState =  buzzerState >= 2 ? buzzerState : 2;
@@ -295,7 +296,7 @@ void loop()
     Serial.print("#e");
     Serial.print(errorMsg);
     Serial.print('\n');
-    errorMsg = "";
+    errorMsg[0] = 0;
   }
 }
 
@@ -447,7 +448,8 @@ bool getCastleSerialLinkData()
     {
       if (response[0] == 255 && response[1] == 255) // error from serial link indicated by 0xFFFF
       {
-        errorMsg += "castle link comm error on register " + ('0' + response[0]) + ',';
+        sprintf(errorMsg,"castle link comm error on register %X",response[0]);
+        //errorMsg += "castle link comm error on register " + ('0' + response[0]) + ',';
         //invalid register of corrupted command
       } else
       {
@@ -456,14 +458,16 @@ bool getCastleSerialLinkData()
       }
     } else
     {
-      errorMsg += "castle link comm failed checksum,";
+      sprintf(errorMsg,"castle link comm failed checksum");
+      //errorMsg += "castle link comm failed checksum,";
       castleLinkCurrentRegister = 0;
       errorCount++;
       return false;
     }
   } else
   {
-    errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(castleLinkCurrentRegister) + ",";
+    sprintf(errorMsg,"wrong number of bytes read from castle link: %d for register %d",bytesRead,castleLinkCurrentRegister);
+    //errorMsg += "wrong number of bytes read from castle link: " + String(bytesRead) + " for register " + String(castleLinkCurrentRegister) + ",";
     castleLinkCurrentRegister = 0;
     errorCount++;
     return false;
