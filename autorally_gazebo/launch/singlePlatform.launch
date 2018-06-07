@@ -62,7 +62,7 @@ limitations under the License.
               -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
 
 
-  <!-- load controllers -->
+  <!-- load joint controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
           args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
 
@@ -75,6 +75,12 @@ limitations under the License.
     <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
   </node>
 
+  <!-- Run ground truth pose publishing -->
+  <node name="grount_truth_republisher" pkg="autorally_gazebo"
+        type="ground_truth_republisher.py" output="screen">
+  </node>
+
+  <!-- Run state estimator -->
   <include file="$(find autorally_core)/launch/stateEstimator.launch">
     <arg name="sim" value="true"/>
     <arg name="InvertY" value="false"/>
