@@ -96,6 +96,7 @@ int castleLinkCurrentRegister = 0; // current register to query
 char castleLinkData[2 * sizeof(castleLinkRegisters)]; ///< each register is 2 bytes
 unsigned long timeOfCastleLinkData = 0; ///< last time the ESC was queried
 
+bool manualMode = false;
 char errorMsg[128] = ""; ///< error message periodically sent up to the compute box
 /**
   @brief Sets up all parameters, attaches interrupts, and initializes Servo objects
@@ -199,10 +200,17 @@ void loop()
           //command actuators
           steerSrv.writeMicroseconds(steer);
           throttleSrv.writeMicroseconds(throttle);
-          frontBrakeSrv.writeMicroseconds(frontBrake);
+          if(!manualMode)
+          {
+            frontBrakeSrv.writeMicroseconds(frontBrake);
+          }
         }
       }
     }
+  }
+  if(manualMode)
+  {
+    frontBrakeSrv.writeMicroseconds(frontBrakeSrvNeutralUs);
   }
 
   if(buzzerState >= 2) {
@@ -262,6 +270,14 @@ void loop()
     uint32_t rc_steer, rc_throttle, rc_frontBrake;
     getRcWidths(rc_steer, rc_throttle, rc_frontBrake);
 
+    if(rc_frontBrake < 1500)
+    {
+      manualMode = true;
+    } else
+    {
+      manualMode = false;
+    }
+    
     Serial.print("#r");
     Serial.print(rc_steer);
     Serial.print(",");
