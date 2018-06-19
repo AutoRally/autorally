@@ -219,7 +219,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
           //std::cout << std::stoi(data[0]) << " " << std::stoi(data[1]) << std::endl;
           chassisCommand->steering = actuatorUsToCmd(std::stoi(data[0]), "steering");
           chassisCommand->throttle = actuatorUsToCmd(std::stoi(data[1]), "throttle");
-          chassisCommand->frontBrake = -5.0;
+          chassisCommand->frontBrake = 0.0; // setting to zero to make sure brake is neutral
           chassisCommand->sender = "RC";
           //this line is in here for compatibility with the old servoInterface
           chassisCommand->header.frame_id = "RC";
