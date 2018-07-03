@@ -13,7 +13,7 @@
     <param name="steeringDamping" value="1.0" />
     <param name="throttleAxis" value="1" />
     <param name="steeringAxis" value="3" />
-    <rosparam param="runstopToggleButtons">[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]</rosparam>
+    <rosparam param="runstopToggleButtons">[0, 1, 2, 3]</rosparam>
     <param name="safeSpeedIncButton" value="0" />
     <param name="safeSpeedDecButton" value="3" />
     <param name="safeSpeedZeroButton1" value="1" />
