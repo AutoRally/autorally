@@ -2,7 +2,7 @@
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
   <node name="joy_node" pkg="joy" type="joy_node" output="screen" machine="autorally-ocs">
-    <param name="dev" value="/dev/input/js0" />
+    <param name="dev" value="$(optenv AR_JOYSTICK /dev/input/js0)" />
     <param name="deadzone" value="0.01" />
     <param name="autorepeat_rate" value="10" />
     <param name="coalesce_interval" value="0.01" />
@@ -13,7 +13,7 @@
     <param name="steeringDamping" value="1.0" />
     <param name="throttleAxis" value="1" />
     <param name="steeringAxis" value="3" />
-    <rosparam param="runstopToggleButtons">[0, 1, 2, 3]</rosparam>
+    <rosparam param="runstopToggleButtons">[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]</rosparam>
     <param name="safeSpeedIncButton" value="0" />
     <param name="safeSpeedDecButton" value="3" />
     <param name="safeSpeedZeroButton1" value="1" />
