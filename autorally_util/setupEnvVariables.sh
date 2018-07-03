@@ -117,3 +117,16 @@ if [[ $DEBUG == true ]]; then
     echo "AR_LEFTCAM_CONNECTED  = ${AR_LEFTCAM_CONNECTED}"
 fi
 
+for device in /dev/input/js*; do
+    AR_JOYSTICK=$(udevadm info -n $device -q property --export | grep ID_INPUT_JOYSTICK)
+    AR_JOYSTICK=${AR_JOYSTICK#*=}
+    if [[ $AR_JOYSTICK == "'1'" ]]; then
+        export AR_JOYSTICK="$device"
+        break
+    fi
+    AR_JOYSTICK=none
+done
+
+YELLOW='\033[0;33m'
+[[ -z $AR_JOYSTICK ]] && echo "${YELLOW}[WARNING] No joystick detected."
+
