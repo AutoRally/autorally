@@ -124,9 +124,11 @@ for device in /dev/input/js*; do
         export AR_JOYSTICK="$device"
         break
     fi
-    AR_JOYSTICK=none
+    AR_JOYSTICK=
 done
 
-YELLOW='\033[0;33m'
-[[ -z $AR_JOYSTICK ]] && echo "${YELLOW}[WARNING] No joystick detected."
-
+YELLOW=`tput setaf 3`
+RESET=`tput sgr0`
+if [[ -z $AR_JOYSTICK ]]; then
+    echo "${YELLOW}[WARNING] No joystick detected.${RESET}"
+fi
