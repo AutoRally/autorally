@@ -124,7 +124,7 @@ for device in /dev/input/js*; do
         export AR_JOYSTICK="$device"
         break
     fi
-    AR_JOYSTICK=
+    export AR_JOYSTICK=
 done
 
 YELLOW=`tput setaf 3`
