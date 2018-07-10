@@ -86,7 +86,7 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
     controller.costs_->update(state);
     u = controller.computeControl(state); //Compute the control
     controller.model_->enforceConstraints(state, u);
-    //controller.model_->updateState(state, u); //Update the state using motion model.
+    controller.model_->updateState(state, u); //Update the state using motion model.
     
     robot.pubControl(u(0), u(1)); //Publish steering u(0) and throttle u(1)
     robot.pubPath(controller.nominal_traj_, path_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
