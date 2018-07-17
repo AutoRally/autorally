@@ -295,26 +295,18 @@ inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, 
 
 inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash)
 {
-  float cost = 0;
-  if (params_d_->desired_speed < 999.0){
-    float speed = fabs(s[4]);
-    if (s[4] > 0){
-      cost = params_d_->speed_coeff*powf(speed - params_d_->desired_speed, 2);
-    }else {
-      cost = params_d_->speed_coeff*powf(speed + params_d_->desired_speed, 2);
-    }
-  }
-  else{//Turn the speed cost into a reward (negative cost), never could get this to work
-    if (crash[0] > 0){
-      cost = 0.0;
-    }
-    else if (s[4] > 0.001 && fabs(-atan(s[5]/fabs(s[4]))) > params_d_->max_slip_ang){
-      cost = 0.0;
-    }
-    else {
-      cost = -params_d_->speed_coeff*s[4]*s[4];
-    }
-  }
+  float cost = params_d_->speed_coeff*fabs(s[4] - params_d_->desired_speed);
+  //else{//Turn the speed cost into a reward (negative cost), never could get this to work
+  //  if (crash[0] > 0){
+  //    cost = 0.0;
+  //  }
+  //  else if (s[4] > 0.001 && fabs(-atan(s[5]/fabs(s[4]))) > params_d_->max_slip_ang){
+  //    cost = 0.0;
+  //  }
+  //  else {
+  //    cost = -params_d_->speed_coeff*s[4]*s[4];
+  //  }
+  //}
   return cost;
 }
 
