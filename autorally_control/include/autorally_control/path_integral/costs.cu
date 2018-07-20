@@ -47,8 +47,8 @@ inline MPPICosts::MPPICosts(int width, int height)
   HANDLE_ERROR( cudaMalloc((void**)&params_d_, sizeof(CostParams)) );
   debugging_ = false;
 
-  callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
-  server_.setCallback(callback_f_);
+  //callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
+  //server_.setCallback(callback_f_);
 }
 
 inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
@@ -67,8 +67,8 @@ inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
   costmapToTexture(track_costs.data());
   debugging_ = false;
 
-  callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
-  server_.setCallback(callback_f_);
+  //callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
+  //server_.setCallback(callback_f_);
 }
 
 inline MPPICosts::~MPPICosts()
@@ -108,7 +108,7 @@ inline void MPPICosts::costmapToTexture(float* costmap)
   HANDLE_ERROR(cudaCreateTextureObject(&costmap_tex_, &resDesc, &texDesc, NULL) );
 }
 
-inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl)
+/*inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl)
 {
   params_.desired_speed = (float)config.desired_speed;
   params_.speed_coeff = (float)config.speed_coefficient;
@@ -121,6 +121,7 @@ inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsCo
   params_.throttle_coeff = (float)config.throttle_coeff;
   paramsToDevice();
 }
+*/
 
 inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
 {

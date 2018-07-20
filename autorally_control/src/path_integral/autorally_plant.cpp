@@ -42,6 +42,12 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   std::string pose_estimate_name;
   mppi_node.getParam("pose_estimate", pose_estimate_name);
   mppi_node.getParam("debug_mode", debug_mode_);
+  deltaT_ = 1.0/hz;
+  mppi_node.getParam("num_timesteps", numTimesteps_);
+
+  controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
+  stateSequence_.resize(AUTORALLY_STATE_DIM*numTimesteps_);
+
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
   std::string nominal_path_name = "planned_trajectory";
@@ -52,7 +58,8 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   //Initialize the pose subscriber.
-  pose_sub_ = mppi_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this);
+  pose_sub_ = mppi_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
+                                  ros::TransportHints().tcpNoDelay());
   //Initialize the servo subscriber
   servo_sub_ = mppi_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
   //Initialize auxiliary variables.
@@ -78,12 +85,25 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   //Diagnostics::init(info, hardwareID, portPath);
 }
 
-AutorallyPlant::~AutorallyPlant(){}
+void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, ros::Time ts)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  solutionTs_ = ts;
+  for (int t = 0; t < numTimesteps_; t++){
+    for (int i = 0; i < AUTORALLY_STATE_DIM; i++){
+      stateSequence_[AUTORALLY_STATE_DIM*t + i] = traj[AUTORALLY_STATE_DIM*t + i];
+    }
+    for (int i = 0; i < AUTORALLY_CONTROL_DIM; i++){
+      controlSequence_[AUTORALLY_CONTROL_DIM*t + i] = controls[AUTORALLY_CONTROL_DIM*t + i];
+    }
+  }
+}
 
 void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   //Update the timestamp
-  last_pose_call_ = ros::Time::now();
+  last_pose_call_ = pose_msg.header.stamp;
   //Set activated to true --> we are receiving state messages.
   activated_ = true;
   //Update position
@@ -112,18 +132,29 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.u_x = cos(full_state_.yaw)*full_state_.x_vel + sin(full_state_.yaw)*full_state_.y_vel;
   full_state_.u_y = -sin(full_state_.yaw)*full_state_.x_vel + cos(full_state_.yaw)*full_state_.y_vel;
   //Update the minus yaw derivative.
-  full_state_.yaw_mder = -pose_msg.twist.twist.angular.z;//.5*full_state_.yaw_mder + .5*(-1.0/cos(full_state_.pitch)*(sin(full_state_.roll)*pose_msg.twist.twist.angular.y
-  						            //  + cos(full_state_.roll)*pose_msg.twist.twist.angular.z));
+  full_state_.yaw_mder = -pose_msg.twist.twist.angular.z;
+
+  //Interpolate and publish the current control
+  double steering, throttle;
+  double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
+  int lowerIdx = (int)(timeFromLastOpt/deltaT_);
+  int upperIdx = lowerIdx + 1;
+  double alpha = (timeFromLastOpt - lowerIdx*deltaT_)/deltaT_;
+  steering = (1 - alpha)*controlSequence_[2*lowerIdx] + alpha*controlSequence_[2*upperIdx];
+  throttle = (1 - alpha)*controlSequence_[2*lowerIdx + 1] + alpha*controlSequence_[2*upperIdx + 1];
+  pubControl(steering, throttle);
 }
 
 void AutorallyPlant::servoCall(autorally_msgs::chassisState servo_msg)
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   full_state_.steering = servo_msg.steering;
   full_state_.throttle = servo_msg.throttle;
 }
 
 void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   if (safe_msg.motionEnabled == false){
     safe_speed_zero_ = true;
   }
@@ -131,11 +162,13 @@ void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
 
 void AutorallyPlant::pubPath(float* nominal_traj, int num_timesteps, int hz)
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   pubPath(nominal_traj, default_path_pub_, num_timesteps, hz);
 }
 
 void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int num_timesteps, int hz)
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   path_msg_.poses.clear();
   int i;
   float r,p,y,q0,q1,q2,q3;
@@ -167,36 +200,30 @@ void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int 
 
 void AutorallyPlant::pubControl(float steering, float throttle)
 {
+  autorally_msgs::chassisCommand control_msg; ///< Autorally control message initialization.
   //Publish the steering and throttle commands
   if (std::isnan(throttle) || std::isnan(steering)){ //Nan control publish zeros and exit.
     ROS_INFO("NaN Control Input Detected");
-    control_msg_.steering = 0;
-    control_msg_.throttle = -.99;
-    control_msg_.frontBrake = -5.0;
-    control_msg_.header.stamp = ros::Time::now();
-    control_msg_.sender = "mppi_controller";
-    control_pub_.publish(control_msg_);
+    control_msg.steering = 0;
+    control_msg.throttle = -.99;
+    control_msg.frontBrake = -5.0;
+    control_msg.header.stamp = ros::Time::now();
+    control_msg.sender = "mppi_controller";
+    control_pub_.publish(control_msg);
     ros::shutdown(); //No use trying to recover, quitting is the best option.
   }
-  else if (!activated_ && !debug_mode_) { //No state update received yet.
-    control_msg_.steering = 0;
-    control_msg_.throttle = 0;
-    control_msg_.frontBrake = -5.0;
-    control_msg_.header.stamp = ros::Time::now();
-    control_msg_.sender = "mppi_controller";
-    control_pub_.publish(control_msg_);
-  }
   else { //Publish the computed control input.
-    control_msg_.steering = steering;
-    control_msg_.throttle = throttle;
-    control_msg_.frontBrake = -5.0;
-    control_msg_.header.stamp = ros::Time::now();
-    control_msg_.sender = "mppi_controller";
-    control_pub_.publish(control_msg_);
+    control_msg.steering = steering;
+    control_msg.throttle = throttle;
+    control_msg.frontBrake = -5.0;
+    control_msg.header.stamp = ros::Time::now();
+    control_msg.sender = "mppi_controller";
+    control_pub_.publish(control_msg);
   }
 }
 
 void AutorallyPlant::pubStatus(){
+  boost::mutex::scoped_lock lock(access_guard_);
   status_msg_.info = ocs_msg_;
   status_msg_.status = status_;
   status_msg_.header.stamp = ros::Time::now();
@@ -205,12 +232,14 @@ void AutorallyPlant::pubStatus(){
 
 AutorallyPlant::FullState AutorallyPlant::getState()
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   return full_state_;
 }
 
-//Returns true is no pose estimate received in the last half second.
+//Returns true if no pose estimate received in the last half second.
 bool AutorallyPlant::getStale()
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   double now = ros::Time::now().toSec();
   double last_pose = last_pose_call_.toSec();
   bool stale = false;
@@ -222,16 +251,19 @@ bool AutorallyPlant::getStale()
 
 bool AutorallyPlant::getRunstop()
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   return safe_speed_zero_;
 }
 
 ros::Time AutorallyPlant::getLastPoseTime()
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   return last_pose_call_;
 }
 
 int AutorallyPlant::checkStatus()
 {
+  boost::mutex::scoped_lock lock(access_guard_);
   if (getStale() && activated_){ //Stale pose estimate.
     status_ = 2;
     ocs_msg_ = "POSE STALE";

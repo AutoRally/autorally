@@ -38,16 +38,20 @@
 #include "autorally_plant.h"
 #include "param_getter.h"
 
+#include <boost/thread/thread.hpp>
+#include <unistd.h>
+#include <chrono>
+
 #include <ros/ros.h>
 
 namespace autorally_control {
 
 template <class CONTROLLER_T> 
-void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandle mppi_node)
+void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, ros::NodeHandle* mppi_node)
 {
   //Initial condition of the robot
   Eigen::MatrixXf state(7,1);
-  state << params.x_pos, params.y_pos, params.heading, 0, 0, 0, 0;
+  state << params->x_pos, params->y_pos, params->heading, 0, 0, 0, 0;
   //Initial control value
   Eigen::MatrixXf u(2,1);
   u << 0, 0;
@@ -55,66 +59,77 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
   int robot_status = 1;
   int last_status = 1;
 
-  AutorallyPlant robot(mppi_node, params.debug_mode, params.hz);
   AutorallyPlant::FullState fs;
-
-  //Set the loop rate
-  ros::Rate loop_rate(params.hz);
 
   //Counter and timing variables.
   int num_iter = 0;
-  ros::Time last_pose_update = robot.getLastPoseTime();
+  ros::Time last_pose_update = robot->getLastPoseTime();
 
-  ros::Publisher path_pub; ///< Publisher of nav_mags::Path on topic nominalPath.
-  ros::Publisher ips_pub; ///< Publisher of nav_mags::Path on topic importance sampler.
+  std::vector<float> controlSolution;
+  std::vector<float> stateSolution;
 
-  path_pub = mppi_node.advertise<nav_msgs::Path>("nominal_path_debug", 1);
-  ips_pub = mppi_node.advertise<nav_msgs::Path>("importance_sampler", 1);
+  int optimization_stride;
+  mppi_node->getParam("optimization_stride", optimization_stride);
+
+  //Set the loop rate
+  std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
 
   //Start the control loop.
   while (ros::ok()) {
-    if (params.debug_mode){ //Display the debug window.
-     controller.costs_->debugDisplay(state(0), state(1));
+    std::chrono::steady_clock::time_point loop_start = std::chrono::steady_clock::now();
+
+    if (params->debug_mode){ //Display the debug window.
+     controller->costs_->debugDisplay(state(0), state(1));
     }
     
-    if (last_pose_update != robot.getLastPoseTime()){ //If we've received a new state estimate
-      last_pose_update = robot.getLastPoseTime();
-      fs = robot.getState(); //Get the new state.
+    if (last_pose_update != robot->getLastPoseTime()){ //If we've received a new state estimate
+      last_pose_update = robot->getLastPoseTime();
+      fs = robot->getState(); //Get the new state.
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
 
-    u = controller.computeControl(state); //Compute the control
-    controller.model_->enforceConstraints(state, u);
-    controller.model_->updateState(state, u); //Update the state using motion model.
+    u = controller->computeControl(state); //Compute the control
+    //controller->model_->enforceConstraints(state, u);
+    //controller->model_->updateState(state, u); //Update the state using motion model.
+
+    controlSolution = controller->getControlSeq();
+    stateSolution = controller->getStateSeq();
+
+    robot->setSolution(stateSolution, controlSolution, last_pose_update);
     
-    robot.pubControl(u(0), u(1)); //Publish steering u(0) and throttle u(1)
-    robot.pubPath(controller.nominal_traj_, path_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
-    robot.pubPath(controller.importance_sampler_, ips_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
+    //robot->pubControl(u(0), u(1)); //Publish steering u(0) and throttle u(1)
+    //robot->pubPath(controller->nominal_traj_, path_pub, controller->num_timesteps_, params->hz); //Publish the planned path.
+    //robot->pubPath(controller->importance_sampler_, ips_pub, controller->num_timesteps_, params->hz); //Publish the planned path.
+    //robot->setSolution(controller->nominal_traj_, controller->importance_sampler_);
 
     //Check system status: 0 -> good, 1-> not active, 2-> bad
-    if (!params.debug_mode){ //In simulation/debug mode everything is always ok.
+    if (!params->debug_mode){ //In simulation/debug mode everything is always ok.
       last_status = robot_status;
-      robot_status = robot.checkStatus();
+      robot_status = robot->checkStatus();
       if (robot_status == 2){
-        controller.cutThrottle(); //Set desired speed and max throttle to zero.
+        controller->cutThrottle(); //Set desired speed and max throttle to zero.
       }
       if (last_status == 2 && robot_status != 2){
-        controller.model_->control_rngs_[1].y = params.max_throttle; //Reset max throttle
-        controller.model_->paramsToDevice();
+        controller->model_->control_rngs_[1].y = params->max_throttle; //Reset max throttle
+        controller->model_->paramsToDevice();
         //Desired speed stays at zero, and needs to be reset manually from dynamic reconfigure.
       }
     }
 
     //Publish the controller status.
-    robot.pubStatus();
+    //robot->pubStatus();
 
     num_iter += 1;
     //Save debug info, do not change to ROS_INFO.
-    ROS_DEBUG("Current State: (%f, %f, %f, %f, %f, %f, %f, %f, %f), Slip Angle: (%f), Avg. Iter Time: %f \n", 
+    printf("Current State: (%f, %f, %f, %f, %f, %f, %f, %f, %f), Slip Angle: (%f), Avg. Iter Time: %f \n", 
               state(0), state(1), state(2), state(3), state(4), state(5), state(6), u(0), u(1),
-              state(4) > 0.01 ? -atan(state(5)/fabs(state(4))) : 0,  controller.total_iter_time_/num_iter);
-    loop_rate.sleep(); //Sleep to get loop rate to match hz.
-    ros::spinOnce(); //Process subscriber callbacks.
+              state(4) > 0.01 ? -atan(state(5)/fabs(state(4))) : 0,  controller->total_iter_time_/num_iter);
+
+    std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
+    while(fp_ms < ms){
+      usleep(10);
+      fp_ms = std::chrono::steady_clock::now() - loop_start;
+    }
   }
 }
 

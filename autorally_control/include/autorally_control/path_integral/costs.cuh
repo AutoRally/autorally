@@ -125,7 +125,7 @@ public:
   void updateParams(ros::NodeHandle mppi_node);
 
 
-  void updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl);
+  //void updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl);
   /*
   * @brief Updates the current costmap coordinate transform.
   * @param h Matrix representing a transform from world to (offset) costmap coordinates.

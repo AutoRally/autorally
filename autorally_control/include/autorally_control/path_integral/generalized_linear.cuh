@@ -101,6 +101,6 @@ protected:
 
 }
 
-#include "generalized_linear.cut"
+#include "generalized_linear.cu"
 
 #endif /*GENERALIZED_LINEAR_CUH_*/

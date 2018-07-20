@@ -58,13 +58,17 @@ public:
 
   int num_timesteps_;
   int hz_;
+  int optimization_stride_;
   double total_iter_time_;
 
   DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
   COSTS_T *costs_; ///< Autorally system costs.
   float* traj_costs_; ///< Array of the trajectory costs.
   float* importance_sampler_; ///< Host array for keeping track of the nomimal trajectory.
-  float* nominal_traj_; ///< Host array for keeping track of the nomimal trajectory.
+  std::vector<float> nominal_traj_; ///< Host array for keeping track of the nomimal trajectory.
+  std::vector<float> curr_controls_;
+
+  std::vector<float> control_hist_;
   /**
   * @brief Constructor for mppi controller class.
   * @param num_timesteps The number of timesteps to look ahead for.
@@ -74,7 +78,8 @@ public:
   * @param mppi_node Handle to a ros node with mppi parameters available as ros params.
   */
   MPPIController(DYNAMICS_T* model, COSTS_T* costs, int num_timesteps, int hz, float gamma,
-                 float* exploration_var, float* init_control, int num_optimization_iters = 1);
+                 float* exploration_var, float* init_control, int num_optimization_iters = 1,
+                 int opt_stride = 1);
 
   /**
   * @brief Destructor for mppi controller class.
@@ -100,13 +105,17 @@ public:
 
   void savitskyGolay();
 
-  void computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state, float* traj);
+  void computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state);
 
   /**
   * @brief Compute the control given the current state of the system.
   * @param state The current state of the autorally system.
   */
   Eigen::MatrixXf computeControl(Eigen::Matrix<float, STATE_DIM, 1> state);
+
+  std::vector<float> getControlSeq();
+
+  std::vector<float> getStateSeq();
 
 private:
   float gamma_; ///< Value of the temperature in the softmax.
@@ -131,7 +140,7 @@ private:
   float* nominal_traj_d_;
 };
 
-#include "mppi_controller.cut"
+#include "mppi_controller.cu"
 
 }
 

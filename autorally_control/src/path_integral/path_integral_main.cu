@@ -97,12 +97,20 @@ int main(int argc, char** argv) {
   DynamicsModel* model = new DynamicsModel(1.0/params.hz, control_constraints);
   model->loadParams(params.model_path); //Load the model parameters from the launch file specified path
 
+  int optimization_stride;
+  mppi_node.getParam("optimization_stride", optimization_stride);
+
   //Define the controller
   float init_u[2] = {(float)params.init_steering, (float)params.init_throttle};
   float exploration_std[2] = {(float)params.steering_std, (float)params.throttle_std};
-  Controller mppi(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, init_u, params.num_iters);
+  Controller mppi(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
+                  init_u, params.num_iters, optimization_stride);
 
-  runControlLoop<Controller>(mppi, params, mppi_node);
+  AutorallyPlant robot(mppi_node, params.debug_mode, params.hz);
 
-  mppi.deallocateCudaMem();
+  //runControlLoop<Controller>(&mppi, &params, &mppi_node);
+  boost::thread optimizer(&runControlLoop<Controller>, &mppi, &robot, &params, &mppi_node);
+
+  ros::spin();
+  //mppi.deallocateCudaMem();
 }

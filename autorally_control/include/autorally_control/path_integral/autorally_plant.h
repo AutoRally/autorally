@@ -50,6 +50,9 @@
 
 #include <eigen3/Eigen/Dense>
 
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
 namespace autorally_control {
 
 /**
@@ -67,6 +70,7 @@ class AutorallyPlant //: public Diagnostics
 {
 public:
   static const int AUTORALLY_STATE_DIM = 7;
+  static const int AUTORALLY_CONTROL_DIM = 2;
   //Struct for holding the autorally pose.
   typedef struct
   { 
@@ -97,7 +101,15 @@ public:
     float throttle;
   } FullState;
 
+	boost::mutex access_guard_;
   bool new_model_available_;
+
+  std::vector<float> controlSequence_;
+  std::vector<float> stateSequence_;
+  ros::Time solutionTs_;
+
+  int numTimesteps_;
+  double deltaT_;
 
   /**
   * @brief Constructor for AutorallyPlant, takes the a ros node handle and initalizes
@@ -105,11 +117,6 @@ public:
   * @param mppi_node A ros node handle.
   */
 	AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int hz);
-	
-  /**
-  * @brief Destructor for AutorallyPlant.
-  */
-	~AutorallyPlant();
 
   /**
   * @brief Callback for /pose_estimate subscriber.
@@ -131,6 +138,8 @@ public:
   * @brief Publishes the controller's nominal path.
   */
 	void pubPath(float* nominal_traj, ros::Publisher path_pub, int num_timesteps, int hz);
+
+  void setSolution(std::vector<float> traj, std::vector<float> controls, ros::Time timestamp);
 
   /**
   * @brief Publishes a control input. 
@@ -196,7 +205,6 @@ private:
   ros::Subscriber pose_sub_; ///< Subscriber to /pose_estimate.
   ros::Subscriber servo_sub_;
 
-  autorally_msgs::chassisCommand control_msg_; ///< Autorally control message initialization.
   nav_msgs::Path path_msg_; ///< Path message for publishing the planned path.
   geometry_msgs::Point time_delay_msg_; ///< Point message for publishing the observed delay.
   autorally_msgs::pathIntegralStatus status_msg_; ///<pathIntegralStatus message for publishing mppi status
