@@ -58,6 +58,16 @@
   </node>
 
   <node
+    pkg = "topic_tools"
+    type = "transform"
+    name = "mppi_subscribed_pose"
+    args = "/mppi_controller/nominal_path
+            /mppi_controller/subscribed_pose
+            geometry_msgs/PoseStamped
+            '[m.header, m.poses[0].pose]'">
+  </node>
+
+  <node
     pkg = "autorally_control" 
     type = "path_integral_monitor" 
     name = "mppi_monitor"

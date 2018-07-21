@@ -42,34 +42,34 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   std::string pose_estimate_name;
   mppi_node.getParam("pose_estimate", pose_estimate_name);
   mppi_node.getParam("debug_mode", debug_mode_);
-  deltaT_ = 1.0/hz;
   mppi_node.getParam("num_timesteps", numTimesteps_);
+  deltaT_ = 1.0/hz;
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
   stateSequence_.resize(AUTORALLY_STATE_DIM*numTimesteps_);
 
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
-  std::string nominal_path_name = "planned_trajectory";
-  if (debug_mode_){
-    nominal_path_name = "planned_trajectory_debug";
-  }
-  default_path_pub_ = mppi_node.advertise<nav_msgs::Path>(nominal_path_name, 1);
+  path_pub_ = mppi_node.advertise<nav_msgs::Path>("nominal_path", 1);
   delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
-  //Initialize the pose subscriber.
+
+  //Initialize the subscribers.
   pose_sub_ = mppi_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
                                   ros::TransportHints().tcpNoDelay());
-  //Initialize the servo subscriber
   servo_sub_ = mppi_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
+ 
+  //Timer callback for path publisher
+  pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
+  statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
+
   //Initialize auxiliary variables.
   safe_speed_zero_ = false;
   debug_mode_ = debug_mode;
   activated_ = false;
   new_model_available_ = false;
-  //Initialize timestamps to the current time.
   last_pose_call_ = ros::Time::now();
-  last_check_ = ros::Time::now();
+  
   //Initialize yaw derivative to zero
   full_state_.yaw_mder = 0.0;
   status_ = 1;
@@ -85,9 +85,10 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   //Diagnostics::init(info, hardwareID, portPath);
 }
 
-void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, ros::Time ts)
+void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, ros::Time ts, double loop_speed)
 {
   boost::mutex::scoped_lock lock(access_guard_);
+  optimizationLoopTime_ = loop_speed;
   solutionTs_ = ts;
   for (int t = 0; t < numTimesteps_; t++){
     for (int i = 0; i < AUTORALLY_STATE_DIM; i++){
@@ -160,41 +161,35 @@ void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
   }
 }
 
-void AutorallyPlant::pubPath(float* nominal_traj, int num_timesteps, int hz)
-{
-  boost::mutex::scoped_lock lock(access_guard_);
-  pubPath(nominal_traj, default_path_pub_, num_timesteps, hz);
-}
-
-void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int num_timesteps, int hz)
+void AutorallyPlant::pubPath(const ros::TimerEvent&)
 {
   boost::mutex::scoped_lock lock(access_guard_);
   path_msg_.poses.clear();
   int i;
-  float r,p,y,q0,q1,q2,q3;
-  ros::Time begin = ros::Time::now();
-  for (i = 0; i < num_timesteps; i++) {
+  float phi,theta,psi,q0,q1,q2,q3;
+  ros::Time begin = solutionTs_;
+  for (int i = 0; i < numTimesteps_; i++) {
     geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = nominal_traj[i*(AUTORALLY_STATE_DIM)];
-    pose.pose.position.y = nominal_traj[i*(AUTORALLY_STATE_DIM) + 1];
+    pose.pose.position.x = stateSequence_[i*(AUTORALLY_STATE_DIM)];
+    pose.pose.position.y = stateSequence_[i*(AUTORALLY_STATE_DIM) + 1];
     pose.pose.position.z = 0;
-    y = nominal_traj[i*(AUTORALLY_STATE_DIM) + 2];
-    r = nominal_traj[i*(AUTORALLY_STATE_DIM) + 3];
-    p = 0;
-    q0 = cos(r/2)*cos(p/2)*cos(y/2) - sin(r/2)*sin(p/2)*sin(y/2);
-    q1 = cos(r/2)*cos(p/2)*sin(y/2) + sin(r/2)*cos(y/2)*sin(p/2);
-    q2 = cos(r/2)*cos(y/2)*sin(p/2) - sin(r/2)*cos(p/2)*sin(y/2);
-    q3 = cos(r/2)*sin(p/2)*sin(y/2) + cos(p/2)*cos(y/2)*sin(r/2);
+    psi = stateSequence_[i*(AUTORALLY_STATE_DIM) + 2];
+    phi = stateSequence_[i*(AUTORALLY_STATE_DIM) + 3];
+    theta = 0;
+    q0 = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2);
+    q1 = -cos(phi/2)*sin(theta/2)*sin(psi/2) + cos(theta/2)*cos(psi/2)*sin(phi/2);
+    q2 = cos(phi/2)*cos(psi/2)*sin(theta/2) + sin(phi/2)*cos(theta/2)*sin(psi/2);
+    q3 = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*cos(psi/2)*sin(theta/2); 
     pose.pose.orientation.w = q0;
     pose.pose.orientation.x = q1;
     pose.pose.orientation.y = q2;
     pose.pose.orientation.z = q3;
-    pose.header.stamp = begin;
-    pose.header.frame_id = "base_link";
+    pose.header.stamp = begin + ros::Duration(i*deltaT_);
+    pose.header.frame_id = "odom";
     path_msg_.poses.push_back(pose);
   }
   path_msg_.header.stamp = begin;
-  path_msg_.header.frame_id = "base_link";
+  path_msg_.header.frame_id = "odom";
   path_pub_.publish(path_msg_);
 }
 
@@ -222,7 +217,7 @@ void AutorallyPlant::pubControl(float steering, float throttle)
   }
 }
 
-void AutorallyPlant::pubStatus(){
+void AutorallyPlant::pubStatus(const ros::TimerEvent&){
   boost::mutex::scoped_lock lock(access_guard_);
   status_msg_.info = ocs_msg_;
   status_msg_.status = status_;
@@ -234,19 +229,6 @@ AutorallyPlant::FullState AutorallyPlant::getState()
 {
   boost::mutex::scoped_lock lock(access_guard_);
   return full_state_;
-}
-
-//Returns true if no pose estimate received in the last half second.
-bool AutorallyPlant::getStale()
-{
-  boost::mutex::scoped_lock lock(access_guard_);
-  double now = ros::Time::now().toSec();
-  double last_pose = last_pose_call_.toSec();
-  bool stale = false;
-  if (now - last_pose > TIMEOUT) {
-    stale = true;
-  }
-  return stale;
 }
 
 bool AutorallyPlant::getRunstop()
@@ -264,11 +246,7 @@ ros::Time AutorallyPlant::getLastPoseTime()
 int AutorallyPlant::checkStatus()
 {
   boost::mutex::scoped_lock lock(access_guard_);
-  if (getStale() && activated_){ //Stale pose estimate.
-    status_ = 2;
-    ocs_msg_ = "POSE STALE";
-  }
-  else if (!activated_) {
+  if (!activated_) {
     status_ = 1;
     ocs_msg_ = "No pose estimates received.";
   }
@@ -280,7 +258,6 @@ int AutorallyPlant::checkStatus()
     ocs_msg_ = "Controller OK";
     status_ = 0; //Everything is good.
   }
-  last_check_ = ros::Time::now(); //Set the last_check_ time variable to now.
   return status_;
 }
 

@@ -64,6 +64,8 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   //Counter, timing, and stride variables.
   int num_iter = 0;
   int optimization_stride;
+  int status = 1;
+  double avgOptimizationLoopTime = optimization_stride/(1.0*params->hz);
   ros::Time last_pose_update = robot->getLastPoseTime();
   ros::Duration optimizationLoopTime(optimization_stride/(1.0*params->hz));
   mppi_node->getParam("optimization_stride", optimization_stride);
@@ -74,46 +76,58 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   //Start the control loop.
   while (ros::ok()) {
     std::chrono::steady_clock::time_point loop_start = std::chrono::steady_clock::now();
+    num_iter ++;
 
-    //if (params->debug_mode){ //Display the debug window.
-    // controller->costs_->debugDisplay(state(0), state(1));
-    //}
-
-    //Figure out how many controls have been published since we were last here and slide the 
-    //control sequence by that much.
-    optimizationLoopTime = robot->getLastPoseTime() - last_pose_update;
-    int stride = round(optimizationLoopTime.toSec()*params->hz);
-    if (stride != 0){
-      controller->slideControlSeq(stride);
+    if (params->debug_mode){ //Display the debug window.
+     controller->costs_->debugDisplay(state(0), state(1));
     }
 
     //Update the state estimate
     if (last_pose_update != robot->getLastPoseTime()){
+      optimizationLoopTime = robot->getLastPoseTime() - last_pose_update;
       last_pose_update = robot->getLastPoseTime();
       fs = robot->getState(); //Get the new state.
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
 
+    //Figure out how many controls have been published since we were last here and slide the 
+    //control sequence by that much.
+    int stride = round(optimizationLoopTime.toSec()*params->hz);
+    if (status != 0){
+      stride = optimization_stride;
+    }
+    if (stride != 0){
+      controller->slideControlSeq(stride);
+    }
+
+    //Update the average loop time based on pose estimate timestamps
+    avgOptimizationLoopTime = (num_iter - 1.0)/num_iter*avgOptimizationLoopTime + optimizationLoopTime.toSec()/num_iter; 
+
     //Compute a new control sequence
     controller->computeControl(state); //Compute the control
 
-    //Get the updated solution
+    //Get and set the updated solution
     controlSolution = controller->getControlSeq();
     stateSolution = controller->getStateSeq();
-    robot->setSolution(stateSolution, controlSolution, last_pose_update);
+    robot->setSolution(stateSolution, controlSolution, last_pose_update, avgOptimizationLoopTime);
   
-    //controller->model_->updateState(state, u); //Update the state using motion model.
-
-    //Print debug info
+    status = robot->checkStatus();
+    if (status != 0 && params->debug_mode){
+      for (int t = 0; t < optimization_stride; t++){
+        u << controlSolution[2*t], controlSolution[2*t + 1];
+        controller->model_->updateState(state, u); 
+      }
+    }
     
     //Sleep 50 microseconds
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
-    while(ros::ok() && (fp_ms < ms || last_pose_update == robot->getLastPoseTime())){
+    while(ros::ok() && (fp_ms < ms || (last_pose_update == robot->getLastPoseTime() && status==0))) {
       usleep(50);
       fp_ms = std::chrono::steady_clock::now() - loop_start;
     }
-    num_iter += 1;
   }
+
+  controller->deallocateCudaMem();
 }
 
 }

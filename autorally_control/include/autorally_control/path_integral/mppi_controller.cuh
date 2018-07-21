@@ -62,12 +62,7 @@ public:
 
   DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
   COSTS_T *costs_; ///< Autorally system costs.
-  float* traj_costs_; ///< Array of the trajectory costs.
-  float* importance_sampler_; ///< Host array for keeping track of the nomimal trajectory.
-  std::vector<float> nominal_traj_; ///< Host array for keeping track of the nomimal trajectory.
-  std::vector<float> curr_controls_;
 
-  std::vector<float> control_hist_;
   /**
   * @brief Constructor for mppi controller class.
   * @param num_timesteps The number of timesteps to look ahead for.
@@ -119,26 +114,26 @@ public:
   std::vector<float> getStateSeq();
 
 private:
-  float gamma_; ///< Value of the temperature in the softmax.
   int num_iters_;
+  float gamma_; ///< Value of the temperature in the softmax.
   float normalizer_; ///< Variable for the normalizing term from sampling.
-
-  Eigen::Matrix<float, CONTROL_DIM, 1> u_; ///< Control input to be computed.
 
   curandGenerator_t gen_;
 
-  float* U_; ///< Host array for keeping track of the nominal control input.
-  Eigen::MatrixXf U_smoothed_;
-  float* du_; ///< Host array for computing the optimal control update.
+  std::vector<float> traj_costs_; ///< Array of the trajectory costs.
+  std::vector<float> state_solution_; ///< Host array for keeping track of the nomimal trajectory.
+  std::vector<float> control_solution_;
+  std::vector<float> control_hist_;
+  std::vector<float> U_;
+  std::vector<float> du_; ///< Host array for computing the optimal control update.
+  std::vector<float> nu_;
+  std::vector<float> init_u_;
 
-  float* nu_;
-  float* init_u_;
   float* state_d_;
   float* nu_d_;
   float* traj_costs_d_;
   float* U_d_;
   float* du_d_;
-  float* nominal_traj_d_;
 };
 
 #include "mppi_controller.cu"
