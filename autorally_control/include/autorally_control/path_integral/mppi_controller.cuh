@@ -56,10 +56,9 @@ public:
   static const int STATE_DIM = DYNAMICS_T::STATE_DIM;
   static const int CONTROL_DIM = DYNAMICS_T::CONTROL_DIM;
 
-  int num_timesteps_;
+  int numTimesteps_;
   int hz_;
-  int optimization_stride_;
-  double total_iter_time_;
+  int optimizationStride_;
 
   DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
   COSTS_T *costs_; ///< Autorally system costs.
@@ -107,11 +106,13 @@ public:
 
   void computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state);
 
+  void slideControlSeq(int stride);
+
   /**
   * @brief Compute the control given the current state of the system.
   * @param state The current state of the autorally system.
   */
-  Eigen::MatrixXf computeControl(Eigen::Matrix<float, STATE_DIM, 1> state);
+  void computeControl(Eigen::Matrix<float, STATE_DIM, 1> state);
 
   std::vector<float> getControlSeq();
 

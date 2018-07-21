@@ -28,7 +28,7 @@
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".0015" />
-    <param name="num_iters" value="2" />
+    <param name="num_iters" value="1" />
 
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />
@@ -43,7 +43,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="desired_speed" value="8.0" />
+    <param name="desired_speed" value="9.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />
     <param name="max_slip_angle" value="1.25" />

@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
 
   AutorallyPlant robot(mppi_node, params.debug_mode, params.hz);
 
-  //runControlLoop<Controller>(&mppi, &params, &mppi_node);
+  //runControlLoop<Controller>( &mppi, &robot, &params, &mppi_node);
   boost::thread optimizer(&runControlLoop<Controller>, &mppi, &robot, &params, &mppi_node);
 
   ros::spin();

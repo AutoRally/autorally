@@ -47,7 +47,7 @@
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, float* du_d, float* nu_d, 
                                float* costs_d, DYNAMICS_T* dynamics_model, COSTS_T* mppi_costs, 
-                               float* nominal_traj_d, int opt_stride)
+                               float* nominal_traj_d, int opt_delay)
 {
   int i,j;
   int tdx = threadIdx.x;
@@ -106,7 +106,7 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
     if (global_idx < NUM_ROLLOUTS) {
       for (j = tdy; j < CONTROL_DIM; j+= blockDim.y) {
         //Noise free rollout
-        if (global_idx == 0 || i < opt_stride) { //Don't inject noise into the first timestep
+        if (global_idx == 0 || i < opt_delay) { //Don't optimize variables that are already being executed
           du[j] = 0.0;
           u[j] = U_d[i*CONTROL_DIM + j];
         }
@@ -215,14 +215,14 @@ __global__ void weightedReductionKernel(float* states_d, float* du_d, float* nu_
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void launchRolloutKernel(int num_timesteps, float* state_d, float* U_d, float* du_d, float* nu_d, 
                          float* costs_d, DYNAMICS_T *dynamics_model, COSTS_T *mppi_costs, 
-                         float* nominal_traj_d, int opt_stride)
+                         float* nominal_traj_d, int opt_delay)
 {
   const int GRIDSIZE_X = (NUM_ROLLOUTS-1)/BLOCKSIZE_X + 1;
   //transferMemToConst(dynamics_model.theta_d_);
   dim3 dimBlock(BLOCKSIZE_X, BLOCKSIZE_Y, 1);
   dim3 dimGrid(GRIDSIZE_X, 1, 1);
   rolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock>>>(num_timesteps, state_d, U_d, 
-    du_d, nu_d, costs_d, dynamics_model, mppi_costs, nominal_traj_d, opt_stride);
+    du_d, nu_d, costs_d, dynamics_model, mppi_costs, nominal_traj_d, opt_delay);
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
@@ -267,7 +267,6 @@ MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DY
                                                                               float* exploration_var, float* init_u, 
                                                                               int num_optimization_iters, int opt_stride)
 {
-  total_iter_time_ = 0;
   model_ = model;
   costs_ = costs;
   //Initialize the exploration variance and initial control value.
@@ -275,25 +274,25 @@ MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DY
   init_u_ = new float[CONTROL_DIM];
   //Initialize parameters, including the number of rollouts and timesteps
   hz_ = hz;
-  num_timesteps_ = num_timesteps;
+  numTimesteps_ = num_timesteps;
   nu_ = exploration_var;
-  optimization_stride_ = opt_stride;
+  optimizationStride_ = opt_stride;
   init_u_ = init_u;
   gamma_ = gamma;
   num_iters_ = num_optimization_iters;
   //Initialize the nominal control and optimal update
-  U_ = new float[num_timesteps_*CONTROL_DIM];
-  U_smoothed_ = Eigen::MatrixXf::Zero(8 + num_timesteps_, CONTROL_DIM);
-  du_ = new float[num_timesteps_*CONTROL_DIM];
+  U_ = new float[numTimesteps_*CONTROL_DIM];
+  U_smoothed_ = Eigen::MatrixXf::Zero(8 + numTimesteps_, CONTROL_DIM);
+  du_ = new float[numTimesteps_*CONTROL_DIM];
   control_hist_.resize(2*CONTROL_DIM);
   for (int i = 0; i < 4; i++){
     control_hist_[i] = 0;
   }
   traj_costs_ = new float[NUM_ROLLOUTS];
   //Initialize the recording arrays
-  nominal_traj_.resize(num_timesteps_*STATE_DIM);
-  curr_controls_.resize(num_timesteps_*CONTROL_DIM);
-  importance_sampler_ = new float[num_timesteps_*STATE_DIM];
+  nominal_traj_.resize(numTimesteps_*STATE_DIM);
+  curr_controls_.resize(numTimesteps_*CONTROL_DIM);
+  importance_sampler_ = new float[numTimesteps_*STATE_DIM];
   //Initialize the random number generator.
   curandCreateGenerator(&gen_, CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen_, 1234ULL);
@@ -318,8 +317,8 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::allocateCuda
   HANDLE_ERROR( cudaMalloc((void**)&nu_d_, STATE_DIM*sizeof(float)));
   HANDLE_ERROR( cudaMalloc((void**)&traj_costs_d_, NUM_ROLLOUTS*sizeof(float)));
   HANDLE_ERROR( cudaMalloc((void**)&U_d_, CONTROL_DIM*NUM_ROLLOUTS));
-  HANDLE_ERROR( cudaMalloc((void**)&du_d_, NUM_ROLLOUTS*num_timesteps_*CONTROL_DIM*sizeof(float)));
-  HANDLE_ERROR( cudaMalloc((void**)&nominal_traj_d_, (STATE_DIM+1)*num_timesteps_*sizeof(float)));
+  HANDLE_ERROR( cudaMalloc((void**)&du_d_, NUM_ROLLOUTS*numTimesteps_*CONTROL_DIM*sizeof(float)));
+  HANDLE_ERROR( cudaMalloc((void**)&nominal_traj_d_, (STATE_DIM+1)*numTimesteps_*sizeof(float)));
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
@@ -339,7 +338,7 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::resetControl
 {
   int i,j;
   //Set all the control values to their initial settings.
-  for (i = 0; i < num_timesteps_; i++) {
+  for (i = 0; i < numTimesteps_; i++) {
     for (j = 0; j < CONTROL_DIM; j++) {
       U_[i*CONTROL_DIM + j] = init_u_[j];
     }
@@ -362,24 +361,24 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::savitskyGola
   Eigen::MatrixXf filter(1,5);
   filter << -3, 12, 17, 12, -3;
   filter /= 35.0;
-  for (i = 0; i < num_timesteps_ + 4; i++){
+  for (i = 0; i < numTimesteps_ + 4; i++){
     if (i < 2) {
       for (j = 0; j < CONTROL_DIM; j++){
         U_smoothed_(i, j) = control_hist_[CONTROL_DIM*i + j];
       }
     }
-    else if (i < num_timesteps_ + 2) {
+    else if (i < numTimesteps_ + 2) {
       for (j = 0; j < CONTROL_DIM; j++){
         U_smoothed_(i,j) = U_[CONTROL_DIM*(i - 2) + j];
       }
     }
     else{
       for (j = 0; j < CONTROL_DIM; j++) {
-        U_smoothed_(i, j) = U_[CONTROL_DIM*(num_timesteps_ - 1) + j];
+        U_smoothed_(i, j) = U_[CONTROL_DIM*(numTimesteps_ - 1) + j];
       }
     }
   }
-  for (i = 0; i < num_timesteps_; i++){
+  for (i = 0; i < numTimesteps_; i++){
     for (j = 0; j < CONTROL_DIM; j++){
       U_[CONTROL_DIM*i + j] = (filter*U_smoothed_.block<5,1>(i,j))(0,0);
     }
@@ -393,7 +392,7 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeNomin
   Eigen::MatrixXf s(7,1);
   Eigen::MatrixXf u(2,1);
   s = state;
-  for (i = 0; i < num_timesteps_; i++){
+  for (i = 0; i < numTimesteps_; i++){
     for (j = 0; j < STATE_DIM; j++){
       //Set the current state solution
       nominal_traj_[i*STATE_DIM + j] = s(j);
@@ -407,118 +406,83 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeNomin
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-Eigen::MatrixXf MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeControl(Eigen::Matrix<float, STATE_DIM, 1> state)
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::slideControlSeq(int stride)
 {
-  int i,j,opt_iter;
-  clock_t startTime = clock();
-  //Compute the importance sampling trajectory
-  //computeNominalTraj(state, importance_sampler_);
+  //Slide the control sequence down by stride
+  if (stride == 1){
+    control_hist_[0] = control_hist_[2];
+    control_hist_[1] = control_hist_[3];
+    control_hist_[2] = U_[0];
+    control_hist_[3] = U_[1];
+  }
+  else{
+    int t = stride - 2;
+    for (int i = 0; i < 4; i++){
+      control_hist_[i] = U_[t + i];
+    }
+  }
+
+  for (int i = 0; i < numTimesteps_- stride; i++) {
+    for (int j = 0; j < CONTROL_DIM; j++) {
+      U_[i*CONTROL_DIM + j] = U_[(i+stride)*CONTROL_DIM + j];
+    }
+  }
+  //Initialize new controls to the init_u_ variable.
+  for (int j = 1; j <= stride; j++) {
+    for (int i = 0; i < CONTROL_DIM; i++){
+      U_[(numTimesteps_ - j)*CONTROL_DIM + i] = init_u_[i];
+    }
+  }
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeControl(Eigen::Matrix<float, STATE_DIM, 1> state)
+{
   //First transfer the state and current control sequence to the device.
   HANDLE_ERROR( cudaMemcpy(state_d_, state.data(), STATE_DIM*sizeof(float), cudaMemcpyHostToDevice));
-  for (opt_iter = 0; opt_iter < num_iters_; opt_iter++) {
-    HANDLE_ERROR( cudaMemcpy(U_d_, U_, CONTROL_DIM*num_timesteps_*sizeof(float), cudaMemcpyHostToDevice));
+  for (int opt_iter = 0; opt_iter < num_iters_; opt_iter++) {
+    HANDLE_ERROR( cudaMemcpy(U_d_, U_, CONTROL_DIM*numTimesteps_*sizeof(float), cudaMemcpyHostToDevice));
     //Generate a bunch of random numbers
-    curandGenerateNormal(gen_, du_d_, NUM_ROLLOUTS*num_timesteps_*CONTROL_DIM, 0.0, 1.0);
+    curandGenerateNormal(gen_, du_d_, NUM_ROLLOUTS*numTimesteps_*CONTROL_DIM, 0.0, 1.0);
     //Launch the rollout kernel
-    launchRolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(num_timesteps_, state_d_, U_d_, du_d_, nu_d_, traj_costs_d_, model_, 
-                        costs_, nominal_traj_d_, optimization_stride_);
+    launchRolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(numTimesteps_, state_d_, U_d_, du_d_, nu_d_, traj_costs_d_, model_, 
+                        costs_, nominal_traj_d_, optimizationStride_);
     //Check for any errors from the rollout kernel.
     CudaCheckError();
     HANDLE_ERROR( cudaDeviceSynchronize() );
+
     HANDLE_ERROR(cudaMemcpy(traj_costs_, traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost));
     float baseline = traj_costs_[0];
-    for (i = 0; i < NUM_ROLLOUTS; i++) {
+    for (int i = 0; i < NUM_ROLLOUTS; i++) {
       if (traj_costs_[i] < baseline){
         baseline = traj_costs_[i];
       }
     }
+
     launchNormExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, gamma_, baseline);
     HANDLE_ERROR(cudaMemcpy(traj_costs_, traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost));
     //Compute the normalizing term
     normalizer_ = 0;
-    for (i = 0; i < NUM_ROLLOUTS; i++) {
+    for (int i = 0; i < NUM_ROLLOUTS; i++) {
       normalizer_ += traj_costs_[i];
     }
+
     //Compute the cost weighted avergage.
-    launchWeightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, du_d_, nu_d_, normalizer_, num_timesteps_);
+    launchWeightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, du_d_, nu_d_, normalizer_, numTimesteps_);
+
     //Transfer control update to host.
-    HANDLE_ERROR( cudaMemcpy(du_, du_d_, num_timesteps_*CONTROL_DIM*sizeof(float), cudaMemcpyDeviceToHost));
-    for (i = 0; i < num_timesteps_; i++) {
-      for (j = 0; j < CONTROL_DIM; j++) {
+    HANDLE_ERROR( cudaMemcpy(du_, du_d_, numTimesteps_*CONTROL_DIM*sizeof(float), cudaMemcpyDeviceToHost));
+    for (int i = 0; i < numTimesteps_; i++) {
+      for (int j = 0; j < CONTROL_DIM; j++) {
         U_[i*CONTROL_DIM + j] = du_[i*CONTROL_DIM + j];
       }
     }
-    //Update the current control.
-    for (i = 0; i < CONTROL_DIM; i++){
-      u_(i) = U_[i];
-    }
+
   }
-  
   //Smooth for the next optimization round
   savitskyGolay();
-
   //Compute the planned trajectory
   computeNominalTraj(state);
-
-  //Slide the control sequence down
-  if (optimization_stride_ == 1){
-    control_hist_[0] = control_hist_[2];
-    control_hist_[1] = control_hist_[3];
-    control_hist_[2] = U_[0];
-    control_hist_[3] = U_[1];
-  }
-  else{
-    int t = optimization_stride_ - 2;
-    for (int i = 0; i < 4; i++){
-      control_hist_[i] = U_[t + i];
-    }
-  }
-
-  for (i = 0; i < num_timesteps_- optimization_stride_; i++) {
-    for (j = 0; j < CONTROL_DIM; j++) {
-      U_[i*CONTROL_DIM + j] = U_[(i+optimization_stride_)*CONTROL_DIM + j];
-    }
-  }
-  //Initialize new controls to the init_u_ variable.
-  for (int j = 1; j <= optimization_stride_; j++) {
-    for (int i = 0; i < CONTROL_DIM; i++){
-      U_[(num_timesteps_ - j)*CONTROL_DIM + i] = init_u_[i];
-    }
-  }
-
-  /*
-  //Slide the control sequence down
-  if (optimization_stride_ == 1){
-    control_hist_[0] = control_hist_[2];
-    control_hist_[1] = control_hist_[3];
-    control_hist_[2] = U_[0];
-    control_hist_[3] = U_[1];
-  }
-  else{
-    int t = optimization_stride_ - 2;
-    for (int i = 0; i < 4; i++){
-      control_hist_[i] = U_[t + i];
-    }
-  }
-
-  for (i = 0; i < num_timesteps_- optimization_stride_; i++) {
-    for (j = 0; j < CONTROL_DIM; j++) {
-      U_[i*CONTROL_DIM + j] = U_[(i+optimization_stride_)*CONTROL_DIM + j];
-    }
-  }
-  //Initialize new controls to the init_u_ variable.
-  for (int j = 1; j <= optimization_stride_; j++) 
-    for (int i = 0; i < CONTROL_DIM; i++){
-      U_[(num_timesteps_ - j)*CONTROL_DIM + i] = init_u_[i];
-    }
-  }*/
-
-
-
-  //Transfer the nominal trajectory to host memory.
-  //HANDLE_ERROR(cudaMemcpy(nominal_traj_, nominal_traj_d_, (STATE_DIM+1)*num_timesteps_*sizeof(float), cudaMemcpyDeviceToHost));
-  total_iter_time_ += double( clock() - startTime ) / (double)CLOCKS_PER_SEC;
-  return u_;
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
