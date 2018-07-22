@@ -43,12 +43,12 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="desired_speed" value="9.0" />
+    <param name="desired_speed" value="8.0" />
     <param name="speed_coefficient" value="4.25" />
-    <param name="track_coefficient" value="100.0" />
+    <param name="track_coefficient" value="200.0" />
     <param name="max_slip_angle" value="1.25" />
-    <param name="slip_penalty" value="250.0" />
-    <param name="track_slop" value="0.5" />
+    <param name="slip_penalty" value="25.0" />
+    <param name="track_slop" value="0.0" />
     <param name="crash_coeff" value="10000.0" />
     <param name="steering_coeff" value="0.0" />
     <param name="throttle_coeff" value="0.0" />

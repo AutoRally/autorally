@@ -54,6 +54,8 @@ public:
   static const int SHARED_MEM_REQUEST_GRD = DYNAMICS_DIM*BF_DIM;
   static const int SHARED_MEM_REQUEST_BLK = 0; 
 
+  Eigen::Matrix<float, STATE_DIM, 1> state_der_; ///< The state derivative.
+
   GeneralizedLinear(Eigen::Matrix<float, DYNAMICS_DIM, NUM_BFS, Eigen::RowMajor> theta, float delta_t,
                     float2* control_rngs = NULL);
 
@@ -71,11 +73,15 @@ public:
 
   void updateState(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
+  void computeKinematics(Eigen::MatrixXf &state);
+
   void computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
   __device__ void cudaInit(float* theta_s);
 
   __device__ void enforceConstraints(float* state, float* control);
+
+  __device__ void computeKinematics(float* state, float* state_der);
 
   __device__ void computeStateDeriv(float* state, float* control, float* state_der, float* theta_s);
 
@@ -91,7 +97,6 @@ protected:
   //Host fields
   Eigen::Matrix<float, DYNAMICS_DIM, NUM_BFS, Eigen::RowMajor> theta_; ///< Coefficient matrix for basis function updates.
   Eigen::Matrix<float, NUM_BFS, 1> bf_vec_; ///< Vector of basis functions.
-  Eigen::Matrix<float, STATE_DIM, 1> state_der_; ///< The state derivative.
 
   //Device fields
   float* theta_d_; ///<Coefficient matrix in device memory.

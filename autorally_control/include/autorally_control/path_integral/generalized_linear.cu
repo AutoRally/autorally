@@ -136,11 +136,20 @@ template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
 void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::updateState(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
 {
   enforceConstraints(state, control);
-  kinematics_->computeKinematics(state.data(), state_der_.data());
+  computeKinematics(state);
   computeDynamics(state, control);
   state += state_der_*dt_;
   state_der_ *= 0;
 }
+
+template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
+void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeKinematics(Eigen::MatrixXf &state)
+{
+  state_der_(0) = cosf(state(2))*state(4) - sinf(state(2))*state(5);
+  state_der_(1) = sinf(state(2))*state(4) + cosf(state(2))*state(5);
+  state_der_(2) = -state(6); //Pose estimate actually gives the negative yaw derivative
+}
+
 
 template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
 void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
@@ -185,7 +194,7 @@ template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
 __device__ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeStateDeriv(float* s, float* u, float* s_der, float* theta_s)
 {
   if (threadIdx.y == 0){
-    kinematics_->computeKinematics(s, s_der);
+    computeKinematics(s, s_der);
   }
   computeDynamics(s, u, s_der, theta_s);
 }
@@ -200,6 +209,14 @@ __device__ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::incr
     state[i] += state_der[i]*dt_;
     state_der[i] = 0; //Important: reset the state derivative to zero.
   }
+}
+
+template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
+__device__ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeKinematics(float* state, float* state_der)
+{
+  state_der[0] = cosf(state[2])*state[4] - sinf(state[2])*state[5];
+  state_der[1] = sinf(state[2])*state[4] + cosf(state[2])*state[5];
+  state_der[2] = -state[6]; //Pose estimate actually gives the negative yaw derivative
 }
 
 template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>

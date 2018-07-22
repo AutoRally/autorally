@@ -85,7 +85,9 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   //Diagnostics::init(info, hardwareID, portPath);
 }
 
-void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, ros::Time ts, double loop_speed)
+void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
+                                util::EigenAlignedVector<float, 2, 7> gains,
+                                ros::Time ts, double loop_speed)
 {
   boost::mutex::scoped_lock lock(access_guard_);
   optimizationLoopTime_ = loop_speed;
@@ -98,6 +100,8 @@ void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> con
       controlSequence_[AUTORALLY_CONTROL_DIM*t + i] = controls[AUTORALLY_CONTROL_DIM*t + i];
     }
   }
+  feedback_gains_ = gains;
+  solutionReceived = true;
 }
 
 void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
@@ -136,14 +140,37 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.yaw_mder = -pose_msg.twist.twist.angular.z;
 
   //Interpolate and publish the current control
-  double steering, throttle;
-  double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
-  int lowerIdx = (int)(timeFromLastOpt/deltaT_);
-  int upperIdx = lowerIdx + 1;
-  double alpha = (timeFromLastOpt - lowerIdx*deltaT_)/deltaT_;
-  steering = (1 - alpha)*controlSequence_[2*lowerIdx] + alpha*controlSequence_[2*upperIdx];
-  throttle = (1 - alpha)*controlSequence_[2*lowerIdx + 1] + alpha*controlSequence_[2*upperIdx + 1];
-  pubControl(steering, throttle);
+  if (solutionReceived){
+    double steering_ff, throttle_ff, steering_fb, throttle_fb, steering, throttle;
+    double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
+    int lowerIdx = (int)(timeFromLastOpt/deltaT_);
+    int upperIdx = lowerIdx + 1;
+    double alpha = (timeFromLastOpt - lowerIdx*deltaT_)/deltaT_;
+    steering_ff = (1 - alpha)*controlSequence_[2*lowerIdx] + alpha*controlSequence_[2*upperIdx];
+    throttle_ff = (1 - alpha)*controlSequence_[2*lowerIdx + 1] + alpha*controlSequence_[2*upperIdx + 1];
+
+    Eigen::MatrixXf current_state(7,1);
+    Eigen::MatrixXf desired_state(7,1);
+    Eigen::MatrixXf deltaU;
+    current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
+    for (int i = 0; i < 7; i++){
+      current_state(i) = (1 - alpha)*controlSequence_[7*lowerIdx + i] + alpha*controlSequence_[7*upperIdx + i];
+    }
+    
+    deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);
+
+    if (std::isnan( deltaU(0) ) || std::isnan( deltaU(1))){
+      pubControl(steering_ff, throttle_ff);
+    }
+    else {
+      steering_fb = deltaU(0);
+      throttle_fb = deltaU(1);
+      steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
+      throttle = fmin(0.75, fmax(-0.99, throttle_ff + throttle_fb));
+      std::cout << "Delta U: " << deltaU << std::endl << std::endl;
+      pubControl(steering, throttle);
+    }
+  }
 }
 
 void AutorallyPlant::servoCall(autorally_msgs::chassisState servo_msg)

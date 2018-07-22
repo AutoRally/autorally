@@ -43,6 +43,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Point.h>
 
+#include <autorally_control/ddp/util.h>
 #include <autorally_msgs/chassisCommand.h>
 #include <autorally_msgs/chassisState.h>
 #include <autorally_msgs/runstop.h>
@@ -104,8 +105,10 @@ public:
 	boost::mutex access_guard_;
   bool new_model_available_;
 
+  bool solutionReceived = false;
   std::vector<float> controlSequence_;
   std::vector<float> stateSequence_;
+  util::EigenAlignedVector<float, 2, 7> feedback_gains_;
   ros::Time solutionTs_;
 
   int numTimesteps_;
@@ -140,7 +143,9 @@ public:
   */
 	void pubPath(const ros::TimerEvent&);
 
-  void setSolution(std::vector<float> traj, std::vector<float> controls, ros::Time timestamp, double loop_speed);
+  void setSolution(std::vector<float> traj, std::vector<float> controls, 
+                   util::EigenAlignedVector<float, 2, 7> gains,
+                   ros::Time timestamp, double loop_speed);
 
   /**
   * @brief Publishes a control input. 

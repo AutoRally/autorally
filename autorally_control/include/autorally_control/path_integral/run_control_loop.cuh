@@ -38,6 +38,10 @@
 #include "autorally_plant.h"
 #include "param_getter.h"
 
+#include <autorally_control/ddp/ddp_model_wrapper.h>
+#include <autorally_control/ddp/ddp_tracking_costs.h>
+#include <autorally_control/ddp/ddp.h>
+
 #include <boost/thread/thread.hpp>
 #include <unistd.h>
 #include <chrono>
@@ -45,6 +49,12 @@
 #include <ros/ros.h>
 
 namespace autorally_control {
+
+//Typedefs for tracking controller
+typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsDDP;
+typedef ModelWrapperDDP<DynamicsDDP> ModelDDP;
+typedef TrackingCostDDP<ModelDDP> RunningCostDDP;
+typedef TrackingTerminalCost<ModelDDP> TerminalCostDDP;
 
 template <class CONTROLLER_T> 
 void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, ros::NodeHandle* mppi_node)
@@ -72,6 +82,34 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
 
   //Set the loop rate
   std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
+
+  //Now define the DDP model, costs, and optimizer
+  float2 control_constraints[2] = {make_float2(-.99, .99), make_float2(-.99, params->max_throttle)};
+  DynamicsDDP* ddp_internal_model = new DynamicsDDP(1.0/params->hz, control_constraints);
+  ddp_internal_model->loadParams(params->model_path); //Load the model parameters from the launch file specified path
+  ModelDDP ddp_model(ddp_internal_model);
+  util::DefaultLogger logger;
+  bool verbose = false;
+  DDP<ModelDDP> ddp_solver(1.0/params->hz, params->num_timesteps, 1, &logger, verbose);
+  RunningCostDDP::StateCostWeight Q;
+  Q.setIdentity();
+  Q.diagonal() << 0.05, 0.05, 0.25, 0.0, 0.05, 0.01, 0.01;
+  TerminalCostDDP::Hessian Qf;
+  Qf.setIdentity();
+  Qf.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  RunningCostDDP::ControlCostWeight R;
+  R.setIdentity();
+  R.diagonal() << 10.0, 10.0;
+  RunningCostDDP run_cost(Q,R, params->num_timesteps);
+  TerminalCostDDP terminal_cost(Qf);
+  Eigen::Matrix<float, DynamicsDDP::CONTROL_DIM, 1> U_MIN;
+  Eigen::Matrix<float, DynamicsDDP::CONTROL_DIM, 1> U_MAX;
+  U_MIN << -0.99, -0.99;
+  U_MAX << 0.99, params->max_throttle;
+
+  //Eigen matrices for holding the control and state solutions
+  Eigen::MatrixXf control_traj(DynamicsDDP::CONTROL_DIM, params->num_timesteps);
+  control_traj = Eigen::MatrixXf::Zero(DynamicsDDP::CONTROL_DIM, params->num_timesteps);
 
   //Start the control loop.
   while (ros::ok()) {
@@ -109,7 +147,26 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     //Get and set the updated solution
     controlSolution = controller->getControlSeq();
     stateSolution = controller->getStateSeq();
-    robot->setSolution(stateSolution, controlSolution, last_pose_update, avgOptimizationLoopTime);
+
+    //Now compute feedback gains
+    std::chrono::steady_clock::time_point ddp_opt_start = std::chrono::steady_clock::now();
+    for (int t = 0; t < params->num_timesteps; t++){
+      for (int i = 0; i < DynamicsDDP::CONTROL_DIM; i++){
+        control_traj(i,t) = controlSolution[DynamicsDDP::CONTROL_DIM*t + i];
+      }
+    }
+    run_cost.setTargets(stateSolution.data(), controlSolution.data(), params->num_timesteps);
+    terminal_cost.xf = run_cost.traj_target_x_.col(params->num_timesteps - 1);
+    auto result = ddp_solver.run(state, control_traj, ddp_model, run_cost, terminal_cost, U_MIN, U_MAX);
+    std::cout << control_traj(0,0) << ", " << control_traj(0, 1) << std::endl;
+    std::cout << result.control_trajectory(0,0) << ", " << result.control_trajectory(0, 1) << std::endl;
+    std::cout << result.feedback_gain[0] << std::endl;
+    std::chrono::duration<double, std::milli> ddp_ms = std::chrono::steady_clock::now() - loop_start;
+
+    ddp_ms = std::chrono::steady_clock::now() - ddp_opt_start;
+    std::cout << "DDP Optimization Time: " << ddp_ms.count() << std::endl << std::endl;
+
+    robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
   
     status = robot->checkStatus();
     if (status != 0 && params->debug_mode){

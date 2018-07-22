@@ -61,21 +61,21 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 
 using namespace autorally_control;
 
-#ifdef USE_NEURAL_NETWORK_MODEL__ /*Use neural network dynamics model*/
+//#ifdef USE_NEURAL_NETWORK_MODEL__ /*Use neural network dynamics model*/
 
 const int MPPI_NUM_ROLLOUTS__ = 1200;
 const int BLOCKSIZE_X = 8;
 const int BLOCKSIZE_Y = 16;
 typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsModel;
 
-#elif USE_BASIS_FUNC_MODEL__ /*Use the basis function model*/
-
-const int MPPI_NUM_ROLLOUTS__ = 2560;
-const int BLOCKSIZE_X = 16;
-const int BLOCKSIZE_Y = 4;
-typedef GeneralizedLinear<CarBasisFuncs, 7, 2, 25, CarKinematics, 3> DynamicsModel;
-
-#endif
+//#elif USE_BASIS_FUNC_MODEL__ /*Use the basis function model*/
+//
+//const int MPPI_NUM_ROLLOUTS__ = 2560;
+//const int BLOCKSIZE_X = 16;
+//const int BLOCKSIZE_Y = 4;
+//typedef GeneralizedLinear<CarBasisFuncs, 7, 2, 25, CarKinematics, 3> DynamicsModel;
+//
+//#endif
 
 //Convenience typedef for the MPPI Controller.
 typedef MPPIController<DynamicsModel, MPPICosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
@@ -108,7 +108,6 @@ int main(int argc, char** argv) {
 
   AutorallyPlant robot(mppi_node, params.debug_mode, params.hz);
 
-  //runControlLoop<Controller>( &mppi, &robot, &params, &mppi_node);
   boost::thread optimizer(&runControlLoop<Controller>, &mppi, &robot, &params, &mppi_node);
 
   ros::spin();  

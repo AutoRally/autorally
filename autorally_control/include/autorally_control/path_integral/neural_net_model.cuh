@@ -40,7 +40,7 @@
 #include "gpu_err_chk.h"
 #include "cnpy.h"
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 
 namespace autorally_control {
