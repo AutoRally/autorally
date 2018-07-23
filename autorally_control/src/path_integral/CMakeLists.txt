@@ -50,24 +50,34 @@ set(
 	-w
 )
 
+add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
+
+cuda_add_library(mppi_nodelet 
+                 mppi.cu
+                 autorally_plant
+                 param_getter)
+add_dependencies(mppi_nodelet autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
+target_link_libraries(mppi_nodelet /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
 
 ####################################################################################
 #Executable for the basis function model
 ####################################################################################
 
-add_definitions(-DUSE_BASIS_FUNC_MODEL__)
+#add_definitions(-DUSE_BASIS_FUNC_MODEL__)
 
-cuda_add_executable(path_integral_bf
-                    path_integral_main.cu
-                    autorally_plant
-                    param_getter
-                    )
+#cuda_add_executable(path_integral_bf
+#                    path_integral_main.cu
+#                    autorally_plant
+#                    param_getter
+#                    )
 
-add_dependencies(path_integral_bf autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
+#add_dependencies(path_integral_bf autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+#target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
+#remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
 
 ###################################################################################
 #Executable for the neural network model
@@ -91,11 +101,11 @@ remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__
 #Executable for monitoring the status of mppi
 ####################################################################################
 
-add_executable(path_integral_monitor
-			   status_monitor.cpp)
+#add_executable(path_integral_monitor
+#			   status_monitor.cpp)
 
-add_dependencies(path_integral_monitor autorally_core autorally_msgs_gencpp)
+#add_dependencies(path_integral_monitor autorally_core autorally_msgs_gencpp)
 
-target_link_libraries(path_integral_monitor ${catkin_LIBRARIES})
+#target_link_libraries(path_integral_monitor ${catkin_LIBRARIES})
 
 endif(CUDA_FOUND)

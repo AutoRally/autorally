@@ -54,10 +54,13 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #include <autorally_control/path_integral/run_control_loop.cuh>
 
 #include <ros/ros.h>
+#include <atomic>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+//PLUGINLIB_DECLARE_CLASS(autorally_control, mppi_controller, autorally_control::MPPI, nodelet::Nodelet)
 
 using namespace autorally_control;
 
@@ -103,14 +106,18 @@ int main(int argc, char** argv) {
   //Define the controller
   float init_u[2] = {(float)params.init_steering, (float)params.init_throttle};
   float exploration_std[2] = {(float)params.steering_std, (float)params.throttle_std};
-  Controller mppi(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
-                  init_u, params.num_iters, optimization_stride);
+  Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
+                                    init_u, params.num_iters, optimization_stride);
 
-  AutorallyPlant robot(mppi_node, params.debug_mode, params.hz);
+  AutorallyPlant* robot = new AutorallyPlant(mppi_node, mppi_node, params.debug_mode, params.hz);
 
-  boost::thread optimizer(&runControlLoop<Controller>, &mppi, &robot, &params, &mppi_node);
+  boost::thread optimizer;
+
+  std::atomic<bool> is_alive(true);
+  optimizer = boost::thread(&runControlLoop<Controller>, mppi, robot, &params, &mppi_node, &is_alive);
 
   ros::spin();
+
   optimizer.join();
-  mppi.deallocateCudaMem();
+  mppi->deallocateCudaMem();
 }

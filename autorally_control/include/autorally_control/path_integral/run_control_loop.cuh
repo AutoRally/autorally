@@ -44,6 +44,7 @@
 
 //#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
+#include <atomic>
 
 
 #include <boost/thread/thread.hpp>
@@ -61,7 +62,8 @@ typedef TrackingCostDDP<ModelDDP> RunningCostDDP;
 typedef TrackingTerminalCost<ModelDDP> TerminalCostDDP;
 
 template <class CONTROLLER_T> 
-void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, ros::NodeHandle* mppi_node)
+void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, 
+                    ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
 {
   //Initial condition of the robot
   Eigen::MatrixXf state(7,1);
@@ -116,7 +118,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   control_traj = Eigen::MatrixXf::Zero(DynamicsDDP::CONTROL_DIM, params->num_timesteps);
 
   //Start the control loop.
-  while (ros::ok()) {
+  while (is_alive->load()) {
     std::chrono::steady_clock::time_point loop_start = std::chrono::steady_clock::now();
     num_iter ++;
 
@@ -131,6 +133,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       fs = robot->getState(); //Get the new state.
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
+
     //Figure out how many controls have been published since we were last here and slide the 
     //control sequence by that much.
     int stride = round(optimizationLoopTime.toSec()*params->hz);
@@ -174,7 +177,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     //Sleep 50 microseconds
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
     int count = 0;
-    while(ros::ok() && (fp_ms < ms || (last_pose_update == robot->getLastPoseTime() && status==0))) {
+    while(is_alive->load() && (fp_ms < ms || (last_pose_update == robot->getLastPoseTime() && status==0))) {
       usleep(50);
       fp_ms = std::chrono::steady_clock::now() - loop_start;
       count++;

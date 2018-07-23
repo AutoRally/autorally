@@ -128,7 +128,7 @@ public:
   * publishers and subscribers.
   * @param mppi_node A ros node handle.
   */
-	AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int hz);
+	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, bool debug_mode, int hz);
 
   /**
   * @brief Callback for /pose_estimate subscriber.

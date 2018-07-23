@@ -37,7 +37,8 @@
 
 namespace autorally_control {
 
-AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int hz)
+
+AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, bool debug_mode, int hz)
 {
   std::string pose_estimate_name;
   mppi_node.getParam("pose_estimate", pose_estimate_name);
@@ -55,9 +56,9 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
 
   //Initialize the subscribers.
-  pose_sub_ = mppi_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
+  pose_sub_ = global_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
                                   ros::TransportHints().tcpNoDelay());
-  servo_sub_ = mppi_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
+  servo_sub_ = global_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
  
   //Timer callback for path publisher
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
@@ -113,7 +114,7 @@ void AutorallyPlant::setDebugImage(cv::Mat img)
 
 void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
 {
-  {
+  /*{
   boost::mutex::scoped_lock lock(access_guard_);
     if (receivedDebugImg_) {
       cv::namedWindow("debugImage", cv::WINDOW_AUTOSIZE);
@@ -122,7 +123,7 @@ void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
   }
   if (receivedDebugImg_){
     cv::waitKey(1);
-  }
+  }*/
 }
 
 
