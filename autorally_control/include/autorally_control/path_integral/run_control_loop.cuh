@@ -42,6 +42,10 @@
 #include <autorally_control/ddp/ddp_tracking_costs.h>
 #include <autorally_control/ddp/ddp.h>
 
+//#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+
+
 #include <boost/thread/thread.hpp>
 #include <unistd.h>
 #include <chrono>
@@ -117,9 +121,9 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     num_iter ++;
 
     if (params->debug_mode){ //Display the debug window.
-     controller->costs_->debugDisplay(state(0), state(1));
+     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1));
+     robot->setDebugImage(debug_img);
     }
-
     //Update the state estimate
     if (last_pose_update != robot->getLastPoseTime()){
       optimizationLoopTime = robot->getLastPoseTime() - last_pose_update;
@@ -127,14 +131,13 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       fs = robot->getState(); //Get the new state.
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
-
     //Figure out how many controls have been published since we were last here and slide the 
     //control sequence by that much.
     int stride = round(optimizationLoopTime.toSec()*params->hz);
     if (status != 0){
       stride = optimization_stride;
     }
-    if (stride != 0){
+    if (stride >= 0 && stride < params->num_timesteps){
       controller->slideControlSeq(stride);
     }
 
@@ -149,7 +152,6 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     stateSolution = controller->getStateSeq();
 
     //Now compute feedback gains
-    std::chrono::steady_clock::time_point ddp_opt_start = std::chrono::steady_clock::now();
     for (int t = 0; t < params->num_timesteps; t++){
       for (int i = 0; i < DynamicsDDP::CONTROL_DIM; i++){
         control_traj(i,t) = controlSolution[DynamicsDDP::CONTROL_DIM*t + i];
@@ -158,16 +160,9 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     run_cost.setTargets(stateSolution.data(), controlSolution.data(), params->num_timesteps);
     terminal_cost.xf = run_cost.traj_target_x_.col(params->num_timesteps - 1);
     auto result = ddp_solver.run(state, control_traj, ddp_model, run_cost, terminal_cost, U_MIN, U_MAX);
-    std::cout << control_traj(0,0) << ", " << control_traj(0, 1) << std::endl;
-    std::cout << result.control_trajectory(0,0) << ", " << result.control_trajectory(0, 1) << std::endl;
-    std::cout << result.feedback_gain[0] << std::endl;
-    std::chrono::duration<double, std::milli> ddp_ms = std::chrono::steady_clock::now() - loop_start;
-
-    ddp_ms = std::chrono::steady_clock::now() - ddp_opt_start;
-    std::cout << "DDP Optimization Time: " << ddp_ms.count() << std::endl << std::endl;
 
     robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
-  
+
     status = robot->checkStatus();
     if (status != 0 && params->debug_mode){
       for (int t = 0; t < optimization_stride; t++){
@@ -178,13 +173,13 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     
     //Sleep 50 microseconds
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
+    int count = 0;
     while(ros::ok() && (fp_ms < ms || (last_pose_update == robot->getLastPoseTime() && status==0))) {
       usleep(50);
       fp_ms = std::chrono::steady_clock::now() - loop_start;
+      count++;
     }
   }
-
-  controller->deallocateCudaMem();
 }
 
 }

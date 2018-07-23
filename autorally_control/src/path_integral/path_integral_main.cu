@@ -110,5 +110,7 @@ int main(int argc, char** argv) {
 
   boost::thread optimizer(&runControlLoop<Controller>, &mppi, &robot, &params, &mppi_node);
 
-  ros::spin();  
+  ros::spin();
+  optimizer.join();
+  mppi.deallocateCudaMem();
 }

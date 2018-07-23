@@ -34,16 +34,13 @@
 #define MPPI_COSTS_CUH_
 
 #include "managed.cuh"
-#include <autorally_control/PathIntegralParamsConfig.h>
 
 #include <ros/ros.h>
-#include <dynamic_reconfigure/server.h>
 
 #include <cuda_runtime.h>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
 namespace autorally_control {
 
@@ -177,7 +174,7 @@ public:
   * @param x float representing the current x-coordinate
   * @param y float representing the current y-coordinate 
   */
-  void debugDisplay(float x, float y);
+  cv::Mat getDebugDisplay(float x, float y);
 
   /*
   * @brief Free cuda variables/memory.
@@ -227,8 +224,6 @@ public:
   __device__ float terminalCost(float* s);
 
 protected:
-  dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
-  dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
 
   //Constant variables
   const float FRONT_D = 0.5; ///< Distance from GPS receiver to front of car.
@@ -245,7 +240,6 @@ protected:
   //Debugging variables
   float* debug_data_; ///< Host array for holding debug info.
   float* debug_data_d_; ///< Device array for holding debug info.
-  cv::Mat debug_img_; ///< OpenCV matrix for display debug info.
   int debug_img_width_; ///Width (in meters) of area imaged by debug view.
   int debug_img_height_; ///< Height (in meters) of area imaged by debug view.
   int debug_img_ppm_; ///< Pixels per meter for resolution of debug view.

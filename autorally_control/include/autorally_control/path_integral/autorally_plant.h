@@ -34,6 +34,16 @@
 #ifndef AUTORALLY_PLANT_H_
 #define AUTORALLY_PLANT_H_
 
+#include "param_getter.h"
+
+#include <autorally_control/ddp/util.h>
+#include <autorally_msgs/chassisCommand.h>
+#include <autorally_msgs/chassisState.h>
+#include <autorally_msgs/runstop.h>
+#include <autorally_msgs/pathIntegralStatus.h>
+#include <autorally_control/PathIntegralParamsConfig.h>
+#include <dynamic_reconfigure/server.h>
+
 #include <ros/ros.h>
 
 #include <nav_msgs/Odometry.h>
@@ -43,11 +53,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Point.h>
 
-#include <autorally_control/ddp/util.h>
-#include <autorally_msgs/chassisCommand.h>
-#include <autorally_msgs/chassisState.h>
-#include <autorally_msgs/runstop.h>
-#include <autorally_msgs/pathIntegralStatus.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <eigen3/Eigen/Dense>
 
@@ -104,6 +111,7 @@ public:
 
 	boost::mutex access_guard_;
   bool new_model_available_;
+  cv::Mat debugImg_;
 
   bool solutionReceived = false;
   std::vector<float> controlSequence_;
@@ -147,6 +155,10 @@ public:
                    util::EigenAlignedVector<float, 2, 7> gains,
                    ros::Time timestamp, double loop_speed);
 
+  void setDebugImage(cv::Mat img);
+
+  void displayDebugImage(const ros::TimerEvent&);
+
   /**
   * @brief Publishes a control input. 
   * @param steering The steering command to publish.
@@ -156,10 +168,13 @@ public:
 
   void pubStatus(const ros::TimerEvent&);
 
+  void updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl);
+
+
   /**
   * @brief Returns the current state of the system.
   */
-	FullState getState();
+	AutorallyPlant::FullState getState();
 
   /**
   * @brief Returns the current value of safe speed.
@@ -183,6 +198,15 @@ public:
   std::vector<float> getModelParams();
 
 private:
+  
+  //dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
+  //dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
+
+  //SystemParams mppiParams_;
+  int poseCount_ = 0;
+  bool useFeedbackGains_ = false;
+  bool receivedDebugImg_ = false;
+
   const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale. 
 
   FullState full_state_; ///< Full state of the autorally vehicle.
@@ -200,12 +224,13 @@ private:
 
   ros::Publisher control_pub_; ///< Publisher of autorally_msgs::chassisCommand type on topic servoCommand.
   ros::Publisher status_pub_; ///< Publishes the status (0 good, 1 neutral, 2 bad) of the controller
-  ros::Publisher delay_pub_; ///< Publisher of geometry::msgs::Point on topic mppiTimeDelay.
+  ros::Publisher subscribed_pose_pub_; ///< Publisher of the subscribed pose
   ros::Publisher path_pub_; ///< Publisher of nav_mags::Path on topic nominalPath.
   ros::Subscriber pose_sub_; ///< Subscriber to /pose_estimate.
   ros::Subscriber servo_sub_;
   ros::Timer pathTimer_;
   ros::Timer statusTimer_;
+  ros::Timer debugImgTimer_;
 
   nav_msgs::Path path_msg_; ///< Path message for publishing the planned path.
   geometry_msgs::Point time_delay_msg_; ///< Point message for publishing the observed delay.

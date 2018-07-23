@@ -50,8 +50,8 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
 
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
-  path_pub_ = mppi_node.advertise<nav_msgs::Path>("nominal_path", 1);
-  delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
+  path_pub_ = mppi_node.advertise<nav_msgs::Path>("nominalPath", 1);
+  subscribed_pose_pub_ = mppi_node.advertise<nav_msgs::Odometry>("subscribedPose", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
 
   //Initialize the subscribers.
@@ -62,6 +62,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   //Timer callback for path publisher
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
   statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
+  debugImgTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::displayDebugImage, this);
 
   //Initialize auxiliary variables.
   safe_speed_zero_ = false;
@@ -82,7 +83,6 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   std::string info = "MPPI Controller";
   std::string hardwareID = "";
   std::string portPath = "";
-  //Diagnostics::init(info, hardwareID, portPath);
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -104,11 +104,34 @@ void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> con
   solutionReceived = true;
 }
 
+void AutorallyPlant::setDebugImage(cv::Mat img)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  receivedDebugImg_ = true;
+  debugImg_ = img;
+}
+
+void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
+{
+  {
+  boost::mutex::scoped_lock lock(access_guard_);
+    if (receivedDebugImg_) {
+      cv::namedWindow("debugImage", cv::WINDOW_AUTOSIZE);
+      cv::imshow("debugImage", debugImg_);
+    } 
+  }
+  if (receivedDebugImg_){
+    cv::waitKey(1);
+  }
+}
+
+
 void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
 {
   boost::mutex::scoped_lock lock(access_guard_);
   //Update the timestamp
   last_pose_call_ = pose_msg.header.stamp;
+  poseCount_++;
   //Set activated to true --> we are receiving state messages.
   activated_ = true;
   //Update position
@@ -140,9 +163,10 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.yaw_mder = -pose_msg.twist.twist.angular.z;
 
   //Interpolate and publish the current control
-  if (solutionReceived){
+  double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
+
+  if (solutionReceived && timeFromLastOpt > 0 && timeFromLastOpt < (numTimesteps_-1)*deltaT_){
     double steering_ff, throttle_ff, steering_fb, throttle_fb, steering, throttle;
-    double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
     int lowerIdx = (int)(timeFromLastOpt/deltaT_);
     int upperIdx = lowerIdx + 1;
     double alpha = (timeFromLastOpt - lowerIdx*deltaT_)/deltaT_;
@@ -167,7 +191,6 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
       throttle_fb = deltaU(1);
       steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
       throttle = fmin(0.75, fmax(-0.99, throttle_ff + throttle_fb));
-      std::cout << "Delta U: " << deltaU << std::endl << std::endl;
       pubControl(steering, throttle);
     }
   }
@@ -192,6 +215,7 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
 {
   boost::mutex::scoped_lock lock(access_guard_);
   path_msg_.poses.clear();
+  nav_msgs::Odometry subscribed_state;
   int i;
   float phi,theta,psi,q0,q1,q2,q3;
   ros::Time begin = solutionTs_;
@@ -214,15 +238,25 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
     pose.header.stamp = begin + ros::Duration(i*deltaT_);
     pose.header.frame_id = "odom";
     path_msg_.poses.push_back(pose);
+    if (i == 0){
+      subscribed_state.pose.pose = pose.pose;
+      subscribed_state.twist.twist.linear.x = stateSequence_[4];
+      subscribed_state.twist.twist.linear.y = stateSequence_[5];
+      subscribed_state.twist.twist.angular.z = -stateSequence_[6];
+    }
   }
+  subscribed_state.header.stamp = begin;
+  subscribed_state.header.frame_id = "odom";
   path_msg_.header.stamp = begin;
   path_msg_.header.frame_id = "odom";
   path_pub_.publish(path_msg_);
+  subscribed_pose_pub_.publish(subscribed_state);
 }
 
 void AutorallyPlant::pubControl(float steering, float throttle)
 {
   autorally_msgs::chassisCommand control_msg; ///< Autorally control message initialization.
+  std::cout << steering << ", " << throttle << std::endl;
   //Publish the steering and throttle commands
   if (std::isnan(throttle) || std::isnan(steering)){ //Nan control publish zeros and exit.
     ROS_INFO("NaN Control Input Detected");
