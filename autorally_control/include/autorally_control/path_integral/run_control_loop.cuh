@@ -81,7 +81,11 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   int num_iter = 0;
   int optimization_stride;
   int status = 1;
-  double avgOptimizationLoopTime = optimization_stride/(1.0*params->hz);
+  bool use_feedback_gains;
+  mppi_node->getParam("use_feedback_gains", use_feedback_gains);
+  double avgOptimizationLoopTime = 0; //Average time between pose estimates
+  double avgOptimizationTickTime = 0; //Avg. time it takes to get to the sleep at end of loop
+  double avgSleepTime = 0; //Average time spent sleeping
   ros::Time last_pose_update = robot->getLastPoseTime();
   ros::Duration optimizationLoopTime(optimization_stride/(1.0*params->hz));
   mppi_node->getParam("optimization_stride", optimization_stride);
@@ -112,6 +116,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   Eigen::Matrix<float, DynamicsDDP::CONTROL_DIM, 1> U_MAX;
   U_MIN << -0.99, -0.99;
   U_MAX << 0.99, params->max_throttle;
+  OptimizerResult<ModelDDP> result;
 
   //Eigen matrices for holding the control and state solutions
   Eigen::MatrixXf control_traj(DynamicsDDP::CONTROL_DIM, params->num_timesteps);
@@ -120,6 +125,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   //Start the control loop.
   while (is_alive->load()) {
     std::chrono::steady_clock::time_point loop_start = std::chrono::steady_clock::now();
+    robot->setTimingInfo(avgOptimizationLoopTime, avgOptimizationTickTime, avgSleepTime);
     num_iter ++;
 
     if (params->debug_mode){ //Display the debug window.
@@ -143,10 +149,6 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     if (stride >= 0 && stride < params->num_timesteps){
       controller->slideControlSeq(stride);
     }
-
-    //Update the average loop time based on pose estimate timestamps
-    avgOptimizationLoopTime = (num_iter - 1.0)/num_iter*avgOptimizationLoopTime + optimizationLoopTime.toSec()/num_iter; 
-
     //Compute a new control sequence
     controller->computeControl(state); //Compute the control
 
@@ -154,16 +156,16 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     controlSolution = controller->getControlSeq();
     stateSolution = controller->getStateSeq();
 
-    //Now compute feedback gains
-    for (int t = 0; t < params->num_timesteps; t++){
-      for (int i = 0; i < DynamicsDDP::CONTROL_DIM; i++){
-        control_traj(i,t) = controlSolution[DynamicsDDP::CONTROL_DIM*t + i];
+    if (use_feedback_gains) {//compute feedback gains
+      for (int t = 0; t < params->num_timesteps; t++){
+        for (int i = 0; i < DynamicsDDP::CONTROL_DIM; i++){
+          control_traj(i,t) = controlSolution[DynamicsDDP::CONTROL_DIM*t + i];
+        }
       }
+      run_cost.setTargets(stateSolution.data(), controlSolution.data(), params->num_timesteps);
+      terminal_cost.xf = run_cost.traj_target_x_.col(params->num_timesteps - 1);
+      result = ddp_solver.run(state, control_traj, ddp_model, run_cost, terminal_cost, U_MIN, U_MAX);
     }
-    run_cost.setTargets(stateSolution.data(), controlSolution.data(), params->num_timesteps);
-    terminal_cost.xf = run_cost.traj_target_x_.col(params->num_timesteps - 1);
-    auto result = ddp_solver.run(state, control_traj, ddp_model, run_cost, terminal_cost, U_MIN, U_MAX);
-
     robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
 
     status = robot->checkStatus();
@@ -176,12 +178,18 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     
     //Sleep 50 microseconds
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
+    double optimizationTickTime = fp_ms.count();
     int count = 0;
     while(is_alive->load() && (fp_ms < ms || (last_pose_update == robot->getLastPoseTime() && status==0))) {
       usleep(50);
       fp_ms = std::chrono::steady_clock::now() - loop_start;
       count++;
     }
+    double sleepTime = fp_ms.count() - optimizationTickTime;
+    //Update the average loop time data
+    avgOptimizationLoopTime = (num_iter - 1.0)/num_iter*avgOptimizationLoopTime + 1000.0*optimizationLoopTime.toSec()/num_iter; 
+    avgOptimizationTickTime = (num_iter - 1.0)/num_iter*avgOptimizationTickTime + optimizationTickTime/num_iter;
+    avgSleepTime = (num_iter - 1.0)/num_iter*avgSleepTime + sleepTime/num_iter;
   }
 }
 

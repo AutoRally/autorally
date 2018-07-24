@@ -23,9 +23,10 @@
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
+    <param name="use_feedback_gains" value="false" />
 
     <!--Model parameters-->
-    <param name="model_path" value="/home/autorally/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
+    <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".0015" />
@@ -44,7 +45,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="desired_speed" value="11.0" />
+    <param name="desired_speed" value="7.5" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />
     <param name="max_slip_angle" value="1.25" />

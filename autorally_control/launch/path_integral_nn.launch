@@ -12,7 +12,7 @@
     <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
-    <param name="debug_mode" value="false" />
+    <param name="debug_mode" value="true" />
 
     <!--Setup parameters-->
     <param name="hz" value="50" />
@@ -22,9 +22,10 @@
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
+    <param name="use_feedback_gains" value="false" />
 
     <!--Model parameters-->
-    <param name="model_path" value="/home/autorally/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
+    <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".0015" />

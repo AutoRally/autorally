@@ -44,6 +44,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   mppi_node.getParam("pose_estimate", pose_estimate_name);
   mppi_node.getParam("debug_mode", debug_mode_);
   mppi_node.getParam("num_timesteps", numTimesteps_);
+  mppi_node.getParam("use_feedback_gains", useFeedbackGains_);
   deltaT_ = 1.0/hz;
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
@@ -54,7 +55,8 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   path_pub_ = mppi_node.advertise<nav_msgs::Path>("nominalPath", 1);
   subscribed_pose_pub_ = mppi_node.advertise<nav_msgs::Odometry>("subscribedPose", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
-
+  timing_data_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralTiming>("timingInfo", 1);
+  
   //Initialize the subscribers.
   pose_sub_ = global_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
                                   ros::TransportHints().tcpNoDelay());
@@ -64,6 +66,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
   statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
   debugImgTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::displayDebugImage, this);
+  timingInfoTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubTimingData, this);
 
   //Initialize auxiliary variables.
   safe_speed_zero_ = false;
@@ -107,6 +110,21 @@ void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> con
   }
   feedback_gains_ = gains;
   solutionReceived_ = true;
+}
+
+void AutorallyPlant::setTimingInfo(double poseDiff, double tickTime, double sleepTime)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  timingData_.averageTimeBetweenPoses = poseDiff;//.clear();
+  timingData_.averageOptimizationCycleTime = tickTime;
+  timingData_.averageSleepTime = sleepTime;
+}
+
+void AutorallyPlant::pubTimingData(const ros::TimerEvent&)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  timingData_.header.stamp = ros::Time::now();
+  timing_data_pub_.publish(timingData_);
 }
 
 void AutorallyPlant::setDebugImage(cv::Mat img)
@@ -177,26 +195,33 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
     steering_ff = (1 - alpha)*controlSequence_[2*lowerIdx] + alpha*controlSequence_[2*upperIdx];
     throttle_ff = (1 - alpha)*controlSequence_[2*lowerIdx + 1] + alpha*controlSequence_[2*upperIdx + 1];
 
-    Eigen::MatrixXf current_state(7,1);
-    Eigen::MatrixXf desired_state(7,1);
-    Eigen::MatrixXf deltaU;
-    current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
-    for (int i = 0; i < 7; i++){
-      current_state(i) = (1 - alpha)*controlSequence_[7*lowerIdx + i] + alpha*controlSequence_[7*upperIdx + i];
+    if (!useFeedbackGains_){ //Just publish the computed open loop controls
+      steering = steering_ff;
+      throttle = throttle_ff;
     }
-    
-    deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);
+    else { //Compute the error between the current and actual state and apply feedback gains
+      Eigen::MatrixXf current_state(7,1);
+      Eigen::MatrixXf desired_state(7,1);
+      Eigen::MatrixXf deltaU;
+      current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
+      for (int i = 0; i < 7; i++){
+        current_state(i) = (1 - alpha)*controlSequence_[7*lowerIdx + i] + alpha*controlSequence_[7*upperIdx + i];
+      }
+      
+      deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);
 
-    if (std::isnan( deltaU(0) ) || std::isnan( deltaU(1))){
-      pubControl(steering_ff, throttle_ff);
+      if (std::isnan( deltaU(0) ) || std::isnan( deltaU(1))){
+        steering = steering_ff;
+        throttle = throttle_ff;
+      }
+      else {
+        steering_fb = deltaU(0);
+        throttle_fb = deltaU(1);
+        steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
+        throttle = fmin(0.75, fmax(-0.99, throttle_ff + throttle_fb));
+      }
     }
-    else {
-      steering_fb = deltaU(0);
-      throttle_fb = deltaU(1);
-      steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
-      throttle = fmin(0.75, fmax(-0.99, throttle_ff + throttle_fb));
-      pubControl(steering, throttle);
-    }
+    pubControl(steering, throttle);
   }
 }
 
@@ -335,6 +360,7 @@ void AutorallyPlant::shutdown()
   pathTimer_.stop();
   statusTimer_.stop();
   debugImgTimer_.stop();
+  timingInfoTimer_.stop();
 }
 
 } //namespace autorally_control

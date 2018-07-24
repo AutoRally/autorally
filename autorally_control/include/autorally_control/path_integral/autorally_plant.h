@@ -41,8 +41,7 @@
 #include <autorally_msgs/chassisState.h>
 #include <autorally_msgs/runstop.h>
 #include <autorally_msgs/pathIntegralStatus.h>
-#include <autorally_control/PathIntegralParamsConfig.h>
-#include <dynamic_reconfigure/server.h>
+#include <autorally_msgs/pathIntegralTiming.h>
 
 #include <ros/ros.h>
 
@@ -123,6 +122,7 @@ public:
 
   int numTimesteps_;
   double deltaT_;
+
   double optimizationLoopTime_;
 
   /**
@@ -162,6 +162,10 @@ public:
 
   void displayDebugImage(const ros::TimerEvent&);
 
+  void setTimingInfo(double poseDiff, double tickTime, double sleepTime);
+
+  void pubTimingData(const ros::TimerEvent&);
+
   /**
   * @brief Publishes a control input. 
   * @param steering The steering command to publish.
@@ -170,9 +174,6 @@ public:
 	void pubControl(float steering, float throttle);
 
   void pubStatus(const ros::TimerEvent&);
-
-  void updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl);
-
 
   /**
   * @brief Returns the current state of the system.
@@ -203,10 +204,6 @@ public:
   void shutdown();
 
 private:
-  
-  //dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
-  //dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
-
   //SystemParams mppiParams_;
   int poseCount_ = 0;
   bool useFeedbackGains_ = false;
@@ -233,15 +230,18 @@ private:
   ros::Publisher status_pub_; ///< Publishes the status (0 good, 1 neutral, 2 bad) of the controller
   ros::Publisher subscribed_pose_pub_; ///< Publisher of the subscribed pose
   ros::Publisher path_pub_; ///< Publisher of nav_mags::Path on topic nominalPath.
+  ros::Publisher timing_data_pub_;
   ros::Subscriber pose_sub_; ///< Subscriber to /pose_estimate.
   ros::Subscriber servo_sub_;
   ros::Timer pathTimer_;
   ros::Timer statusTimer_;
   ros::Timer debugImgTimer_;
+  ros::Timer timingInfoTimer_;
 
   nav_msgs::Path path_msg_; ///< Path message for publishing the planned path.
   geometry_msgs::Point time_delay_msg_; ///< Point message for publishing the observed delay.
   autorally_msgs::pathIntegralStatus status_msg_; ///<pathIntegralStatus message for publishing mppi status
+  autorally_msgs::pathIntegralTiming timingData_; ///<pathIntegralStatus message for publishing mppi status
   std::vector<float> model_params_; ///< Array for holding the updated model parameters
 
 };
