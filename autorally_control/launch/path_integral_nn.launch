@@ -12,7 +12,7 @@
     <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
-    <param name="debug_mode" value="true" />
+    <param name="debug_mode" value="false" />
 
     <!--Setup parameters-->
     <param name="hz" value="50" />
@@ -43,7 +43,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="desired_speed" value="8.0" />
+    <param name="desired_speed" value="7.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />
     <param name="max_slip_angle" value="1.25" />
@@ -70,7 +70,7 @@
     name = "stat_tracker"
     output = "screen">
     <param name="controller_type" value="mppi_controller" />
-    <param name="tag" value="Neural Network Model - Path Integral"/>
-  </node> 
+    <param name="tag" value="Neural Network Model - Path Integral"/> 
+  </node>
 
 </launch>

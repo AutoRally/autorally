@@ -37,8 +37,8 @@
 
 namespace autorally_control {
 
-
-AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, bool debug_mode, int hz)
+AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
+                               bool debug_mode, int hz, bool nodelet)
 {
   std::string pose_estimate_name;
   mppi_node.getParam("pose_estimate", pose_estimate_name);
@@ -84,6 +84,10 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   std::string info = "MPPI Controller";
   std::string hardwareID = "";
   std::string portPath = "";
+
+  //Debug image display signaller
+  receivedDebugImg_ = false;
+  is_nodelet_ = nodelet;
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -102,30 +106,29 @@ void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> con
     }
   }
   feedback_gains_ = gains;
-  solutionReceived = true;
+  solutionReceived_ = true;
 }
 
 void AutorallyPlant::setDebugImage(cv::Mat img)
 {
-  boost::mutex::scoped_lock lock(access_guard_);
   receivedDebugImg_ = true;
+  boost::mutex::scoped_lock lock(access_guard_);
   debugImg_ = img;
 }
 
 void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
 {
-  /*{
-  boost::mutex::scoped_lock lock(access_guard_);
-    if (receivedDebugImg_) {
-      cv::namedWindow("debugImage", cv::WINDOW_AUTOSIZE);
-      cv::imshow("debugImage", debugImg_);
+  if (receivedDebugImg_.load() && !is_nodelet_) {
+    {
+      boost::mutex::scoped_lock lock(access_guard_);
+      cv::namedWindow("mppiDebugImage", cv::WINDOW_AUTOSIZE);
+      cv::imshow("mppiDebugImage", debugImg_);
     } 
   }
-  if (receivedDebugImg_){
+  if (receivedDebugImg_.load() && !is_nodelet_){
     cv::waitKey(1);
-  }*/
+  }
 }
-
 
 void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
 {
@@ -166,7 +169,7 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   //Interpolate and publish the current control
   double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
 
-  if (solutionReceived && timeFromLastOpt > 0 && timeFromLastOpt < (numTimesteps_-1)*deltaT_){
+  if (solutionReceived_ && timeFromLastOpt > 0 && timeFromLastOpt < (numTimesteps_-1)*deltaT_){
     double steering_ff, throttle_ff, steering_fb, throttle_fb, steering, throttle;
     int lowerIdx = (int)(timeFromLastOpt/deltaT_);
     int upperIdx = lowerIdx + 1;
@@ -257,7 +260,6 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
 void AutorallyPlant::pubControl(float steering, float throttle)
 {
   autorally_msgs::chassisCommand control_msg; ///< Autorally control message initialization.
-  std::cout << steering << ", " << throttle << std::endl;
   //Publish the steering and throttle commands
   if (std::isnan(throttle) || std::isnan(steering)){ //Nan control publish zeros and exit.
     ROS_INFO("NaN Control Input Detected");
@@ -321,6 +323,18 @@ int AutorallyPlant::checkStatus()
     status_ = 0; //Everything is good.
   }
   return status_;
+}
+
+void AutorallyPlant::shutdown()
+{
+  //Shutdown all timers and subscribers
+  boost::mutex::scoped_lock lock(access_guard_);
+  path_pub_.shutdown();
+  pose_sub_.shutdown();
+  servo_sub_.shutdown();
+  pathTimer_.stop();
+  statusTimer_.stop();
+  debugImgTimer_.stop();
 }
 
 } //namespace autorally_control

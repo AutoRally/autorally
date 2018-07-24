@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
   Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
                                     init_u, params.num_iters, optimization_stride);
 
-  AutorallyPlant* robot = new AutorallyPlant(mppi_node, mppi_node, params.debug_mode, params.hz);
+  AutorallyPlant* robot = new AutorallyPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
 
   boost::thread optimizer;
 
@@ -118,6 +118,13 @@ int main(int argc, char** argv) {
 
   ros::spin();
 
+  //Shutdown procedure
+  is_alive.store(false);
   optimizer.join();
+  robot->shutdown();
   mppi->deallocateCudaMem();
+  delete robot;
+  delete mppi;
+  delete costs;
+  delete model;
 }

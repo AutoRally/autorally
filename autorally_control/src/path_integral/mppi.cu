@@ -10,7 +10,12 @@ MPPI::~MPPI()
 {
     is_alive_.store(false);
     optimizer.join();
+    robot->shutdown();
     mppi->deallocateCudaMem();
+    delete robot;
+    delete mppi;
+    delete costs;
+    delete model;
 }
 
 void MPPI::onInit()
@@ -19,6 +24,7 @@ void MPPI::onInit()
     global_node = getNodeHandle();
     mppi_node = getPrivateNodeHandle();
     is_alive_.store(true);
+    bool is_nodelet = true;
 
     //Load setup parameters
     loadParams(&params, mppi_node);
@@ -43,7 +49,7 @@ void MPPI::onInit()
     mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
                           init_u, params.num_iters, optimization_stride);
 
-    robot = new AutorallyPlant(global_node, mppi_node, params.debug_mode, params.hz);
+    robot = new AutorallyPlant(global_node, mppi_node, params.debug_mode, params.hz, is_nodelet);
 
     optimizer = boost::thread(&runControlLoop<Controller>, mppi, robot, &params, &mppi_node, &is_alive_);
 

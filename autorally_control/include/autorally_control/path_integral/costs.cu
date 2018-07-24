@@ -60,7 +60,6 @@ inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
   //Get the map path
   std::string map_path;
   mppi_node.getParam("map_path", map_path);
-  std::cout << map_path << std::endl;
   std::vector<float> track_costs = loadTrackData(map_path.c_str(), R, trs); //R and trs passed by reference
   updateTransform(R, trs);
   updateParams(mppi_node);

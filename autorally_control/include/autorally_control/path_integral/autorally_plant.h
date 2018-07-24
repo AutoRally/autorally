@@ -60,6 +60,7 @@
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <atomic>
 
 namespace autorally_control {
 
@@ -113,7 +114,8 @@ public:
   bool new_model_available_;
   cv::Mat debugImg_;
 
-  bool solutionReceived = false;
+  bool solutionReceived_ = false;
+  bool is_nodelet_;
   std::vector<float> controlSequence_;
   std::vector<float> stateSequence_;
   util::EigenAlignedVector<float, 2, 7> feedback_gains_;
@@ -128,7 +130,8 @@ public:
   * publishers and subscribers.
   * @param mppi_node A ros node handle.
   */
-	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, bool debug_mode, int hz);
+	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
+                 bool debug_mode, int hz, bool nodelet);
 
   /**
   * @brief Callback for /pose_estimate subscriber.
@@ -197,6 +200,8 @@ public:
 
   std::vector<float> getModelParams();
 
+  void shutdown();
+
 private:
   
   //dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
@@ -205,7 +210,9 @@ private:
   //SystemParams mppiParams_;
   int poseCount_ = 0;
   bool useFeedbackGains_ = false;
-  bool receivedDebugImg_ = false;
+  std::atomic<bool> receivedDebugImg_;
+  std::atomic<bool> debugShutdownSignal_;
+  std::atomic<bool> debugShutdownSignalAcknowledged_;
 
   const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale. 
 
