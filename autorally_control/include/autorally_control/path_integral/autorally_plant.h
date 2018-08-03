@@ -42,9 +42,10 @@
 #include <autorally_msgs/runstop.h>
 #include <autorally_msgs/pathIntegralStatus.h>
 #include <autorally_msgs/pathIntegralTiming.h>
+#include <autorally_control/PathIntegralParamsConfig.h>
 
 #include <ros/ros.h>
-
+#include <dynamic_reconfigure/server.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 
@@ -198,18 +199,28 @@ public:
   */
   int checkStatus();
 
+  void getDynRcfgParams(autorally_control::PathIntegralParamsConfig &config, int lvl);
+
+  bool hasNewCostParams();
+
+  autorally_control::PathIntegralParamsConfig getCostParams();
 
   std::vector<float> getModelParams();
 
   void shutdown();
 
 private:
+  dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
+  dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
+
   //SystemParams mppiParams_;
   int poseCount_ = 0;
   bool useFeedbackGains_ = false;
   std::atomic<bool> receivedDebugImg_;
   std::atomic<bool> debugShutdownSignal_;
   std::atomic<bool> debugShutdownSignalAcknowledged_;
+  autorally_control::PathIntegralParamsConfig costParams_;
+  bool hasNewCostParams_ = false;
 
   const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale. 
 

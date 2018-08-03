@@ -38,14 +38,13 @@
 #include "autorally_plant.h"
 #include "param_getter.h"
 
+#include <autorally_control/PathIntegralParamsConfig.h>
 #include <autorally_control/ddp/ddp_model_wrapper.h>
 #include <autorally_control/ddp/ddp_tracking_costs.h>
 #include <autorally_control/ddp/ddp.h>
 
-//#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <atomic>
-
 
 #include <boost/thread/thread.hpp>
 #include <unistd.h>
@@ -138,6 +137,10 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       last_pose_update = robot->getLastPoseTime();
       fs = robot->getState(); //Get the new state.
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
+    }
+    //Update the cost parameters
+    if (robot->hasNewCostParams()){
+      controller->costs_->updateParams_dcfg(robot->getCostParams());
     }
 
     //Figure out how many controls have been published since we were last here and slide the 

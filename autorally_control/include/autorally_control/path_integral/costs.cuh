@@ -34,7 +34,7 @@
 #define MPPI_COSTS_CUH_
 
 #include "managed.cuh"
-
+#include <autorally_control/PathIntegralParamsConfig.h>
 #include <ros/ros.h>
 
 #include <cuda_runtime.h>
@@ -108,6 +108,8 @@ public:
   * @brief Allocate memory to cuda array which is bound to a texture.
   */
   void allocateTexMem();
+
+  void updateParams_dcfg(autorally_control::PathIntegralParamsConfig config);
 
   /**
   * @brief Takes a pointer to CPU memory and binds it to a CUDA texture.

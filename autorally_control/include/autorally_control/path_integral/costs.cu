@@ -46,9 +46,6 @@ inline MPPICosts::MPPICosts(int width, int height)
   //Initialize memory for device cost param struct
   HANDLE_ERROR( cudaMalloc((void**)&params_d_, sizeof(CostParams)) );
   debugging_ = false;
-
-  //callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
-  //server_.setCallback(callback_f_);
 }
 
 inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
@@ -66,9 +63,6 @@ inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
   allocateTexMem();
   costmapToTexture(track_costs.data());
   debugging_ = false;
-
-  //callback_f_ = boost::bind(&MPPICosts::updateParams_dcfg, this, _1, _2);
-  //server_.setCallback(callback_f_);
 }
 
 inline MPPICosts::~MPPICosts()
@@ -79,6 +73,20 @@ inline void MPPICosts::allocateTexMem()
   //Allocate memory for the cuda array which is bound the costmap_tex_
   channelDesc_ = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
   HANDLE_ERROR(cudaMallocArray(&costmapArray_d_, &channelDesc_, width_, height_));
+}
+
+inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsConfig config)
+{
+  params_.desired_speed = (float)config.desired_speed;
+  params_.speed_coeff = (float)config.speed_coefficient;
+  params_.track_coeff = (float)config.track_coefficient;
+  params_.max_slip_ang = (float)config.max_slip_angle;
+  params_.slip_penalty = (float)config.slip_penalty;
+  params_.crash_coeff = (float)config.crash_coefficient;
+  params_.track_slop = (float)config.track_slop;
+  params_.steering_coeff = (float)config.steering_coeff;
+  params_.throttle_coeff = (float)config.throttle_coeff;
+  paramsToDevice();
 }
 
 inline void MPPICosts::costmapToTexture(float* costmap)
@@ -108,21 +116,6 @@ inline void MPPICosts::costmapToTexture(float* costmap)
   HANDLE_ERROR(cudaCreateTextureObject(&costmap_tex_, &resDesc, &texDesc, NULL) );
 }
 
-/*inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl)
-{
-  params_.desired_speed = (float)config.desired_speed;
-  params_.speed_coeff = (float)config.speed_coefficient;
-  params_.track_coeff = (float)config.track_coefficient;
-  params_.max_slip_ang = (float)config.max_slip_angle;
-  params_.slip_penalty = (float)config.slip_penalty;
-  params_.crash_coeff = (float)config.crash_coefficient;
-  params_.track_slop = (float)config.track_slop;
-  params_.steering_coeff = (float)config.steering_coeff;
-  params_.throttle_coeff = (float)config.throttle_coeff;
-  paramsToDevice();
-}
-*/
-
 inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
 {
   double desired_speed, speed_coeff, track_coeff, max_slip_ang, 
@@ -142,8 +135,6 @@ inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
   mppi_node.getParam("num_timesteps", num_timesteps);
   mppi_node.getParam("boundary_threshold", boundary_threshold);
   mppi_node.getParam("discount", discount);
-
-
   //Transfer to the cost params struct
   params_.desired_speed = (float)desired_speed;
   params_.speed_coeff = (float)speed_coeff;
@@ -282,7 +273,6 @@ inline __host__ __device__ void MPPICosts::getCrash(float* state, int* crash) {
   if (fabs(state[3]) > 1.57) {
     crash[0] = 1;
   }
-
 }
 
 inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars)

@@ -91,6 +91,11 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   //Debug image display signaller
   receivedDebugImg_ = false;
   is_nodelet_ = nodelet;
+
+  //Dynamic reconfigure callback
+  callback_f_ = boost::bind(&AutorallyPlant::getDynRcfgParams, this, _1, _2);
+  server_.setCallback(callback_f_);
+
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -348,6 +353,34 @@ int AutorallyPlant::checkStatus()
     status_ = 0; //Everything is good.
   }
   return status_;
+}
+
+void AutorallyPlant::getDynRcfgParams(autorally_control::PathIntegralParamsConfig &config, int lvl)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  costParams_.desired_speed = config.desired_speed;
+  costParams_.speed_coefficient = config.speed_coefficient;
+  costParams_.track_coefficient = config.track_coefficient;
+  costParams_.max_slip_angle = config.max_slip_angle;
+  costParams_.slip_penalty = config.slip_penalty;
+  costParams_.crash_coefficient = config.crash_coefficient;
+  costParams_.track_slop = config.track_slop;
+  costParams_.steering_coeff = config.steering_coeff;
+  costParams_.throttle_coeff = config.throttle_coeff;
+  hasNewCostParams_ = true;
+}
+
+bool AutorallyPlant::hasNewCostParams()
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  return hasNewCostParams_;
+}
+
+autorally_control::PathIntegralParamsConfig AutorallyPlant::getCostParams()
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  hasNewCostParams_ = false;
+  return costParams_;
 }
 
 void AutorallyPlant::shutdown()
