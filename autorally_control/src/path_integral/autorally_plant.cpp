@@ -95,7 +95,6 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   //Dynamic reconfigure callback
   callback_f_ = boost::bind(&AutorallyPlant::getDynRcfgParams, this, _1, _2);
   server_.setCallback(callback_f_);
-
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -385,7 +384,7 @@ autorally_control::PathIntegralParamsConfig AutorallyPlant::getCostParams()
 
 void AutorallyPlant::shutdown()
 {
-  //Shutdown all timers and subscribers
+  //Shutdown timers, subscribers, and dynamic reconfigure
   boost::mutex::scoped_lock lock(access_guard_);
   path_pub_.shutdown();
   pose_sub_.shutdown();
@@ -394,6 +393,7 @@ void AutorallyPlant::shutdown()
   statusTimer_.stop();
   debugImgTimer_.stop();
   timingInfoTimer_.stop();
+  server_.clearCallback();
 }
 
 } //namespace autorally_control
