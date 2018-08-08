@@ -209,7 +209,7 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
       Eigen::MatrixXf deltaU;
       current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
       for (int i = 0; i < 7; i++){
-        current_state(i) = (1 - alpha)*controlSequence_[7*lowerIdx + i] + alpha*controlSequence_[7*upperIdx + i];
+        desired_state(i) = (1 - alpha)*stateSequence_[7*lowerIdx + i] + alpha*stateSequence_[7*upperIdx + i];
       }
       
       deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);

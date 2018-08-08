@@ -38,11 +38,10 @@
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NeuralNetModel(float delta_t, float2* control_rngs)
 {
-  int i;
   dt_ = delta_t;
   if (control_rngs == NULL){
     control_rngs_ = new float2[CONTROL_DIM];
-    for (i = 0; i < CONTROL_DIM; i++){
+    for (int i = 0; i < CONTROL_DIM; i++){
       control_rngs_[i].x = -FLT_MAX;
       control_rngs_[i].y = FLT_MAX;
     }
@@ -62,7 +61,7 @@ NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NeuralNetModel(float delta_t
   net_params_ = new float[NUM_PARAMS];
 
   weighted_in_ = new Eigen::MatrixXf[NUM_LAYERS - 1];
-  for (i = 1; i < NUM_LAYERS; i++){
+  for (int i = 1; i < NUM_LAYERS; i++){
     weighted_in_[i-1] = Eigen::MatrixXf::Zero(net_structure_[i], 1);
   }
 

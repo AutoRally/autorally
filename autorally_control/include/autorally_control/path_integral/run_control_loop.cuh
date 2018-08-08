@@ -54,16 +54,17 @@
 
 namespace autorally_control {
 
-//Typedefs for tracking controller
-typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsDDP;
-typedef ModelWrapperDDP<DynamicsDDP> ModelDDP;
-typedef TrackingCostDDP<ModelDDP> RunningCostDDP;
-typedef TrackingTerminalCost<ModelDDP> TerminalCostDDP;
-
-template <class CONTROLLER_T> 
+template <class CONTROLLER_T, class DYNAMICS_T> 
 void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, 
                     ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
 {
+
+  //Typedefs for tracking controller
+  typedef DYNAMICS_T DynamicsDDP;
+  typedef ModelWrapperDDP<DynamicsDDP> ModelDDP;
+  typedef TrackingCostDDP<ModelDDP> RunningCostDDP;
+  typedef TrackingTerminalCost<ModelDDP> TerminalCostDDP;
+  
   //Initial condition of the robot
   Eigen::MatrixXf state(7,1);
   AutorallyPlant::FullState fs;
@@ -100,13 +101,13 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   util::DefaultLogger logger;
   bool verbose = false;
   DDP<ModelDDP> ddp_solver(1.0/params->hz, params->num_timesteps, 1, &logger, verbose);
-  RunningCostDDP::StateCostWeight Q;
+  typename RunningCostDDP::StateCostWeight Q;
   Q.setIdentity();
-  Q.diagonal() << 0.05, 0.05, 0.25, 0.0, 0.05, 0.01, 0.01;
-  TerminalCostDDP::Hessian Qf;
+  Q.diagonal() << 0.5, 0.5, 0.25, 0.0, 0.05, 0.01, 0.01;
+  typename TerminalCostDDP::Hessian Qf;
   Qf.setIdentity();
   Qf.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-  RunningCostDDP::ControlCostWeight R;
+  typename RunningCostDDP::ControlCostWeight R;
   R.setIdentity();
   R.diagonal() << 10.0, 10.0;
   RunningCostDDP run_cost(Q,R, params->num_timesteps);

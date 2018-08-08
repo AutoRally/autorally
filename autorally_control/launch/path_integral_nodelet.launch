@@ -23,7 +23,7 @@
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
-    <param name="use_feedback_gains" value="false" />
+    <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
     <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
@@ -45,7 +45,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="desired_speed" value="7.5" />
+    <param name="desired_speed" value="7.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />
     <param name="max_slip_angle" value="1.25" />
@@ -55,7 +55,7 @@
     <param name="steering_coeff" value="0.0" />
     <param name="throttle_coeff" value="0.0" />
     <param name="boundary_threshold" value="0.65" />
-    <param name="discount" value = "0.1" />
+    <param name="discount" value = "0.01" />
     <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo/" />
   </node>
 

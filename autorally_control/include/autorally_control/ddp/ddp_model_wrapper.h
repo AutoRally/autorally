@@ -2,8 +2,39 @@
 #define DDP_MODEL_WRAPPER_H
 
 #include "ddp_dynamics.h"
+#include <boost/typeof/typeof.hpp>
+#include <boost/type_traits.hpp>
+#include <type_traits>
 
 namespace autorally_control{
+
+template<typename T>
+struct HasAnalyticGrad
+{
+    template <typename U> static char Test( typeof(&U::computeGrad) ) ;
+    template <typename U> static long Test(...);
+    static const bool Has = sizeof(Test<T>(0)) == sizeof(char);
+};
+
+template<typename T>
+bool getGrad(T* model, typename Dynamics<float, T::STATE_DIM, T::CONTROL_DIM>::Jacobian &jac,
+            Eigen::MatrixXf &x, Eigen::MatrixXf &u, std::true_type)
+{
+    model->computeGrad(x, u);
+    for (int i = 0; i < T::STATE_DIM; i++){
+        for (int j = 0; j < T::STATE_DIM + T::CONTROL_DIM; j++){
+            jac(i,j) = model->jac_(i,j);
+        }
+    }
+    return true;
+}
+
+template<typename T>
+bool getGrad(T* model, typename Dynamics<float, T::STATE_DIM, T::CONTROL_DIM>::Jacobian &jac, 
+            Eigen::MatrixXf &x, Eigen::MatrixXf &u, std::false_type)
+{
+    return false;
+}
 
 template <class DYNAMICS_T>
 struct ModelWrapperDDP: public Dynamics<float, DYNAMICS_T::STATE_DIM, DYNAMICS_T::CONTROL_DIM>
@@ -37,15 +68,13 @@ struct ModelWrapperDDP: public Dynamics<float, DYNAMICS_T::STATE_DIM, DYNAMICS_T
     }
 
     Jacobian df(const Eigen::Ref<const State> &x, const Eigen::Ref<const Control> &u)
-    {
+    {   
         Jacobian j_;
         state = x;
         control = u;
-        model_->computeGrad(state, control);
-        for (int i = 0; i < DYNAMICS_T::STATE_DIM; i++){
-            for (int j = 0; j < DYNAMICS_T::STATE_DIM + DYNAMICS_T::CONTROL_DIM; j++){
-                j_(i,j) = model_->jac_(i,j);
-            }
+        bool analyticGradComputed = getGrad(model_, j_, state, control, std::integral_constant<bool, HasAnalyticGrad<DYNAMICS_T>::Has>());
+        if (!analyticGradComputed){
+            j_ = Dynamics<float, DYNAMICS_T::STATE_DIM, DYNAMICS_T::CONTROL_DIM>::df(x,u); 
         }
         return j_;
     }

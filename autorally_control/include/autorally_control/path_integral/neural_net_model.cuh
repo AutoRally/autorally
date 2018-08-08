@@ -42,7 +42,6 @@
 
 #include <Eigen/Dense>
 
-
 namespace autorally_control {
 
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>

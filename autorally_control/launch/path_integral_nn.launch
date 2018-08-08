@@ -22,7 +22,7 @@
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
-    <param name="use_feedback_gains" value="false" />
+    <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
     <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />

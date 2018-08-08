@@ -34,9 +34,12 @@
 #ifndef GENERALIZED_LINEAR_CUH_
 #define GENERALIZED_LINEAR_CUH_
 
-#include <cuda_runtime.h>
-
+#include "managed.cuh"
+#include "meta_math.h"
+#include "gpu_err_chk.h"
 #include "cnpy.h"
+
+#include <Eigen/Dense>
 
 namespace autorally_control {
 
