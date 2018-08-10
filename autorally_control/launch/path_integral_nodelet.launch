@@ -13,13 +13,13 @@
     <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
-    <param name="debug_mode" value="false" />
+    <param name="debug_mode" value="true" />
 
     <!--Setup parameters-->
     <param name="hz" value="50" />
     <param name="num_timesteps" value="100" />
-    <param name="x_pos" value="0.0" />
-    <param name="y_pos" value="0.0" />
+    <param name="x_pos" value="5.0" />
+    <param name="y_pos" value="-5.0" />
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
