@@ -93,7 +93,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   is_nodelet_ = nodelet;
 
   //Dynamic reconfigure callback
-  callback_f_ = boost::bind(&AutorallyPlant::getDynRcfgParams, this, _1, _2);
+  callback_f_ = boost::bind(&AutorallyPlant::dynRcfgCall, this, _1, _2);
   server_.setCallback(callback_f_);
 }
 
@@ -354,7 +354,7 @@ int AutorallyPlant::checkStatus()
   return status_;
 }
 
-void AutorallyPlant::getDynRcfgParams(autorally_control::PathIntegralParamsConfig &config, int lvl)
+void AutorallyPlant::dynRcfgCall(autorally_control::PathIntegralParamsConfig &config, int lvl)
 {
   boost::mutex::scoped_lock lock(access_guard_);
   costParams_.desired_speed = config.desired_speed;
@@ -369,13 +369,13 @@ void AutorallyPlant::getDynRcfgParams(autorally_control::PathIntegralParamsConfi
   hasNewCostParams_ = true;
 }
 
-bool AutorallyPlant::hasNewCostParams()
+bool AutorallyPlant::hasNewDynRcfg()
 {
   boost::mutex::scoped_lock lock(access_guard_);
   return hasNewCostParams_;
 }
 
-autorally_control::PathIntegralParamsConfig AutorallyPlant::getCostParams()
+autorally_control::PathIntegralParamsConfig AutorallyPlant::getDynRcfgParams()
 {
   boost::mutex::scoped_lock lock(access_guard_);
   hasNewCostParams_ = false;

@@ -134,6 +134,8 @@ public:
 	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
                  bool debug_mode, int hz, bool nodelet);
 
+	AutorallyPlant(ros::NodeHandle global_node, bool debug_mode, int hz):AutorallyPlant(global_node, global_node, debug_mode, hz, false){};
+
   /**
   * @brief Callback for /pose_estimate subscriber.
   */
@@ -149,7 +151,6 @@ public:
   */
 	void runstopCall(autorally_msgs::runstop safe_msg);
 
-  void pubPath(float* nominal_traj, int num_timesteps, int hz);
   /**
   * @brief Publishes the controller's nominal path.
   */
@@ -199,17 +200,21 @@ public:
   */
   int checkStatus();
 
-  void getDynRcfgParams(autorally_control::PathIntegralParamsConfig &config, int lvl);
+  void dynRcfgCall(autorally_control::PathIntegralParamsConfig &config, int lvl);
 
-  bool hasNewCostParams();
+  bool hasNewDynRcfg();
 
-  autorally_control::PathIntegralParamsConfig getCostParams();
+  autorally_control::PathIntegralParamsConfig getDynRcfgParams();
 
-  std::vector<float> getModelParams();
+  virtual bool hasNewObstacles(){return false;};
+  virtual void getObstacles(std::vector<int> &description, std::vector<float> &data){};
 
-  void shutdown();
+  virtual bool hasNewCostmap(){return false;};
+  virtual void getCostmap(std::vector<int> &description, std::vector<float> &data){};
 
-private:
+  virtual void shutdown();
+
+protected:
   dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
   dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
 

@@ -77,6 +77,12 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   std::vector<float> controlSolution;
   std::vector<float> stateSolution;
 
+  //Obstacle and map parameters
+  std::vector<int> obstacleDescription;
+  std::vector<float> obstacleData;
+  std::vector<int> costmapDescription;
+  std::vector<float> costmapData;
+
   //Counter, timing, and stride variables.
   int num_iter = 0;
   int optimization_stride;
@@ -140,8 +146,18 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
     //Update the cost parameters
-    if (robot->hasNewCostParams()){
-      controller->costs_->updateParams_dcfg(robot->getCostParams());
+    if (robot->hasNewDynRcfg()){
+      controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
+    }
+    //Update any obstacles
+    if (robot->hasNewObstacles()){
+      robot->getObstacles(obstacleDescription, obstacleData);
+      controller->costs_->updateObstacles(obstacleDescription, obstacleData);
+    }
+    //Update the costmap
+    if (robot->hasNewCostmap()){
+      robot->getCostmap(costmapDescription, costmapData);
+      controller->costs_->updateCostmap(costmapDescription, costmapData);
     }
 
     //Figure out how many controls have been published since we were last here and slide the 

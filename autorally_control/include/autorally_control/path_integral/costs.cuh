@@ -178,6 +178,10 @@ public:
   */
   cv::Mat getDebugDisplay(float x, float y);
 
+  void updateCostmap(std::vector<int> description, std::vector<float> data);
+
+  void updateObstacles(std::vector<int> description, std::vector<float> data);
+
   /*
   * @brief Free cuda variables/memory.
   */
