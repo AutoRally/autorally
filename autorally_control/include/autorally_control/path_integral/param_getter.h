@@ -43,7 +43,6 @@ typedef struct
 { 
   bool debug_mode;
   int hz;
-  int num_rollouts;
   int num_timesteps;
   int num_iters;
   float x_pos;
@@ -58,7 +57,23 @@ typedef struct
   std::string model_path;
 } SystemParams;
 
-void loadParams(SystemParams* params, ros::NodeHandle mppi_node);
+template <typename T>
+T getRosParam(std::string paramName, ros::NodeHandle nh)
+{
+  std::string key;
+  T val;
+  bool found = nh.searchParam(paramName, key);
+  if (!found){
+    ROS_ERROR("Could not find parameter name '%s' in tree of node '%s'", 
+              paramName.c_str(), nh.getNamespace().c_str());
+  }
+  else {
+    nh.getParam(key, val);
+  }
+  return val;
+}
+
+void loadParams(SystemParams* params, ros::NodeHandle nh);
 
 }
 

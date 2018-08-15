@@ -111,6 +111,8 @@ public:
   } FullState;
 
 	boost::mutex access_guard_;
+  std::string nodeNamespace_;
+
   bool new_model_available_;
   cv::Mat debugImg_;
 
@@ -215,9 +217,6 @@ public:
   virtual void shutdown();
 
 protected:
-  //dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
-  //dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
-
   //SystemParams mppiParams_;
   int poseCount_ = 0;
   bool useFeedbackGains_ = false;

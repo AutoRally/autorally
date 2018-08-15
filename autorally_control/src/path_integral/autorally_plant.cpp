@@ -40,11 +40,11 @@ namespace autorally_control {
 AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
                                bool debug_mode, int hz, bool nodelet)
 {
-  std::string pose_estimate_name;
-  mppi_node.getParam("pose_estimate", pose_estimate_name);
-  mppi_node.getParam("debug_mode", debug_mode_);
-  mppi_node.getParam("num_timesteps", numTimesteps_);
-  mppi_node.getParam("use_feedback_gains", useFeedbackGains_);
+  nodeNamespace_ = mppi_node.getNamespace(); 
+  std::string pose_estimate_name = getRosParam<std::string>("pose_estimate", mppi_node);
+  debug_mode_ = getRosParam<bool>("debug_mode", mppi_node);
+  numTimesteps_ = getRosParam<int>("num_timesteps", mppi_node);
+  useFeedbackGains_ = getRosParam<bool>("use_feedback_gains", mppi_node);
   deltaT_ = 1.0/hz;
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
@@ -91,10 +91,6 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   //Debug image display signaller
   receivedDebugImg_ = false;
   is_nodelet_ = nodelet;
-
-  //Dynamic reconfigure callback
-  //callback_f_ = boost::bind(&AutorallyPlant::dynRcfgCall, this, _1, _2);
-  //server_.setCallback(callback_f_);
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -143,8 +139,8 @@ void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
   if (receivedDebugImg_.load() && !is_nodelet_) {
     {
       boost::mutex::scoped_lock lock(access_guard_);
-      cv::namedWindow("mppiDebugImage", cv::WINDOW_AUTOSIZE);
-      cv::imshow("mppiDebugImage", debugImg_);
+      cv::namedWindow(nodeNamespace_, cv::WINDOW_AUTOSIZE);
+      cv::imshow(nodeNamespace_, debugImg_);
     } 
   }
   if (receivedDebugImg_.load() && !is_nodelet_){

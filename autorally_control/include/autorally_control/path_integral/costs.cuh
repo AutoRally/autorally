@@ -34,6 +34,8 @@
 #define MPPI_COSTS_CUH_
 
 #include "managed.cuh"
+#include "param_getter.h"
+
 #include <autorally_control/PathIntegralParamsConfig.h>
 #include <ros/ros.h>
 

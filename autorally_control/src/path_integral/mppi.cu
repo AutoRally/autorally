@@ -38,8 +38,7 @@ void MPPI::onInit()
     model = new DynamicsModel(1.0/params.hz, control_constraints);
     model->loadParams(params.model_path); //Load the model parameters from the launch file specified path
 
-    int optimization_stride;
-    mppi_node.getParam("optimization_stride", optimization_stride);
+    int optimization_stride = getRosParam<int>("optimization_stride", mppi_node);
 
     //Define the controller
     init_u[0] = (float)params.init_steering;
@@ -50,7 +49,8 @@ void MPPI::onInit()
                           init_u, params.num_iters, optimization_stride);
 
     robot = new AutorallyPlant(global_node, mppi_node, params.debug_mode, params.hz, is_nodelet);
-
+    callback_f = boost::bind(&AutorallyPlant::dynRcfgCall, robot, _1, _2);
+    server.setCallback(callback_f);
     optimizer = boost::thread(&runControlLoop<Controller, DynamicsModel>, mppi, robot, &params, &mppi_node, &is_alive_);
 
 }

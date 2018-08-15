@@ -48,18 +48,17 @@ inline MPPICosts::MPPICosts(int width, int height)
   debugging_ = false;
 }
 
-inline MPPICosts::MPPICosts(ros::NodeHandle mppi_node)
+inline MPPICosts::MPPICosts(ros::NodeHandle nh)
 {
   //Transform from world coordinates to normalized grid coordinates
   Eigen::Matrix3f R;
   Eigen::Array3f trs;
   HANDLE_ERROR( cudaMalloc((void**)&params_d_, sizeof(CostParams)) ); //Initialize memory for device cost param struct
   //Get the map path
-  std::string map_path;
-  mppi_node.getParam("map_path", map_path);
+  std::string map_path = getRosParam<std::string>("map_path", nh);
   std::vector<float> track_costs = loadTrackData(map_path.c_str(), R, trs); //R and trs passed by reference
   updateTransform(R, trs);
-  updateParams(mppi_node);
+  updateParams(nh);
   allocateTexMem();
   costmapToTexture(track_costs.data());
   debugging_ = false;
@@ -116,38 +115,21 @@ inline void MPPICosts::costmapToTexture(float* costmap)
   HANDLE_ERROR(cudaCreateTextureObject(&costmap_tex_, &resDesc, &texDesc, NULL) );
 }
 
-inline void MPPICosts::updateParams(ros::NodeHandle mppi_node)
+inline void MPPICosts::updateParams(ros::NodeHandle nh)
 {
-  double desired_speed, speed_coeff, track_coeff, max_slip_ang, 
-          slip_penalty, track_slop, crash_coeff, steering_coeff, throttle_coeff, 
-          boundary_threshold, discount;
-  int num_timesteps;
-  //Read parameters from the ROS parameter server
-  mppi_node.getParam("desired_speed", desired_speed);
-  mppi_node.getParam("speed_coefficient", speed_coeff);
-  mppi_node.getParam("track_coefficient", track_coeff);
-  mppi_node.getParam("max_slip_angle", max_slip_ang);
-  mppi_node.getParam("slip_penalty", slip_penalty);
-  mppi_node.getParam("track_slop", track_slop);
-  mppi_node.getParam("crash_coeff", crash_coeff);
-  mppi_node.getParam("steering_coeff", steering_coeff);
-  mppi_node.getParam("throttle_coeff", throttle_coeff);
-  mppi_node.getParam("num_timesteps", num_timesteps);
-  mppi_node.getParam("boundary_threshold", boundary_threshold);
-  mppi_node.getParam("discount", discount);
   //Transfer to the cost params struct
-  params_.desired_speed = (float)desired_speed;
-  params_.speed_coeff = (float)speed_coeff;
-  params_.track_coeff = (float)track_coeff;
-  params_.max_slip_ang = (float)max_slip_ang;
-  params_.slip_penalty = (float)slip_penalty;
-  params_.track_slop = (float)track_slop;
-  params_.crash_coeff = (float)crash_coeff;
-  params_.steering_coeff = (float)steering_coeff;
-  params_.throttle_coeff = (float)throttle_coeff;
-  params_.boundary_threshold = (float)boundary_threshold;
-  params_.discount = (float)discount;
-  params_.num_timesteps = (int)num_timesteps;
+  params_.desired_speed = getRosParam<double>("desired_speed", nh);
+  params_.speed_coeff = getRosParam<double>("speed_coefficient", nh);
+  params_.track_coeff = getRosParam<double>("track_coefficient", nh);
+  params_.max_slip_ang = getRosParam<double>("max_slip_angle", nh);
+  params_.slip_penalty = getRosParam<double>("slip_penalty", nh);
+  params_.track_slop = getRosParam<double>("track_slop", nh);
+  params_.crash_coeff = getRosParam<double>("crash_coeff", nh);
+  params_.steering_coeff = getRosParam<double>("steering_coeff", nh);
+  params_.throttle_coeff = getRosParam<double>("throttle_coeff", nh);
+  params_.boundary_threshold = getRosParam<double>("boundary_threshold", nh);
+  params_.discount = getRosParam<double>("discount", nh);
+  params_.num_timesteps = getRosParam<int>("num_timesteps", nh);
   //Move the updated parameters to gpu memory
   paramsToDevice();
 }

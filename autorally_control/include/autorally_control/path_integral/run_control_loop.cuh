@@ -86,16 +86,14 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
 
   //Counter, timing, and stride variables.
   int num_iter = 0;
-  int optimization_stride;
   int status = 1;
-  bool use_feedback_gains;
-  mppi_node->getParam("use_feedback_gains", use_feedback_gains);
+  int optimization_stride = getRosParam<int>("optimization_stride", *mppi_node);
+  bool use_feedback_gains = getRosParam<bool>("use_feedback_gains", *mppi_node);
   double avgOptimizationLoopTime = 0; //Average time between pose estimates
   double avgOptimizationTickTime = 0; //Avg. time it takes to get to the sleep at end of loop
   double avgSleepTime = 0; //Average time spent sleeping
   ros::Time last_pose_update = robot->getLastPoseTime();
   ros::Duration optimizationLoopTime(optimization_stride/(1.0*params->hz));
-  mppi_node->getParam("optimization_stride", optimization_stride);
 
   //Set the loop rate
   std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
@@ -148,7 +146,6 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     }
     //Update the cost parameters
     if (robot->hasNewDynRcfg()){
-      std::cout << "Hello" << std::endl;
       controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
     }
     //Update any obstacles
