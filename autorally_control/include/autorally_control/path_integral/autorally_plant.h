@@ -162,8 +162,6 @@ public:
 
   void setDebugImage(cv::Mat img);
 
-  void displayDebugImage(const ros::TimerEvent&);
-
   void setTimingInfo(double poseDiff, double tickTime, double sleepTime);
 
   void pubTimingData(const ros::TimerEvent&);
@@ -206,6 +204,8 @@ public:
 
   autorally_control::PathIntegralParamsConfig getDynRcfgParams();
 
+  virtual void displayDebugImage(const ros::TimerEvent&);
+
   virtual bool hasNewObstacles(){return false;};
   virtual void getObstacles(std::vector<int> &description, std::vector<float> &data){};
 
@@ -215,8 +215,8 @@ public:
   virtual void shutdown();
 
 protected:
-  dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
-  dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
+  //dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
+  //dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
 
   //SystemParams mppiParams_;
   int poseCount_ = 0;

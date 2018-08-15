@@ -54,7 +54,7 @@
     <param name="crash_coeff" value="10000.0" />
     <param name="steering_coeff" value ="0.0" />
     <param name="throttle_coeff" value ="0.0" />
-    <param name="map_path" value="/home/gwilliams76/catkin_ws/src/autorally/autorally_control/src/path_integral/params/maps/gazebo/crf/" />
+    <param name="map_path" value="/home/gwilliams76/catkin_ws/src/autorally/autorally_control/src/path_integral/params/maps/gazebo/" />
     <param name="boundary_threshold" value="0.85" />
     <param name="discount" value = "0.1" />
   </node>

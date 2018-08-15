@@ -56,6 +56,8 @@ public:
   static const int STATE_DIM = DYNAMICS_T::STATE_DIM;
   static const int CONTROL_DIM = DYNAMICS_T::CONTROL_DIM;
 
+  cudaStream_t stream_;
+
   int numTimesteps_;
   int hz_;
   int optimizationStride_;
@@ -73,12 +75,14 @@ public:
   */
   MPPIController(DYNAMICS_T* model, COSTS_T* costs, int num_timesteps, int hz, float gamma,
                  float* exploration_var, float* init_control, int num_optimization_iters = 1,
-                 int opt_stride = 1);
+                 int opt_stride = 1, cudaStream_t = 0);
 
   /**
   * @brief Destructor for mppi controller class.
   */
   ~MPPIController();
+
+  void setCudaStream(cudaStream_t stream);
 
   /**
   * @brief Allocates cuda memory for all of the controller's device array fields.

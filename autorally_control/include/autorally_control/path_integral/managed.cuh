@@ -40,7 +40,7 @@ class Managed
 public:
   void *operator new(size_t len) {
     void *ptr;
-    cudaMallocManaged(&ptr, len);
+    cudaMallocManaged(&ptr, len, cudaMemAttachHost);
     cudaDeviceSynchronize();
     return ptr;
   }

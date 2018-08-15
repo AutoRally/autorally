@@ -93,8 +93,8 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   is_nodelet_ = nodelet;
 
   //Dynamic reconfigure callback
-  callback_f_ = boost::bind(&AutorallyPlant::dynRcfgCall, this, _1, _2);
-  server_.setCallback(callback_f_);
+  //callback_f_ = boost::bind(&AutorallyPlant::dynRcfgCall, this, _1, _2);
+  //server_.setCallback(callback_f_);
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -393,7 +393,7 @@ void AutorallyPlant::shutdown()
   statusTimer_.stop();
   debugImgTimer_.stop();
   timingInfoTimer_.stop();
-  server_.clearCallback();
+  //server_.clearCallback();
 }
 
 } //namespace autorally_control

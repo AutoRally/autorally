@@ -176,7 +176,7 @@ public:
   * @param x float representing the current x-coordinate
   * @param y float representing the current y-coordinate 
   */
-  cv::Mat getDebugDisplay(float x, float y);
+  cv::Mat getDebugDisplay(float x, float y, float heading, cudaStream_t stream);
 
   void updateCostmap(std::vector<int> description, std::vector<float> data);
 

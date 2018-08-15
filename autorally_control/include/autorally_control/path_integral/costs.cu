@@ -245,14 +245,14 @@ inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
   HANDLE_ERROR( cudaMalloc((void**)&debug_data_d_, debug_img_size_*sizeof(float)) );
 }
 
-inline cv::Mat MPPICosts::getDebugDisplay(float x, float y)
+inline cv::Mat MPPICosts::getDebugDisplay(float x, float y, float heading, cudaStream_t stream)
 {
   cv::Mat debug_img; ///< OpenCV matrix for display debug info.
   if (!debugging_){
     debugDisplayInit();
   }
-  launchDebugCostKernel(x, y, debug_img_width_, debug_img_height_, debug_img_ppm_, 
-                        costmap_tex_, debug_data_d_, params_.r_c1, params_.r_c2, params_.trs);
+  launchDebugCostKernel(x, y, heading, debug_img_width_, debug_img_height_, debug_img_ppm_, 
+                        costmap_tex_, debug_data_d_, params_.r_c1, params_.r_c2, params_.trs, stream);
   //Now we just have to display debug_data_d_
   HANDLE_ERROR( cudaMemcpy(debug_data_, debug_data_d_, debug_img_size_*sizeof(float), cudaMemcpyDeviceToHost) );
   debug_img = cv::Mat(debug_img_width_*debug_img_ppm_, debug_img_height_*debug_img_ppm_, CV_32F, debug_data_);

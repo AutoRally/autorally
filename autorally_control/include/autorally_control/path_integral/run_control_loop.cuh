@@ -58,6 +58,7 @@ template <class CONTROLLER_T, class DYNAMICS_T>
 void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, 
                     ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
 {
+  cudaSetDevice(0);
 
   //Typedefs for tracking controller
   typedef DYNAMICS_T DynamicsDDP;
@@ -135,7 +136,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     num_iter ++;
 
     if (params->debug_mode){ //Display the debug window.
-     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1));
+     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1), state(2), controller->stream_);
      robot->setDebugImage(debug_img);
     }
     //Update the state estimate
@@ -147,6 +148,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     }
     //Update the cost parameters
     if (robot->hasNewDynRcfg()){
+      std::cout << "Hello" << std::endl;
       controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
     }
     //Update any obstacles
@@ -186,8 +188,8 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       terminal_cost.xf = run_cost.traj_target_x_.col(params->num_timesteps - 1);
       result = ddp_solver.run(state, control_traj, ddp_model, run_cost, terminal_cost, U_MIN, U_MAX);
     }
-    robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
 
+    robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
     status = robot->checkStatus();
     if (status != 0 && params->debug_mode){
       for (int t = 0; t < optimization_stride; t++){
