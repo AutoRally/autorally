@@ -42,7 +42,12 @@
 #include <cuda_runtime.h>
 #include <vector>
 #include <eigen3/Eigen/Dense>
+
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include "cnpy.h"
 
 namespace autorally_control {
 
@@ -113,11 +118,17 @@ public:
 
   void updateParams_dcfg(autorally_control::PathIntegralParamsConfig config);
 
+  void initCostmap();
+
+  void costmapToTexture(float* costmap, int channel = 0);
+
   /**
-  * @brief Takes a pointer to CPU memory and binds it to a CUDA texture.
-  * @param costmap Pointer to and array of floats of size width*height. 
+  * @brief Binds the member variable costmap to a CUDA texture.
+  * 
   */
-  void costmapToTexture(float* costmap);
+  void costmapToTexture();
+  
+  void update(Eigen::MatrixXf state);
 
   /*
   * @brief Updates cost parameters by reading from the rosparam server
@@ -140,7 +151,9 @@ public:
   * @param h Matrix representing a transform from world to (offset) costmap coordinates.
   * @param trs Array representing the offset.
   */
-  std::vector<float> loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
+  std::vector<float4> loadTrackData(std::string map_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
+
+  //std::vector<float4> loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
 
   /*
   * @brief Copy the params_ struct to the gpu.
@@ -244,7 +257,9 @@ protected:
   cudaArray *costmapArray_d_; ///< Cuda array for texture binding.
   cudaChannelFormatDesc channelDesc_; ///< Cuda texture channel description.
   cudaTextureObject_t costmap_tex_; ///< Cuda texture object.
-  
+  //float4* costmap_;
+  std::vector<float4> track_costs_;
+
   //Debugging variables
   float* debug_data_; ///< Host array for holding debug info.
   float* debug_data_d_; ///< Device array for holding debug info.

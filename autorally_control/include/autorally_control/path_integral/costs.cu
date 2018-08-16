@@ -46,6 +46,7 @@ inline MPPICosts::MPPICosts(int width, int height)
   //Initialize memory for device cost param struct
   HANDLE_ERROR( cudaMalloc((void**)&params_d_, sizeof(CostParams)) );
   debugging_ = false;
+  initCostmap();
 }
 
 inline MPPICosts::MPPICosts(ros::NodeHandle nh)
@@ -55,12 +56,13 @@ inline MPPICosts::MPPICosts(ros::NodeHandle nh)
   Eigen::Array3f trs;
   HANDLE_ERROR( cudaMalloc((void**)&params_d_, sizeof(CostParams)) ); //Initialize memory for device cost param struct
   //Get the map path
+
   std::string map_path = getRosParam<std::string>("map_path", nh);
-  std::vector<float> track_costs = loadTrackData(map_path.c_str(), R, trs); //R and trs passed by reference
+  track_costs_ = loadTrackData(map_path, R, trs); //R and trs passed by reference
   updateTransform(R, trs);
   updateParams(nh);
   allocateTexMem();
-  costmapToTexture(track_costs.data());
+  costmapToTexture();
   debugging_ = false;
 }
 
@@ -70,7 +72,7 @@ inline MPPICosts::~MPPICosts()
 inline void MPPICosts::allocateTexMem()
 {
   //Allocate memory for the cuda array which is bound the costmap_tex_
-  channelDesc_ = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
+  channelDesc_ = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
   HANDLE_ERROR(cudaMallocArray(&costmapArray_d_, &channelDesc_, width_, height_));
 }
 
@@ -88,10 +90,50 @@ inline void MPPICosts::updateParams_dcfg(autorally_control::PathIntegralParamsCo
   paramsToDevice();
 }
 
-inline void MPPICosts::costmapToTexture(float* costmap)
+inline void MPPICosts::initCostmap()
 {
+  track_costs_ = std::vector<float4>(width_*height_);
+  //Initialize costmap to zeros
+  for (int i = 0; i < width_*height_; i++){
+    track_costs_[i].x = 0;
+    track_costs_[i].y = 0;
+    track_costs_[i].z = 0;
+    track_costs_[i].w = 0;
+  }
+}
+
+inline void MPPICosts::costmapToTexture(float* costmap, int channel)
+{
+    switch(channel){
+    case 0: 
+      for (int i = 0; i < width_*height_; i++){
+        track_costs_[i].x = costmap[i];
+      } 
+      break;
+    case 1: 
+      for (int i = 0; i < width_*height_; i++){
+        track_costs_[i].y = costmap[i];
+      } 
+      break;
+    case 2: 
+      for (int i = 0; i < width_*height_; i++){
+        track_costs_[i].z = costmap[i];
+      } 
+      break;
+    case 3: 
+      for (int i = 0; i < width_*height_; i++){
+        track_costs_[i].w = costmap[i];
+      } 
+      break;
+  }
+}
+
+inline void MPPICosts::costmapToTexture()
+{
+  //costmap_ = costmap;
   //Transfer CPU mem to GPU
-  HANDLE_ERROR(cudaMemcpyToArray(costmapArray_d_, 0, 0, costmap, width_*height_*sizeof(float), cudaMemcpyHostToDevice));
+  float4* costmap_ptr = track_costs_.data();
+  HANDLE_ERROR(cudaMemcpyToArray(costmapArray_d_, 0, 0, costmap_ptr, width_*height_*sizeof(float4), cudaMemcpyHostToDevice));
 
   //Specify texture
   struct cudaResourceDesc resDesc;
@@ -104,7 +146,7 @@ inline void MPPICosts::costmapToTexture(float* costmap)
   memset(&texDesc, 0, sizeof(texDesc));
   texDesc.addressMode[0] = cudaAddressModeClamp;
   texDesc.addressMode[1] = cudaAddressModeClamp;
-  texDesc.filterMode = cudaFilterModeLinear;
+  texDesc.filterMode = cudaFilterModePoint;
   texDesc.readMode = cudaReadModeElementType;
   texDesc.normalizedCoords = 1;
 
@@ -148,46 +190,49 @@ inline void MPPICosts::updateTransform(Eigen::MatrixXf m, Eigen::ArrayXf trs){
   paramsToDevice();
 }
 
-inline std::vector<float> MPPICosts::loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs)
+inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen::Matrix3f &R, Eigen::Array3f &trs)
 {
-  int i;
-  float p;
-  FILE *track_data_file;
-  char file_path[256];
-  file_path[0] = 0;
-  strcat(file_path, costmap_path);
-  strcat(file_path, "track_data.txt");
-  track_data_file=fopen(file_path, "r");
-  if (track_data_file == NULL) {
-    ROS_INFO("Error opening track data file: No such file or directory: %s \n", file_path);
-    ros::shutdown();
+  cnpy::npz_t map_dict = cnpy::npz_load(map_path);
+  float x_min, x_max, y_min, y_max, ppm;
+  float* xBounds = map_dict["xBounds"].data<float>();
+  float* yBounds = map_dict["yBounds"].data<float>();
+  float* pixelsPerMeter = map_dict["pixelsPerMeter"].data<float>();
+  x_min = xBounds[0];
+  x_max = xBounds[1];
+  y_min = yBounds[0];
+  y_max = yBounds[1];
+  ppm = pixelsPerMeter[0];
+  std::cout << x_min << " " << x_max << std::endl;
+  std::cout << y_min << " " << y_max << std::endl;
+  std::cout << ppm << std::endl;  
+
+  width_ = int((x_max - x_min)*ppm);
+  height_ = int((y_max - y_min)*ppm);
+
+  initCostmap();
+
+  std::vector<float4> track_costs(width_*height_);  
+  
+  float* channel0 = map_dict["channel0"].data<float>();
+  float* channel1 = map_dict["channel1"].data<float>();
+  float* channel2 = map_dict["channel2"].data<float>();
+  float* channel3 = map_dict["channel3"].data<float>();
+
+  std::cout << width_ << " " << height_ << std::endl;
+
+  for (int i = 0; i < width_*height_; i++){
+    track_costs[i].x = channel0[i];
+    track_costs[i].y = channel1[i];
+    track_costs[i].z = channel2[i];
+    track_costs[i].w = channel3[i];
   }
-  //Read the parameters from the file
-  float x_min, x_max, y_min, y_max, resolution;
-  bool success = true;
-  success = success && fscanf(track_data_file, "%f", &x_min);
-  success = success && fscanf(track_data_file, "%f", &x_max);
-  success = success && fscanf(track_data_file, "%f", &y_min);
-  success = success && fscanf(track_data_file, "%f", &y_max);
-  success = success && fscanf(track_data_file, "%f", &resolution);
-  //Save width_ and height_ parameters
-  width_ = int((x_max - x_min)*resolution);
-  height_ = int((y_max - y_min)*resolution);
-  std::vector<float> track_costs(width_*height_);
-  //Scan the result of the file to load track parameters
-  for (i = 0; i < width_*height_; i++) {
-    success = success && fscanf(track_data_file, "%f", &p);
-    track_costs[i] = p;
-  }
-  if (!success){
-    ROS_INFO("Warning track parameters not read succesfully.");
-  }
+
   //Save the scaling and offset
   R << 1./(x_max - x_min), 0,                  0,
        0,                  1./(y_max - y_min), 0,
        0,                  0,                  1;
   trs << -x_min/(x_max - x_min), -y_min/(y_max - y_min), 1;
-  fclose(track_data_file);
+
   return track_costs;
 }
 
@@ -213,7 +258,7 @@ inline void MPPICosts::setDesiredSpeed(float desired_speed)
 
 inline void MPPICosts::debugDisplayInit()
 {
-  debugDisplayInit(10, 10, 50);
+  debugDisplayInit(100, 100, 5);
 }
 
 inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
@@ -339,11 +384,14 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
 
   //Cost of front of the car
   coorTransform(x_front, y_front, &u, &v, &w);
-  float track_cost_front = tex2D<float>(costmap_tex_, u/w, v/w); 
+  float4 track_params_front = tex2D<float4>(costmap_tex_, u/w, v/w); 
 
   //Cost for back of the car
   coorTransform(x_back, y_back, &u, &v, &w);
-  float track_cost_back = tex2D<float>(costmap_tex_, u/w, v/w);
+  float4 track_params_back = tex2D<float4>(costmap_tex_, u/w, v/w);
+
+  float track_cost_front = track_params_front.x;
+  float track_cost_back = track_params_back.x;
 
   track_cost = (fabs(track_cost_front) + fabs(track_cost_back) )/2.0;
   if (fabs(track_cost) < params_d_->track_slop) {

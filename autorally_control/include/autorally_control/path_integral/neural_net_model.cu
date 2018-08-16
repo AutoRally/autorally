@@ -361,7 +361,7 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynam
       }
       tmp += b[j];
       if (i < NUM_LAYERS - 2){
-        tmp = tanh(tmp);
+        tmp = tanhf(tmp);
       }
       next_act[j] = tmp;
     }
