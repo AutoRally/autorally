@@ -36,6 +36,10 @@
 
 #include "managed.cuh"
 
+#include <autorally_control/ddp/ddp_model_wrapper.h>
+#include <autorally_control/ddp/ddp_tracking_costs.h>
+#include <autorally_control/ddp/ddp.h>
+
 #include <eigen3/Eigen/Dense>
 #include <cuda_runtime.h>
 #include <curand.h>
@@ -67,6 +71,19 @@ public:
   DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
   COSTS_T *costs_; ///< Autorally system costs.
 
+  //Define DDP optimizer for computing feedback gains around MPPI solution
+  ModelWrapperDDP<DYNAMICS_T> *ddp_model_;
+  TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>> *run_cost_;
+  TrackingTerminalCost<ModelWrapperDDP<DYNAMICS_T>> *terminal_cost_;
+  DDP<ModelWrapperDDP<DYNAMICS_T>> *ddp_solver_;
+  typename TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>>::StateCostWeight Q_;
+  typename TrackingTerminalCost<ModelWrapperDDP<DYNAMICS_T>>::Hessian Qf_;
+  typename TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>>::ControlCostWeight R_;
+  Eigen::Matrix<float, CONTROL_DIM, 1> U_MIN_;
+  Eigen::Matrix<float, CONTROL_DIM, 1> U_MAX_;
+  OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> result_;
+
+
   /**
   * @brief Constructor for mppi controller class.
   * @param num_timesteps The number of timesteps to look ahead for.
@@ -95,6 +112,12 @@ public:
   * @brief Frees the cuda memory allocated by allocateCudaMem()
   */
   void deallocateCudaMem();
+
+  void initDDP();
+  
+  void computeFeedbackGains(Eigen::MatrixXf state);
+
+  OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> getFeedbackGains();
 
   /*
   * @brief Resets the control commands to there initial values.

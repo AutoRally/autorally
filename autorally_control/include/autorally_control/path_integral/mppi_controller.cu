@@ -296,6 +296,7 @@ MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DY
   //Transfer exploration variance to device.
   HANDLE_ERROR(cudaMemcpyAsync(nu_d_, nu_.data(), CONTROL_DIM*sizeof(float), cudaMemcpyHostToDevice, stream_));
   //Get the parameters for the control input and initialize the sequence.
+  initDDP();
   resetControls();
   //Make sure all cuda operations have finished.
   cudaStreamSynchronize(stream_);
@@ -336,6 +337,51 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::deallocateCu
   model_->freeCudaMem();
   costs_->freeCudaMem();
   cudaStreamDestroy(stream_);
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::initDDP()
+{
+  util::DefaultLogger logger;
+  bool verbose = false;
+  ddp_model_ = new ModelWrapperDDP<DYNAMICS_T>(model_);
+  ddp_solver_ = new DDP<ModelWrapperDDP<DYNAMICS_T>>(1.0/hz_, numTimesteps_, 1, &logger, verbose);
+
+  Q_.setIdentity();
+  Q_.diagonal() << 0.5, 0.5, 0.25, 0.0, 0.05, 0.01, 0.01;
+
+  Qf_.setIdentity();
+  Qf_.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+
+  R_.setIdentity();
+  R_.diagonal() << 10.0, 10.0;
+
+  U_MIN_ << model_->control_rngs_[0].x, model_->control_rngs_[1].x;
+  U_MAX_ << model_->control_rngs_[0].y, model_->control_rngs_[1].y;
+  
+  //Define the running and terminal cost
+  run_cost_ = new TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>>(Q_, R_, numTimesteps_);
+  terminal_cost_ = new TrackingTerminalCost<ModelWrapperDDP<DYNAMICS_T>>(Qf_);
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeFeedbackGains(Eigen::MatrixXf state)
+{
+  Eigen::MatrixXf control_traj = Eigen::MatrixXf::Zero(CONTROL_DIM, numTimesteps_);
+  for (int t = 0; t < numTimesteps_; t++){
+    for (int i = 0; i < CONTROL_DIM; i++){
+      control_traj(i,t) = control_solution_[CONTROL_DIM*t + i];
+    }
+  }
+  run_cost_->setTargets(state_solution_.data(), control_solution_.data(), numTimesteps_);
+  terminal_cost_->xf = run_cost_->traj_target_x_.col(numTimesteps_ - 1);
+  result_ = ddp_solver_->run(state, control_traj, *ddp_model_, *run_cost_, *terminal_cost_, U_MIN_, U_MAX_);
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::getFeedbackGains()
+{
+  return result_;
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
