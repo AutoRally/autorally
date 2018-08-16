@@ -126,6 +126,7 @@ inline void MPPICosts::costmapToTexture(float* costmap, int channel)
       } 
       break;
   }
+  costmapToTexture();
 }
 
 inline void MPPICosts::costmapToTexture()
@@ -134,6 +135,7 @@ inline void MPPICosts::costmapToTexture()
   //Transfer CPU mem to GPU
   float4* costmap_ptr = track_costs_.data();
   HANDLE_ERROR(cudaMemcpyToArray(costmapArray_d_, 0, 0, costmap_ptr, width_*height_*sizeof(float4), cudaMemcpyHostToDevice));
+  cudaStreamSynchronize(stream_);
 
   //Specify texture
   struct cudaResourceDesc resDesc;
@@ -150,16 +152,15 @@ inline void MPPICosts::costmapToTexture()
   texDesc.readMode = cudaReadModeElementType;
   texDesc.normalizedCoords = 1;
 
-  //First destroy the current texture object
+  //Destroy current texture and create new texture object
   HANDLE_ERROR(cudaDestroyTextureObject(costmap_tex_));
-
-  //Now create the new texture object.
   HANDLE_ERROR(cudaCreateTextureObject(&costmap_tex_, &resDesc, &texDesc, NULL) );
 }
 
 inline void MPPICosts::updateParams(ros::NodeHandle nh)
 {
   //Transfer to the cost params struct
+  l1_cost_ = getRosParam<double>("l1_cost", nh);
   params_.desired_speed = getRosParam<double>("desired_speed", nh);
   params_.speed_coeff = getRosParam<double>("speed_coefficient", nh);
   params_.track_coeff = getRosParam<double>("track_coefficient", nh);
@@ -202,9 +203,6 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
   y_min = yBounds[0];
   y_max = yBounds[1];
   ppm = pixelsPerMeter[0];
-  std::cout << x_min << " " << x_max << std::endl;
-  std::cout << y_min << " " << y_max << std::endl;
-  std::cout << ppm << std::endl;  
 
   width_ = int((x_max - x_min)*ppm);
   height_ = int((y_max - y_min)*ppm);
@@ -217,8 +215,6 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
   float* channel1 = map_dict["channel1"].data<float>();
   float* channel2 = map_dict["channel2"].data<float>();
   float* channel3 = map_dict["channel3"].data<float>();
-
-  std::cout << width_ << " " << height_ << std::endl;
 
   for (int i = 0; i < width_*height_; i++){
     track_costs[i].x = channel0[i];
@@ -239,6 +235,7 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
 inline void MPPICosts::paramsToDevice()
 {
   HANDLE_ERROR( cudaMemcpy(params_d_, &params_, sizeof(CostParams), cudaMemcpyHostToDevice) );
+  HANDLE_ERROR( cudaStreamSynchronize(stream_) );
 }
 
 inline void MPPICosts::getCostInfo()
@@ -258,7 +255,7 @@ inline void MPPICosts::setDesiredSpeed(float desired_speed)
 
 inline void MPPICosts::debugDisplayInit()
 {
-  debugDisplayInit(100, 100, 5);
+  debugDisplayInit(10, 10, 50);
 }
 
 inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
@@ -272,16 +269,17 @@ inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
   HANDLE_ERROR( cudaMalloc((void**)&debug_data_d_, debug_img_size_*sizeof(float)) );
 }
 
-inline cv::Mat MPPICosts::getDebugDisplay(float x, float y, float heading, cudaStream_t stream)
+inline cv::Mat MPPICosts::getDebugDisplay(float x, float y, float heading)
 {
   cv::Mat debug_img; ///< OpenCV matrix for display debug info.
   if (!debugging_){
     debugDisplayInit();
   }
   launchDebugCostKernel(x, y, heading, debug_img_width_, debug_img_height_, debug_img_ppm_, 
-                        costmap_tex_, debug_data_d_, params_.r_c1, params_.r_c2, params_.trs, stream);
+                        costmap_tex_, debug_data_d_, params_.r_c1, params_.r_c2, params_.trs, stream_);
   //Now we just have to display debug_data_d_
   HANDLE_ERROR( cudaMemcpy(debug_data_, debug_data_d_, debug_img_size_*sizeof(float), cudaMemcpyDeviceToHost) );
+  cudaStreamSynchronize(stream_);
   debug_img = cv::Mat(debug_img_width_*debug_img_ppm_, debug_img_height_*debug_img_ppm_, CV_32F, debug_data_);
   return debug_img;
 }
@@ -317,26 +315,14 @@ inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, 
 inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash)
 {
   float cost = 0;
-  if (params_d_->desired_speed < 999.0){
-    float speed = fabs(s[4]);
-    if (s[4] > 0){
-      cost = params_d_->speed_coeff*powf(speed - params_d_->desired_speed, 2);
-    }else {
-      cost = params_d_->speed_coeff*powf(speed + params_d_->desired_speed, 2);
-    }
+  float error = s[4] - params_d_->desired_speed;
+  if (l1_cost_){
+    cost = fabs(error);
   }
-  else{//Turn the speed cost into a reward (negative cost), never could get this to work
-    if (crash[0] > 0){
-      cost = 0.0;
-    }
-    else if (s[4] > 0.001 && fabs(-atan(s[5]/fabs(s[4]))) > params_d_->max_slip_ang){
-      cost = 0.0;
-    }
-    else {
-      cost = -params_d_->speed_coeff*s[4]*s[4];
-    }
+  else {
+    cost = error*error;
   }
-  return cost;
+  return (params_d_->speed_coeff*cost);
 }
 
 inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, int timestep)
@@ -416,8 +402,8 @@ inline __device__ float MPPICosts::computeCost(float* s, float* u, float* du,
   float crash_cost = (1.0 - params_.discount)*getCrashCost(s, crash, timestep);
   float stabilizing_cost = getStabilizingCost(s);            
   float cost = control_cost + speed_cost + crash_cost + track_cost + stabilizing_cost;
-  if (cost > 1e9 || isnan(cost)) {
-    cost = 1e9;
+  if (cost > 1e12 || isnan(cost)) {
+    cost = 1e12;
   }
   return cost;
 }

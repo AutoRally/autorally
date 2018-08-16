@@ -36,11 +36,13 @@
 #ifndef MPPI_MANAGED_CUH_
 #define MPPI_MANAGED_CUH_
 
+#include <stdio.h>
+
 class Managed 
 {
 public:
 
-  cudaStream_t stream_;
+  cudaStream_t stream_ = 0;
 
   void *operator new(size_t len) {
     void *ptr;
@@ -56,12 +58,14 @@ public:
 
   void bindToStream(cudaStream_t stream) {
     stream_ = stream;
+    cudaDeviceSynchronize();
     if (stream_ == 0){
       cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachGlobal);
     }
     else {
       cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachSingle);
     }
+    cudaDeviceSynchronize();
   }
 
 };

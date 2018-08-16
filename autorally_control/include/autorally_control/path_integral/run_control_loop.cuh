@@ -97,7 +97,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     num_iter ++;
 
     if (params->debug_mode){ //Display the debug window.
-     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1), state(2), controller->stream_);
+     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1), state(2));
      robot->setDebugImage(debug_img);
     }
     //Update the state estimate

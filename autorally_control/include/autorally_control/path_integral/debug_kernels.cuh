@@ -56,7 +56,7 @@ __global__ void debugCostKernel(float x, float y, float heading, int width_m ,in
   v = c1.y*x_pos + c2.y*y_pos + trs.y;
   w = c1.z*x_pos + c2.z*y_pos + trs.z;
   //Compute the cost for the current position
-  float cost = tex2D<float>(tex, u/w, v/w);
+  float cost = tex2D<float4>(tex, u/w, v/w).x;
   //Write the cost to the debug data array
   if (x_idx < width_m*ppm && (height_m*ppm - y_idx) < height_m*ppm) {
     float x_transformed = cosf(heading)*(x_pos - x) + sinf(heading)*(y_pos - y);

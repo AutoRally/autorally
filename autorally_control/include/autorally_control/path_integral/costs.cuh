@@ -191,7 +191,7 @@ public:
   * @param x float representing the current x-coordinate
   * @param y float representing the current y-coordinate 
   */
-  cv::Mat getDebugDisplay(float x, float y, float heading, cudaStream_t stream);
+  cv::Mat getDebugDisplay(float x, float y, float heading);
 
   void updateCostmap(std::vector<int> description, std::vector<float> data);
 
@@ -250,6 +250,8 @@ protected:
   const float FRONT_D = 0.5; ///< Distance from GPS receiver to front of car.
   const float BACK_D = -0.5; ///< Distance from GPS receiver to back of car.
   const float DISCOUNT = 0.9; ///< Discount on the crashing cost coefficient
+
+  bool l1_cost_; //Whether to use L1 speed cost (if false it is L2)
 
   //Primary variables
   int width_, height_; ///< Width and height of costmap.
