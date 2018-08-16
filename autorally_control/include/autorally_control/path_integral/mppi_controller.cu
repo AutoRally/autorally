@@ -128,6 +128,7 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
     __syncthreads();
     //Compute the cost of the being in the current state
     if (tdy == 0 && global_idx < NUM_ROLLOUTS && i > 0 && crash[0] > -1) {
+      //Running average formula
       running_cost += (mppi_costs->computeCost(s, u, du, nu, crash, i) - running_cost)/(1.0*i);
     }
     //Compute the dynamics
