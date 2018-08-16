@@ -51,7 +51,7 @@ void MPPI::onInit()
     robot = new AutorallyPlant(global_node, mppi_node, params.debug_mode, params.hz, is_nodelet);
     callback_f = boost::bind(&AutorallyPlant::dynRcfgCall, robot, _1, _2);
     server.setCallback(callback_f);
-    optimizer = boost::thread(&runControlLoop<Controller, DynamicsModel>, mppi, robot, &params, &mppi_node, &is_alive_);
+    optimizer = boost::thread(&runControlLoop<Controller>, mppi, robot, &params, &mppi_node, &is_alive_);
 
 }
 

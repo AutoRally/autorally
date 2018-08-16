@@ -54,18 +54,10 @@
 
 namespace autorally_control {
 
-template <class CONTROLLER_T, class DYNAMICS_T> 
+template <class CONTROLLER_T> 
 void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, 
                     ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
-{
-  cudaSetDevice(0);
-
-  //Typedefs for tracking controller
-  typedef DYNAMICS_T DynamicsDDP;
-  typedef ModelWrapperDDP<DynamicsDDP> ModelDDP;
-  typedef TrackingCostDDP<ModelDDP> RunningCostDDP;
-  typedef TrackingTerminalCost<ModelDDP> TerminalCostDDP;
-  
+{  
   //Initial condition of the robot
   Eigen::MatrixXf state(7,1);
   AutorallyPlant::FullState fs;
@@ -139,19 +131,23 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     if (stride >= 0 && stride < params->num_timesteps){
       controller->slideControlSeq(stride);
     }
+
     //Compute a new control sequence
     controller->computeControl(state); //Compute the control
     if (use_feedback_gains){
       controller->computeFeedbackGains(state);
     }
-
-    //Get and set the updated solution
     controlSolution = controller->getControlSeq();
     stateSolution = controller->getStateSeq();
     auto result = controller->getFeedbackGains();
 
+    //Set the updated solution for execution
     robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
+    
+    //Check the robots status
     status = robot->checkStatus();
+
+    //Increment the state if debug mode is set to true
     if (status != 0 && params->debug_mode){
       for (int t = 0; t < optimization_stride; t++){
         u << controlSolution[2*t], controlSolution[2*t + 1];
@@ -159,7 +155,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       }
     }
     
-    //Sleep 50 microseconds
+    //Sleep for any leftover time in the control loop
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
     double optimizationTickTime = fp_ms.count();
     int count = 0;
@@ -169,6 +165,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       count++;
     }
     double sleepTime = fp_ms.count() - optimizationTickTime;
+
     //Update the average loop time data
     avgOptimizationLoopTime = (num_iter - 1.0)/num_iter*avgOptimizationLoopTime + 1000.0*optimizationLoopTime.toSec()/num_iter; 
     avgOptimizationTickTime = (num_iter - 1.0)/num_iter*avgOptimizationTickTime + optimizationTickTime/num_iter;

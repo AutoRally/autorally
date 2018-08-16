@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
   boost::thread optimizer;
 
   std::atomic<bool> is_alive(true);
-  optimizer = boost::thread(&runControlLoop<Controller, DynamicsModel>, mppi, robot, &params, &mppi_node, &is_alive);
+  optimizer = boost::thread(&runControlLoop<Controller>, mppi, robot, &params, &mppi_node, &is_alive);
 
   ros::spin();
 
