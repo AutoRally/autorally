@@ -29,7 +29,7 @@
     <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
 
     <!-- Control hyper-parameters-->
-    <param name="gamma" value=".0015" />
+    <param name="gamma" value=".15" />
     <param name="num_iters" value="1" />
 
     <!-- Control parameters -->
@@ -54,7 +54,7 @@
     <param name="crash_coeff" value="10000.0" />
     <param name="steering_coeff" value ="0.0" />
     <param name="throttle_coeff" value ="0.0" />
-    <param name="map_path" value="/home/gwilliams76/catkin_ws/src/autorally/autorally_control/src/path_integral/params/maps/gazebo/" />
+    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo_costmap.npz" />
     <param name="boundary_threshold" value="0.85" />
     <param name="discount" value = "0.1" />
   </node>

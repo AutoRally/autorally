@@ -18,8 +18,8 @@
     <param name="hz" value="50" />
     <param name="num_timesteps" value="100" />
     <param name="x_pos" value="0.0" />
-    <param name="y_pos" value="0.0" />
-    <param name="heading" value="2.35" />
+    <param name="y_pos" value="-2.5" />
+    <param name="heading" value="3.00" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
     <param name="use_feedback_gains" value="true" />
@@ -28,7 +28,7 @@
     <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
 
     <!-- Control hyper-parameters-->
-    <param name="gamma" value=".12" />
+    <param name="gamma" value=".15" />
     <param name="num_iters" value="1" />
 
     <!-- Control parameters -->
@@ -55,7 +55,7 @@
     <param name="throttle_coeff" value="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo/gazebo_map.npz" />
+    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo_costmap.npz" />
   </node>
 
   <node
