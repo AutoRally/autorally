@@ -34,6 +34,8 @@
 #ifndef MPPI_CONTROLLER_CUH_
 #define MPPI_CONTROLLER_CUH_ 
 
+#include "managed.cuh"
+
 #include <eigen3/Eigen/Dense>
 #include <cuda_runtime.h>
 #include <curand.h>

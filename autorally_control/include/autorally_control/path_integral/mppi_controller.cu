@@ -310,16 +310,8 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::setCudaStrea
 {
   //Set the CUDA stream and attach unified memory in object to that stream
   stream_ = stream;
-  if (stream_ == 0){ //If using the default stream we must attach memory globally
-    cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachGlobal);
-    cudaStreamAttachMemAsync(stream_, model_, 0, cudaMemAttachGlobal);
-    cudaStreamAttachMemAsync(stream_, costs_, 0, cudaMemAttachGlobal);
-  } 
-  else{ //Otherwise attach unified memory to the particular stream
-    cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachSingle);
-    cudaStreamAttachMemAsync(stream_, model_, 0, cudaMemAttachSingle);
-    cudaStreamAttachMemAsync(stream_, costs_, 0, cudaMemAttachSingle);
-  }
+  model_->bindToStream(stream_);
+  costs_->bindToStream(stream_);
   curandSetStream(gen_, stream_);
 } 
 

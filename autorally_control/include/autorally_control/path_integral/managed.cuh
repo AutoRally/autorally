@@ -29,7 +29,8 @@
  * @date May 24, 2017
  * @copyright 2017 Georgia Institute of Technology
  * @brief Class to be inherited by classes passed 
- * by reference to CUDA kernels
+ * by reference to CUDA kernels. ALL classes passed to MPPI
+ * as costs or dynamics need to inherit from this class
  ***********************************************/
 
 #ifndef MPPI_MANAGED_CUH_
@@ -38,6 +39,9 @@
 class Managed 
 {
 public:
+
+  cudaStream_t stream_;
+
   void *operator new(size_t len) {
     void *ptr;
     cudaMallocManaged(&ptr, len, cudaMemAttachHost);
@@ -49,6 +53,17 @@ public:
     cudaDeviceSynchronize();
     cudaFree(ptr);
   }
+
+  void bindToStream(cudaStream_t stream) {
+    stream_ = stream;
+    if (stream_ == 0){
+      cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachGlobal);
+    }
+    else {
+      cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachSingle);
+    }
+  }
+
 };
 
 
