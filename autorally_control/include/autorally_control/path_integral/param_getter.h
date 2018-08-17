@@ -35,6 +35,8 @@
 #ifndef PARAM_GETTER_H_
 #define PARAM_GETTER_H_
 
+#include <unistd.h>
+#include <string>
 #include <ros/ros.h>
 
 namespace autorally_control {
@@ -56,6 +58,10 @@ typedef struct
   float max_throttle;
   std::string model_path;
 } SystemParams;
+
+inline bool fileExists (const std::string& name) {
+    return ( access( name.c_str(), F_OK ) != -1 );
+}
 
 template <typename T>
 T getRosParam(std::string paramName, ros::NodeHandle nh)

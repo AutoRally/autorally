@@ -193,6 +193,9 @@ inline void MPPICosts::updateTransform(Eigen::MatrixXf m, Eigen::ArrayXf trs){
 
 inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen::Matrix3f &R, Eigen::Array3f &trs)
 {
+  if (!fileExists(map_path)){
+    ROS_FATAL("Could not load costmap at path: %s", map_path.c_str());
+  }
   cnpy::npz_t map_dict = cnpy::npz_load(map_path);
   float x_min, x_max, y_min, y_max, ppm;
   float* xBounds = map_dict["xBounds"].data<float>();

@@ -77,6 +77,9 @@ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::loadParams(std::string 
   int i,j,k;
   std::string bias_name = "";
   std::string weight_name = "";
+  if (!fileExists(model_path)){
+    ROS_FATAL("Could not load neural net model at path: %s", model_path.c_str());
+  }
   cnpy::npz_t param_dict = cnpy::npz_load(model_path);
   for (i = 1; i < NUM_LAYERS; i++){
     bias_name = "dynamics_b" + std::to_string(i);
