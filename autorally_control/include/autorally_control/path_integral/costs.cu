@@ -160,7 +160,7 @@ inline void MPPICosts::costmapToTexture()
 inline void MPPICosts::updateParams(ros::NodeHandle nh)
 {
   //Transfer to the cost params struct
-  l1_cost_ = getRosParam<double>("l1_cost", nh);
+  l1_cost_ = getRosParam<bool>("l1_cost", nh);
   params_.desired_speed = getRosParam<double>("desired_speed", nh);
   params_.speed_coeff = getRosParam<double>("speed_coefficient", nh);
   params_.track_coeff = getRosParam<double>("track_coefficient", nh);
