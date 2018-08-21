@@ -493,6 +493,9 @@ template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeControl(Eigen::Matrix<float, STATE_DIM, 1> state)
 {
   //First transfer the state and current control sequence to the device.
+  costs_->paramsToDevice();
+  model_->paramsToDevice();
+
   HANDLE_ERROR( cudaMemcpyAsync(state_d_, state.data(), STATE_DIM*sizeof(float), cudaMemcpyHostToDevice, stream_));
   for (int opt_iter = 0; opt_iter < num_iters_; opt_iter++) {
     HANDLE_ERROR( cudaMemcpyAsync(U_d_, U_.data(), CONTROL_DIM*numTimesteps_*sizeof(float), cudaMemcpyHostToDevice, stream_));
