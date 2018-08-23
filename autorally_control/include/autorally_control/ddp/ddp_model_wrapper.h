@@ -6,8 +6,6 @@
 #include <boost/type_traits.hpp>
 #include <type_traits>
 
-namespace autorally_control{
-
 template<typename T>
 struct HasAnalyticGrad
 {
@@ -80,7 +78,5 @@ struct ModelWrapperDDP: public Dynamics<float, DYNAMICS_T::STATE_DIM, DYNAMICS_T
     }
 
 };
-
-}
 
 #endif // DDP_MODEL_WRAPPER_H
