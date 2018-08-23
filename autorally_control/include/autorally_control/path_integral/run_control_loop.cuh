@@ -90,6 +90,12 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   //Set the loop rate
   std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
 
+  if (!params->debug_mode){
+    while(last_pose_update == robot->getLastPoseTime()){ //Wait until we receive a pose estimate
+      usleep(50);
+    }
+  }
+
   //Start the control loop.
   while (is_alive->load()) {
     std::chrono::steady_clock::time_point loop_start = std::chrono::steady_clock::now();

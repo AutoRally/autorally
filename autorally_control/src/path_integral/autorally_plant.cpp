@@ -169,6 +169,17 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.roll = atan2(2*q2*q3 + 2*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0);
   full_state_.pitch = -asin(2*q1*q3 - 2*q0*q2);
   full_state_.yaw = atan2(2*q1*q2 + 2*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2);
+
+  //Don't allow heading to wrap around
+  if (last_heading_ > 3.0 && full_state_.yaw < -3.0){
+    heading_multiplier_ += 1;
+  }
+  else if (last_heading_ < -3.0 && full_state_.yaw > 3.0){
+    heading_multiplier_ -= 1;
+  }
+  last_heading_ = full_state_.yaw;
+  full_state_.yaw = full_state_.yaw + heading_multiplier_*2*3.14159265359;
+
   //Update the quaternion
   full_state_.q0 = q0;
   full_state_.q1 = q1;

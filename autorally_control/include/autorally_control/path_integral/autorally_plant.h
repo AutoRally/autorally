@@ -110,6 +110,9 @@ public:
     float throttle;
   } FullState;
 
+  float last_heading_ = 0.0;
+  int heading_multiplier_ = 0;
+
 	boost::mutex access_guard_;
   std::string nodeNamespace_;
 
