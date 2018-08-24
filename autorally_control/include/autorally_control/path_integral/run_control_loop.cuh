@@ -91,7 +91,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
 
   if (!params->debug_mode){
-    while(last_pose_update == robot->getLastPoseTime()){ //Wait until we receive a pose estimate
+    while(last_pose_update == robot->getLastPoseTime() && is_alive->load()){ //Wait until we receive a pose estimate
       usleep(50);
     }
   }
