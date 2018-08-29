@@ -44,6 +44,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
+    <param name="l1_cost" value="false" />
     <param name="desired_speed" value="7.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />

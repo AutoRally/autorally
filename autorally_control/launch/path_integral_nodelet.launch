@@ -26,7 +26,7 @@
     <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
-    <param name="model_path" value="/home/gwilliams76/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/beta_chassis_model.npz" />
+    <param name="model_path" value="$(find autorally_private_control)/src/dynamics_models/models/NeuralNet/beta_model_2018_08_17.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
@@ -45,6 +45,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
+    <param name="l1_cost" value="false" />
     <param name="desired_speed" value="9.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="200.0" />
@@ -54,8 +55,8 @@
     <param name="crash_coeff" value="10000.0" />
     <param name="steering_coeff" value ="0.0" />
     <param name="throttle_coeff" value ="0.0" />
-    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo_costmap.npz" />
-    <param name="boundary_threshold" value="0.85" />
+    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/ccrf_costmap.npz" />
+    <param name="boundary_threshold" value="0.75" />
     <param name="discount" value = "0.1" />
   </node>
 
