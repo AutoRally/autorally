@@ -54,17 +54,10 @@
 
 namespace autorally_control {
 
-template <class CONTROLLER_T, class DYNAMICS_T> 
+template <class CONTROLLER_T> 
 void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, 
                     ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
-{
-
-  //Typedefs for tracking controller
-  typedef DYNAMICS_T DynamicsDDP;
-  typedef ModelWrapperDDP<DynamicsDDP> ModelDDP;
-  typedef TrackingCostDDP<ModelDDP> RunningCostDDP;
-  typedef TrackingTerminalCost<ModelDDP> TerminalCostDDP;
-  
+{  
   //Initial condition of the robot
   Eigen::MatrixXf state(7,1);
   AutorallyPlant::FullState fs;
@@ -77,50 +70,34 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   std::vector<float> controlSolution;
   std::vector<float> stateSolution;
 
+  //Obstacle and map parameters
+  std::vector<int> obstacleDescription;
+  std::vector<float> obstacleData;
+  std::vector<int> costmapDescription;
+  std::vector<float> costmapData;
+
   //Counter, timing, and stride variables.
   int num_iter = 0;
-  int optimization_stride;
   int status = 1;
-  bool use_feedback_gains;
-  mppi_node->getParam("use_feedback_gains", use_feedback_gains);
+  int optimization_stride = getRosParam<int>("optimization_stride", *mppi_node);
+  bool use_feedback_gains = getRosParam<bool>("use_feedback_gains", *mppi_node);
   double avgOptimizationLoopTime = 0; //Average time between pose estimates
   double avgOptimizationTickTime = 0; //Avg. time it takes to get to the sleep at end of loop
   double avgSleepTime = 0; //Average time spent sleeping
   ros::Time last_pose_update = robot->getLastPoseTime();
   ros::Duration optimizationLoopTime(optimization_stride/(1.0*params->hz));
-  mppi_node->getParam("optimization_stride", optimization_stride);
 
   //Set the loop rate
   std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
 
-  //Now define the DDP model, costs, and optimizer
-  float2 control_constraints[2] = {make_float2(-.99, .99), make_float2(-.99, params->max_throttle)};
-  DynamicsDDP* ddp_internal_model = new DynamicsDDP(1.0/params->hz, control_constraints);
-  ddp_internal_model->loadParams(params->model_path); //Load the model parameters from the launch file specified path
-  ModelDDP ddp_model(ddp_internal_model);
-  util::DefaultLogger logger;
-  bool verbose = false;
-  DDP<ModelDDP> ddp_solver(1.0/params->hz, params->num_timesteps, 1, &logger, verbose);
-  typename RunningCostDDP::StateCostWeight Q;
-  Q.setIdentity();
-  Q.diagonal() << 0.5, 0.5, 0.25, 0.0, 0.05, 0.01, 0.01;
-  typename TerminalCostDDP::Hessian Qf;
-  Qf.setIdentity();
-  Qf.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-  typename RunningCostDDP::ControlCostWeight R;
-  R.setIdentity();
-  R.diagonal() << 10.0, 10.0;
-  RunningCostDDP run_cost(Q,R, params->num_timesteps);
-  TerminalCostDDP terminal_cost(Qf);
-  Eigen::Matrix<float, DynamicsDDP::CONTROL_DIM, 1> U_MIN;
-  Eigen::Matrix<float, DynamicsDDP::CONTROL_DIM, 1> U_MAX;
-  U_MIN << -0.99, -0.99;
-  U_MAX << 0.99, params->max_throttle;
-  OptimizerResult<ModelDDP> result;
+  if (!params->debug_mode){
+    while(last_pose_update == robot->getLastPoseTime() && is_alive->load()){ //Wait until we receive a pose estimate
+      usleep(50);
+    }
+  }
 
-  //Eigen matrices for holding the control and state solutions
-  Eigen::MatrixXf control_traj(DynamicsDDP::CONTROL_DIM, params->num_timesteps);
-  control_traj = Eigen::MatrixXf::Zero(DynamicsDDP::CONTROL_DIM, params->num_timesteps);
+  controller->resetControls();
+  controller->computeFeedbackGains(state);
 
   //Start the control loop.
   while (is_alive->load()) {
@@ -129,7 +106,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     num_iter ++;
 
     if (params->debug_mode){ //Display the debug window.
-     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1));
+     cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1), state(2));
      robot->setDebugImage(debug_img);
     }
     //Update the state estimate
@@ -140,8 +117,18 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
     }
     //Update the cost parameters
-    if (robot->hasNewCostParams()){
-      controller->costs_->updateParams_dcfg(robot->getCostParams());
+    if (robot->hasNewDynRcfg()){
+      controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
+    }
+    //Update any obstacles
+    if (robot->hasNewObstacles()){
+      robot->getObstacles(obstacleDescription, obstacleData);
+      controller->costs_->updateObstacles(obstacleDescription, obstacleData);
+    }
+    //Update the costmap
+    if (robot->hasNewCostmap()){
+      robot->getCostmap(costmapDescription, costmapData);
+      controller->costs_->updateCostmap(costmapDescription, costmapData);
     }
 
     //Figure out how many controls have been published since we were last here and slide the 
@@ -153,26 +140,23 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     if (stride >= 0 && stride < params->num_timesteps){
       controller->slideControlSeq(stride);
     }
+
     //Compute a new control sequence
     controller->computeControl(state); //Compute the control
-
-    //Get and set the updated solution
+    if (use_feedback_gains){
+      controller->computeFeedbackGains(state);
+    }
     controlSolution = controller->getControlSeq();
     stateSolution = controller->getStateSeq();
+    auto result = controller->getFeedbackGains();
 
-    if (use_feedback_gains) {//compute feedback gains
-      for (int t = 0; t < params->num_timesteps; t++){
-        for (int i = 0; i < DynamicsDDP::CONTROL_DIM; i++){
-          control_traj(i,t) = controlSolution[DynamicsDDP::CONTROL_DIM*t + i];
-        }
-      }
-      run_cost.setTargets(stateSolution.data(), controlSolution.data(), params->num_timesteps);
-      terminal_cost.xf = run_cost.traj_target_x_.col(params->num_timesteps - 1);
-      result = ddp_solver.run(state, control_traj, ddp_model, run_cost, terminal_cost, U_MIN, U_MAX);
-    }
+    //Set the updated solution for execution
     robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
-
+    
+    //Check the robots status
     status = robot->checkStatus();
+
+    //Increment the state if debug mode is set to true
     if (status != 0 && params->debug_mode){
       for (int t = 0; t < optimization_stride; t++){
         u << controlSolution[2*t], controlSolution[2*t + 1];
@@ -180,7 +164,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       }
     }
     
-    //Sleep 50 microseconds
+    //Sleep for any leftover time in the control loop
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
     double optimizationTickTime = fp_ms.count();
     int count = 0;
@@ -190,6 +174,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       count++;
     }
     double sleepTime = fp_ms.count() - optimizationTickTime;
+
     //Update the average loop time data
     avgOptimizationLoopTime = (num_iter - 1.0)/num_iter*avgOptimizationLoopTime + 1000.0*optimizationLoopTime.toSec()/num_iter; 
     avgOptimizationTickTime = (num_iter - 1.0)/num_iter*avgOptimizationTickTime + optimizationTickTime/num_iter;

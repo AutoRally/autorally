@@ -77,6 +77,9 @@ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::loadParams(std::string 
   int i,j,k;
   std::string bias_name = "";
   std::string weight_name = "";
+  if (!fileExists(model_path)){
+    ROS_FATAL("Could not load neural net model at path: %s", model_path.c_str());
+  }
   cnpy::npz_t param_dict = cnpy::npz_load(model_path);
   for (i = 1; i < NUM_LAYERS; i++){
     bias_name = "dynamics_b" + std::to_string(i);
@@ -259,15 +262,7 @@ void NeuralNetModel<S_DIM, C_DIM,  K_DIM, layer_args...>::freeCudaMem()
 
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::cudaInit(float* theta_s)
-{
-  int i;
-  int tdx = threadIdx.x;
-  int tdy = threadIdx.y;
-  int idx = blockDim.x*tdy + tdx;
-  for (i = idx; i < 2*LARGEST_LAYER; i+= blockDim.x*blockDim.y){
-    theta_s[i] = 0.0;
-  }
-}
+{}
 
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::printCudaParamVec()
@@ -334,9 +329,10 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynam
   float* b;
   int tdx = threadIdx.x;
   int tdy = threadIdx.y;
+  int tdz = threadIdx.z;
   int i,j,k;
-  curr_act = &theta_s[(2*LARGEST_LAYER)*tdx];
-  next_act = &theta_s[(2*LARGEST_LAYER)*tdx + LARGEST_LAYER];
+  curr_act = &theta_s[(2*LARGEST_LAYER)*(blockDim.x*tdz + tdx)];
+  next_act = &theta_s[(2*LARGEST_LAYER)*(blockDim.x*tdz + tdx) + LARGEST_LAYER];
   for (i = tdy; i < DYNAMICS_DIM; i+= blockDim.y){
     curr_act[i] = state[i + (STATE_DIM - DYNAMICS_DIM)];
   }
@@ -361,7 +357,7 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynam
       }
       tmp += b[j];
       if (i < NUM_LAYERS - 2){
-        tmp = tanh(tmp);
+        tmp = MPPI_NNET_NONLINEARITY(tmp);
       }
       next_act[j] = tmp;
     }

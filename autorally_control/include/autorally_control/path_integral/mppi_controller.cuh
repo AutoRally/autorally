@@ -34,6 +34,12 @@
 #ifndef MPPI_CONTROLLER_CUH_
 #define MPPI_CONTROLLER_CUH_ 
 
+#include "managed.cuh"
+
+#include <autorally_control/ddp/ddp_model_wrapper.h>
+#include <autorally_control/ddp/ddp_tracking_costs.h>
+#include <autorally_control/ddp/ddp.h>
+
 #include <eigen3/Eigen/Dense>
 #include <cuda_runtime.h>
 #include <curand.h>
@@ -56,12 +62,27 @@ public:
   static const int STATE_DIM = DYNAMICS_T::STATE_DIM;
   static const int CONTROL_DIM = DYNAMICS_T::CONTROL_DIM;
 
+  cudaStream_t stream_;
+
   int numTimesteps_;
   int hz_;
   int optimizationStride_;
 
   DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
   COSTS_T *costs_; ///< Autorally system costs.
+
+  //Define DDP optimizer for computing feedback gains around MPPI solution
+  ModelWrapperDDP<DYNAMICS_T> *ddp_model_;
+  TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>> *run_cost_;
+  TrackingTerminalCost<ModelWrapperDDP<DYNAMICS_T>> *terminal_cost_;
+  DDP<ModelWrapperDDP<DYNAMICS_T>> *ddp_solver_;
+  typename TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>>::StateCostWeight Q_;
+  typename TrackingTerminalCost<ModelWrapperDDP<DYNAMICS_T>>::Hessian Qf_;
+  typename TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>>::ControlCostWeight R_;
+  Eigen::Matrix<float, CONTROL_DIM, 1> U_MIN_;
+  Eigen::Matrix<float, CONTROL_DIM, 1> U_MAX_;
+  OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> result_;
+
 
   /**
   * @brief Constructor for mppi controller class.
@@ -73,12 +94,14 @@ public:
   */
   MPPIController(DYNAMICS_T* model, COSTS_T* costs, int num_timesteps, int hz, float gamma,
                  float* exploration_var, float* init_control, int num_optimization_iters = 1,
-                 int opt_stride = 1);
+                 int opt_stride = 1, cudaStream_t = 0);
 
   /**
   * @brief Destructor for mppi controller class.
   */
   ~MPPIController();
+
+  void setCudaStream(cudaStream_t stream);
 
   /**
   * @brief Allocates cuda memory for all of the controller's device array fields.
@@ -89,6 +112,12 @@ public:
   * @brief Frees the cuda memory allocated by allocateCudaMem()
   */
   void deallocateCudaMem();
+
+  void initDDP();
+  
+  void computeFeedbackGains(Eigen::MatrixXf state);
+
+  OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> getFeedbackGains();
 
   /*
   * @brief Resets the control commands to there initial values.

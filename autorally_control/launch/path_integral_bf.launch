@@ -28,7 +28,7 @@
     <param name="model_path" value="$(find autorally_control)/src/path_integral/params/models/basis_function.npz"/>
 
     <!-- Control hyper-parameters-->
-    <param name="gamma" value=".0015" />
+    <param name="gamma" value=".15" />
     <param name="num_iters" value="1" />
 
     <!-- Control parameters -->
@@ -44,6 +44,7 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
+    <param name="l1_cost" value="false" />
     <param name="desired_speed" value="7.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="100.0" />
@@ -55,7 +56,7 @@
     <param name="throttle_coeff" value="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo/" />
+    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo_costmap.npz" />
   </node>
 
   <node

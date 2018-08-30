@@ -92,6 +92,9 @@ template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
 void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::loadParams(std::string model_path)
 {
   int i,j;
+  if (!fileExists(model_path)){
+    ROS_FATAL("Could not load generalized linear model at path: %s", model_path.c_str());
+  }
   Eigen::Matrix<float, DYNAMICS_DIM, NUM_BFS, Eigen::RowMajor> theta;
   cnpy::npz_t param_dict = cnpy::npz_load(model_path);
   cnpy::NpyArray theta_raw = param_dict["W"];

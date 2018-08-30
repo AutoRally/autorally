@@ -8,8 +8,6 @@
 #include <limits>
 #include <memory>
 
-namespace autorally_control {
-
 template <class DynamicsT>
 class DDP
 {
@@ -187,7 +185,5 @@ private:
     Eigen::Matrix<Scalar, DynamicsT::ControlSize, Eigen::Dynamic> lk_;
     Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> cost_;
 };
-
-} // namespace autorally_private_control
 
 #endif // TRAJOPT_DDP_HPP

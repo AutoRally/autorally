@@ -282,7 +282,7 @@ if __name__ == '__main__':
     rospy.init_node('systemStatus_'+hostname)
     pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1)
     array = DiagnosticArray()
-    status = DiagnosticStatus(name='SystemStatus',\
+    status = DiagnosticStatus(name='systemStatus',\
                               level=0,\
                               message='',
                               hardware_id=hostname)

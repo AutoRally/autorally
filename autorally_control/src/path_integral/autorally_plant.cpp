@@ -40,11 +40,11 @@ namespace autorally_control {
 AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
                                bool debug_mode, int hz, bool nodelet)
 {
-  std::string pose_estimate_name;
-  mppi_node.getParam("pose_estimate", pose_estimate_name);
-  mppi_node.getParam("debug_mode", debug_mode_);
-  mppi_node.getParam("num_timesteps", numTimesteps_);
-  mppi_node.getParam("use_feedback_gains", useFeedbackGains_);
+  nodeNamespace_ = mppi_node.getNamespace(); 
+  std::string pose_estimate_name = getRosParam<std::string>("pose_estimate", mppi_node);
+  debug_mode_ = getRosParam<bool>("debug_mode", mppi_node);
+  numTimesteps_ = getRosParam<int>("num_timesteps", mppi_node);
+  useFeedbackGains_ = getRosParam<bool>("use_feedback_gains", mppi_node);
   deltaT_ = 1.0/hz;
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
@@ -91,10 +91,6 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   //Debug image display signaller
   receivedDebugImg_ = false;
   is_nodelet_ = nodelet;
-
-  //Dynamic reconfigure callback
-  callback_f_ = boost::bind(&AutorallyPlant::getDynRcfgParams, this, _1, _2);
-  server_.setCallback(callback_f_);
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -143,8 +139,8 @@ void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
   if (receivedDebugImg_.load() && !is_nodelet_) {
     {
       boost::mutex::scoped_lock lock(access_guard_);
-      cv::namedWindow("mppiDebugImage", cv::WINDOW_AUTOSIZE);
-      cv::imshow("mppiDebugImage", debugImg_);
+      cv::namedWindow(nodeNamespace_, cv::WINDOW_AUTOSIZE);
+      cv::imshow(nodeNamespace_, debugImg_);
     } 
   }
   if (receivedDebugImg_.load() && !is_nodelet_){
@@ -173,6 +169,17 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.roll = atan2(2*q2*q3 + 2*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0);
   full_state_.pitch = -asin(2*q1*q3 - 2*q0*q2);
   full_state_.yaw = atan2(2*q1*q2 + 2*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2);
+
+  //Don't allow heading to wrap around
+  if (last_heading_ > 3.0 && full_state_.yaw < -3.0){
+    heading_multiplier_ += 1;
+  }
+  else if (last_heading_ < -3.0 && full_state_.yaw > 3.0){
+    heading_multiplier_ -= 1;
+  }
+  last_heading_ = full_state_.yaw;
+  full_state_.yaw = full_state_.yaw + heading_multiplier_*2*3.14159265359;
+
   //Update the quaternion
   full_state_.q0 = q0;
   full_state_.q1 = q1;
@@ -354,7 +361,7 @@ int AutorallyPlant::checkStatus()
   return status_;
 }
 
-void AutorallyPlant::getDynRcfgParams(autorally_control::PathIntegralParamsConfig &config, int lvl)
+void AutorallyPlant::dynRcfgCall(autorally_control::PathIntegralParamsConfig &config, int lvl)
 {
   boost::mutex::scoped_lock lock(access_guard_);
   costParams_.desired_speed = config.desired_speed;
@@ -369,13 +376,13 @@ void AutorallyPlant::getDynRcfgParams(autorally_control::PathIntegralParamsConfi
   hasNewCostParams_ = true;
 }
 
-bool AutorallyPlant::hasNewCostParams()
+bool AutorallyPlant::hasNewDynRcfg()
 {
   boost::mutex::scoped_lock lock(access_guard_);
   return hasNewCostParams_;
 }
 
-autorally_control::PathIntegralParamsConfig AutorallyPlant::getCostParams()
+autorally_control::PathIntegralParamsConfig AutorallyPlant::getDynRcfgParams()
 {
   boost::mutex::scoped_lock lock(access_guard_);
   hasNewCostParams_ = false;
@@ -393,7 +400,7 @@ void AutorallyPlant::shutdown()
   statusTimer_.stop();
   debugImgTimer_.stop();
   timingInfoTimer_.stop();
-  server_.clearCallback();
+  //server_.clearCallback();
 }
 
 } //namespace autorally_control

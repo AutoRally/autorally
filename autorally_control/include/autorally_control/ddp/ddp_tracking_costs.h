@@ -1,3 +1,6 @@
+#ifndef DDP_TRACKING_COSTS_
+#define DDP_TRACKING_COSTS_
+
 #include "ddp_dynamics.h"
 #include "ddp_costs.h"
 
@@ -112,3 +115,5 @@ public:
 private:
     StateCostWeight Qf_;
 };
+
+#endif /*DDP_TRACKING_COSTS_H_*/

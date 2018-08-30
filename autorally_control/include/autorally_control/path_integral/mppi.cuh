@@ -65,6 +65,8 @@ private:
     float2 control_constraints[2];
     float init_u[2];
     float exploration_std[2];
+    dynamic_reconfigure::Server<PathIntegralParamsConfig> server;
+    dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f;
 };
 
 }

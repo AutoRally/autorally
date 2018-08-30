@@ -75,7 +75,7 @@ namespace autorally_core
 {
 
   StateEstimator::StateEstimator() :
-    Diagnostics("StateEstimator", "", ""),
+    Diagnostics("StateEstimator", "none", ""),
     nh_("~"),
     lastImuT_(0.0),
     lastImuTgps_(0.0),

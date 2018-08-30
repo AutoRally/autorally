@@ -127,8 +127,9 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
     }
     __syncthreads();
     //Compute the cost of the being in the current state
-    if (tdy == 0 && global_idx < NUM_ROLLOUTS) {
-      running_cost += mppi_costs->computeCost(s, u, du, nu, crash, i);
+    if (tdy == 0 && global_idx < NUM_ROLLOUTS && i > 0 && crash[0] > -1) {
+      //Running average formula
+      running_cost += (mppi_costs->computeCost(s, u, du, nu, crash, i) - running_cost)/(1.0*i);
     }
     //Compute the dynamics
     if (global_idx < NUM_ROLLOUTS){
@@ -215,36 +216,32 @@ __global__ void weightedReductionKernel(float* states_d, float* du_d, float* nu_
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void launchRolloutKernel(int num_timesteps, float* state_d, float* U_d, float* du_d, float* nu_d, 
                          float* costs_d, DYNAMICS_T *dynamics_model, COSTS_T *mppi_costs, 
-                         int opt_delay)
+                         int opt_delay, cudaStream_t stream)
 {
   const int GRIDSIZE_X = (NUM_ROLLOUTS-1)/BLOCKSIZE_X + 1;
   //transferMemToConst(dynamics_model.theta_d_);
   dim3 dimBlock(BLOCKSIZE_X, BLOCKSIZE_Y, 1);
   dim3 dimGrid(GRIDSIZE_X, 1, 1);
-  rolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock>>>(num_timesteps, state_d, U_d, 
+  rolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>(num_timesteps, state_d, U_d, 
     du_d, nu_d, costs_d, dynamics_model, mppi_costs, opt_delay);
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-void launchNormExpKernel(float* costs_d, float gamma, float baseline)
+void launchNormExpKernel(float* costs_d, float gamma, float baseline, cudaStream_t stream)
 {
   dim3 dimBlock(BLOCKSIZE_X, 1, 1);
   dim3 dimGrid((NUM_ROLLOUTS-1)/BLOCKSIZE_X + 1, 1, 1);
-  normExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock>>>(costs_d, gamma, baseline);
-  CudaCheckError();
-  HANDLE_ERROR( cudaDeviceSynchronize() );
+  normExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>(costs_d, gamma, baseline);
 }
 
 //Launches the multiplication and reduction kernel
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void launchWeightedReductionKernel(float* state_costs_d, float* du_d, float* nu_d, 
-                                  float normalizer, int num_timesteps)
+                                  float normalizer, int num_timesteps, cudaStream_t stream)
 {
     dim3 dimBlock((NUM_ROLLOUTS-1)/BLOCKSIZE_WRX + 1, 1, 1);
     dim3 dimGrid(num_timesteps, 1, 1);
-    weightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock>>>(state_costs_d, du_d, nu_d, normalizer, num_timesteps);
-    CudaCheckError();
-    HANDLE_ERROR( cudaDeviceSynchronize() );
+    weightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>(state_costs_d, du_d, nu_d, normalizer, num_timesteps);
 }
 
 #undef BLOCKSIZE_X
@@ -265,19 +262,27 @@ template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DYNAMICS_T* model, COSTS_T* costs, 
                                                                               int num_timesteps, int hz, float gamma, 
                                                                               float* exploration_var, float* init_u, 
-                                                                              int num_optimization_iters, int opt_stride)
+                                                                              int num_optimization_iters, int opt_stride,
+                                                                              cudaStream_t stream)
 {
+  //Initialize internal classes which use the CUDA API.
   model_ = model;
   costs_ = costs;
-  
+  curandCreateGenerator(&gen_, CURAND_RNG_PSEUDO_DEFAULT);
+  curandSetPseudoRandomGeneratorSeed(gen_, 1234ULL);
+
+  //Set the CUDA stream, and attach unified memory to the particular stream.
+  //This must be done AFTER all internal classes that use unified memory are initialized (cost and model)
+  setCudaStream(stream);
+
   //Initialize parameters, including the number of rollouts and timesteps
   hz_ = hz;
   numTimesteps_ = num_timesteps;
-
   optimizationStride_ = opt_stride;
   gamma_ = gamma;
   num_iters_ = num_optimization_iters;
 
+  //Initialize host vectors
   nu_.assign(exploration_var, exploration_var + CONTROL_DIM);
   init_u_.assign(init_u, init_u + CONTROL_DIM);
   control_hist_.assign(2*CONTROL_DIM, 0);
@@ -287,22 +292,30 @@ MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DY
   U_.resize(numTimesteps_*CONTROL_DIM);
   traj_costs_.resize(NUM_ROLLOUTS);
 
-  //Initialize the random number generator.
-  curandCreateGenerator(&gen_, CURAND_RNG_PSEUDO_DEFAULT);
-  curandSetPseudoRandomGeneratorSeed(gen_, 1234ULL);
   //Allocate memory on the device.
   allocateCudaMem();
   //Transfer exploration variance to device.
-  HANDLE_ERROR(cudaMemcpy(nu_d_, nu_.data(), CONTROL_DIM*sizeof(float), cudaMemcpyHostToDevice));
+  HANDLE_ERROR(cudaMemcpyAsync(nu_d_, nu_.data(), CONTROL_DIM*sizeof(float), cudaMemcpyHostToDevice, stream_));
   //Get the parameters for the control input and initialize the sequence.
+  initDDP();
   resetControls();
   //Make sure all cuda operations have finished.
-  cudaDeviceSynchronize();
+  cudaStreamSynchronize(stream_);
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::~MPPIController()
 {}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::setCudaStream(cudaStream_t stream)
+{
+  //Set the CUDA stream and attach unified memory in object to that stream
+  stream_ = stream;
+  model_->bindToStream(stream_);
+  costs_->bindToStream(stream_);
+  curandSetStream(gen_, stream_);
+} 
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::allocateCudaMem()
@@ -319,10 +332,57 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::deallocateCu
   cudaFree(state_d_);
   cudaFree(nu_d_);
   cudaFree(traj_costs_d_);
+  cudaFree(U_d_);
   cudaFree(du_d_);
   //Free cuda memory used by the model and costs.
   model_->freeCudaMem();
   costs_->freeCudaMem();
+  cudaStreamDestroy(stream_);
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::initDDP()
+{
+  util::DefaultLogger logger;
+  bool verbose = false;
+  ddp_model_ = new ModelWrapperDDP<DYNAMICS_T>(model_);
+  ddp_solver_ = new DDP<ModelWrapperDDP<DYNAMICS_T>>(1.0/hz_, numTimesteps_, 1, &logger, verbose);
+
+  Q_.setIdentity();
+  Q_.diagonal() << 0.5, 0.5, 0.25, 0.0, 0.05, 0.01, 0.01;
+
+  Qf_.setIdentity();
+  Qf_.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+
+  R_.setIdentity();
+  R_.diagonal() << 10.0, 10.0;
+
+  U_MIN_ << model_->control_rngs_[0].x, model_->control_rngs_[1].x;
+  U_MAX_ << model_->control_rngs_[0].y, model_->control_rngs_[1].y;
+  
+  //Define the running and terminal cost
+  run_cost_ = new TrackingCostDDP<ModelWrapperDDP<DYNAMICS_T>>(Q_, R_, numTimesteps_);
+  terminal_cost_ = new TrackingTerminalCost<ModelWrapperDDP<DYNAMICS_T>>(Qf_);
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeFeedbackGains(Eigen::MatrixXf state)
+{
+  Eigen::MatrixXf control_traj = Eigen::MatrixXf::Zero(CONTROL_DIM, numTimesteps_);
+  for (int t = 0; t < numTimesteps_; t++){
+    for (int i = 0; i < CONTROL_DIM; i++){
+      control_traj(i,t) = control_solution_[CONTROL_DIM*t + i];
+    }
+  }
+  run_cost_->setTargets(state_solution_.data(), control_solution_.data(), numTimesteps_);
+  terminal_cost_->xf = run_cost_->traj_target_x_.col(numTimesteps_ - 1);
+  result_ = ddp_solver_->run(state, control_traj, *ddp_model_, *run_cost_, *terminal_cost_, U_MIN_, U_MAX_);
+}
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::getFeedbackGains()
+{
+  return result_;
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
@@ -433,19 +493,26 @@ template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeControl(Eigen::Matrix<float, STATE_DIM, 1> state)
 {
   //First transfer the state and current control sequence to the device.
-  HANDLE_ERROR( cudaMemcpy(state_d_, state.data(), STATE_DIM*sizeof(float), cudaMemcpyHostToDevice));
+  costs_->paramsToDevice();
+  model_->paramsToDevice();
+
+  HANDLE_ERROR( cudaMemcpyAsync(state_d_, state.data(), STATE_DIM*sizeof(float), cudaMemcpyHostToDevice, stream_));
   for (int opt_iter = 0; opt_iter < num_iters_; opt_iter++) {
-    HANDLE_ERROR( cudaMemcpy(U_d_, U_.data(), CONTROL_DIM*numTimesteps_*sizeof(float), cudaMemcpyHostToDevice));
+    HANDLE_ERROR( cudaMemcpyAsync(U_d_, U_.data(), CONTROL_DIM*numTimesteps_*sizeof(float), cudaMemcpyHostToDevice, stream_));
     //Generate a bunch of random numbers
     curandGenerateNormal(gen_, du_d_, NUM_ROLLOUTS*numTimesteps_*CONTROL_DIM, 0.0, 1.0);
     //Launch the rollout kernel
     launchRolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(numTimesteps_, state_d_, U_d_, du_d_, nu_d_, traj_costs_d_, model_, 
-                        costs_, optimizationStride_);
-    //Check for any errors from the rollout kernel.
-    CudaCheckError();
-    HANDLE_ERROR( cudaDeviceSynchronize() );
+                        costs_, optimizationStride_, stream_);
+    HANDLE_ERROR(cudaMemcpyAsync(traj_costs_.data(), traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost, stream_));
+    //NOTE: The calls to cudaMemcpyAsync are only asynchronous with regards to (1) CPU operations AND (2) GPU operations 
+    //that are potentially occuring on other streams. Since all the previous kernel/memcpy operations use the same 
+    //stream, they all occur sequentially with respect to our stream (which is necessary for correct execution)
+  
+    //Synchronize stream here since we want to do computations on the CPU
+    HANDLE_ERROR( cudaStreamSynchronize(stream_) );
 
-    HANDLE_ERROR(cudaMemcpy(traj_costs_.data(), traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost));
+    //Compute the baseline (minimum) sampled cost
     float baseline = traj_costs_[0];
     for (int i = 0; i < NUM_ROLLOUTS; i++) {
       if (traj_costs_[i] < baseline){
@@ -453,8 +520,11 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeContr
       }
     }
 
-    launchNormExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, gamma_, baseline);
-    HANDLE_ERROR(cudaMemcpy(traj_costs_.data(), traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost));
+    //Now resume GPU computations
+    launchNormExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, gamma_, baseline, stream_);
+    HANDLE_ERROR(cudaMemcpyAsync(traj_costs_.data(), traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost, stream_));
+    cudaStreamSynchronize(stream_);
+
     //Compute the normalizing term
     normalizer_ = 0;
     for (int i = 0; i < NUM_ROLLOUTS; i++) {
@@ -462,10 +532,13 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeContr
     }
 
     //Compute the cost weighted avergage.
-    launchWeightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, du_d_, nu_d_, normalizer_, numTimesteps_);
+    launchWeightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(traj_costs_d_, du_d_, nu_d_, normalizer_, numTimesteps_, stream_);
 
     //Transfer control update to host.
-    HANDLE_ERROR( cudaMemcpy(du_.data(), du_d_, numTimesteps_*CONTROL_DIM*sizeof(float), cudaMemcpyDeviceToHost));
+    HANDLE_ERROR( cudaMemcpyAsync(du_.data(), du_d_, numTimesteps_*CONTROL_DIM*sizeof(float), cudaMemcpyDeviceToHost, stream_));
+    cudaStreamSynchronize(stream_);
+
+    //Save the control update
     for (int i = 0; i < numTimesteps_; i++) {
       for (int j = 0; j < CONTROL_DIM; j++) {
         U_[i*CONTROL_DIM + j] = du_[i*CONTROL_DIM + j];

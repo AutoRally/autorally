@@ -110,7 +110,12 @@ public:
     float throttle;
   } FullState;
 
+  float last_heading_ = 0.0;
+  int heading_multiplier_ = 0;
+
 	boost::mutex access_guard_;
+  std::string nodeNamespace_;
+
   bool new_model_available_;
   cv::Mat debugImg_;
 
@@ -134,6 +139,8 @@ public:
 	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
                  bool debug_mode, int hz, bool nodelet);
 
+	AutorallyPlant(ros::NodeHandle global_node, bool debug_mode, int hz):AutorallyPlant(global_node, global_node, debug_mode, hz, false){};
+
   /**
   * @brief Callback for /pose_estimate subscriber.
   */
@@ -149,7 +156,6 @@ public:
   */
 	void runstopCall(autorally_msgs::runstop safe_msg);
 
-  void pubPath(float* nominal_traj, int num_timesteps, int hz);
   /**
   * @brief Publishes the controller's nominal path.
   */
@@ -160,8 +166,6 @@ public:
                    ros::Time timestamp, double loop_speed);
 
   void setDebugImage(cv::Mat img);
-
-  void displayDebugImage(const ros::TimerEvent&);
 
   void setTimingInfo(double poseDiff, double tickTime, double sleepTime);
 
@@ -199,20 +203,23 @@ public:
   */
   int checkStatus();
 
-  void getDynRcfgParams(autorally_control::PathIntegralParamsConfig &config, int lvl);
+  void dynRcfgCall(autorally_control::PathIntegralParamsConfig &config, int lvl);
 
-  bool hasNewCostParams();
+  bool hasNewDynRcfg();
 
-  autorally_control::PathIntegralParamsConfig getCostParams();
+  autorally_control::PathIntegralParamsConfig getDynRcfgParams();
 
-  std::vector<float> getModelParams();
+  virtual void displayDebugImage(const ros::TimerEvent&);
 
-  void shutdown();
+  virtual bool hasNewObstacles(){return false;};
+  virtual void getObstacles(std::vector<int> &description, std::vector<float> &data){};
 
-private:
-  dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
-  dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
+  virtual bool hasNewCostmap(){return false;};
+  virtual void getCostmap(std::vector<int> &description, std::vector<float> &data){};
 
+  virtual void shutdown();
+
+protected:
   //SystemParams mppiParams_;
   int poseCount_ = 0;
   bool useFeedbackGains_ = false;
