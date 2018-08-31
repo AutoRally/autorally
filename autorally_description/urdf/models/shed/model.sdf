@@ -6,7 +6,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/shed_outer.dae</uri>
+            <uri>model://urdf/cad/shed_outer.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -23,7 +23,7 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/shed_outer.dae</uri>
+            <uri>model://urdf/cad/shed_outer.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -40,7 +40,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/shed_edges.dae</uri>
+            <uri>model://urdf/cad/shed_edges.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -57,7 +57,7 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/shed_edges.dae</uri>
+            <uri>model://urdf/cad/shed_edges.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

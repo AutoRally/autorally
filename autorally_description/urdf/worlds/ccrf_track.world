@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    <scene>
+      <sky>
+        <clouds>
+          <speed>12</speed>
+        </clouds>
+      </sky>
+      <ambient>1.0 1.0 1.0 1.0</ambient>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://urdf/models/sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <name>blended_plane</name>
+      <uri>model://urdf/models/blended_track_ccrf</uri>
+      <pose>0 0 0 0 0 0.785398</pose>
+    </include>
+  </world>
+</sdf>

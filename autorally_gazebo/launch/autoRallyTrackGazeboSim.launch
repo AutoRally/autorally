@@ -32,8 +32,8 @@ limitations under the License.
 <launch>
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
-  <arg name="namespace" default=""/>
-  <arg name="world_name" default="model://urdf/populated_AR.world"/>
+  <arg name="namespace" default="alpha"/>
+  <arg name="world_name" default="model://urdf/worlds/ccrf_track.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- parameter for other programs to use to know if we are in simulation ro real world-->
@@ -48,7 +48,7 @@ limitations under the License.
   <arg name="yaw" default="0.785498"/>
 
   <!-- Create the world. -->
-  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
+  <include file="$(find autorally_gazebo)/launch/autoRallyTrackCCRFWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
@@ -61,7 +61,7 @@ limitations under the License.
 
 
   <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-        args="-urdf -param robot_description -model $(arg namespace)
+        args="-param robot_description -urdf -model $(arg namespace)
               -gazebo_namespace /gazebo
               -x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
