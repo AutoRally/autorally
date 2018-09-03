@@ -111,6 +111,7 @@ public:
   } FullState;
 
   float last_heading_ = 0.0;
+  float throttleMax_ = 0.99;
   int heading_multiplier_ = 0;
 
 	boost::mutex access_guard_;

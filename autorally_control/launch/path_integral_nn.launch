@@ -8,11 +8,11 @@
     output = "screen">
     
     <!--Pose topic configuration parameters -->
-    <param name="pose_estimate" value="/pose_estimate" />
+    <param name="pose_estimate" value="/ground_truth/state" />
     <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
-    <param name="debug_mode" value="true" />s
+    <param name="debug_mode" value="false" />s
 
     <!--Setup parameters-->
     <param name="hz" value="50" />
@@ -45,7 +45,7 @@
 
     <!-- Cost Parameters -->
     <param name="l1_cost" value="false" />
-    <param name="desired_speed" value="7.0" />
+    <param name="desired_speed" value="5.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="200.0" />
     <param name="max_slip_angle" value="1.25" />

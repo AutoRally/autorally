@@ -45,6 +45,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   debug_mode_ = getRosParam<bool>("debug_mode", mppi_node);
   numTimesteps_ = getRosParam<int>("num_timesteps", mppi_node);
   useFeedbackGains_ = getRosParam<bool>("use_feedback_gains", mppi_node);
+  throttleMax_ = getRosParam<float>("max_throttle", mppi_node);
   deltaT_ = 1.0/hz;
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
@@ -229,7 +230,7 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
         steering_fb = deltaU(0);
         throttle_fb = deltaU(1);
         steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
-        throttle = fmin(0.75, fmax(-0.99, throttle_ff + throttle_fb));
+        throttle = fmin(throttleMax_, fmax(-0.99, throttle_ff + throttle_fb));
       }
     }
     pubControl(steering, throttle);
