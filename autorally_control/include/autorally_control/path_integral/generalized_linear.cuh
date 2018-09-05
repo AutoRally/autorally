@@ -49,6 +49,7 @@ class GeneralizedLinear: public Managed
 public:
 
   float2* control_rngs_;
+  float2* control_rngs_d_;
 
   static const int NUM_BFS = BF_DIM;
   static const int STATE_DIM = S_DIM;
@@ -103,7 +104,6 @@ protected:
 
   //Device fields
   float* theta_d_; ///<Coefficient matrix in device memory.
-  float2* control_rngs_d_;
 
 };
 

@@ -44,7 +44,7 @@ public:
 
   cudaStream_t stream_ = 0;
 
-  void *operator new(size_t len) {
+  /*void *operator new(size_t len) {
     void *ptr;
     cudaMallocManaged(&ptr, len, cudaMemAttachHost);
     cudaDeviceSynchronize();
@@ -54,18 +54,19 @@ public:
   void operator delete(void *ptr) {
     cudaDeviceSynchronize();
     cudaFree(ptr);
-  }
+  }*/
 
   void bindToStream(cudaStream_t stream) {
     stream_ = stream;
     cudaDeviceSynchronize();
-    if (stream_ == 0){
+    /*if (stream_ == 0){
       cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachGlobal);
     }
     else {
       cudaStreamAttachMemAsync(stream_, this, 0, cudaMemAttachSingle);
     }
     cudaDeviceSynchronize();
+    */
   }
 
 };

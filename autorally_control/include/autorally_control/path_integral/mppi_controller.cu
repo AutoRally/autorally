@@ -46,7 +46,7 @@
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, float* du_d, float* nu_d, 
-                              float* costs_d, DYNAMICS_T* dynamics_model, COSTS_T* mppi_costs, 
+                              float* costs_d, DYNAMICS_T dynamics_model, COSTS_T mppi_costs, 
                               int opt_delay)
 {
   int i,j;
@@ -76,7 +76,7 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
   float running_cost = 0;
 
   //Initialize the dynamics model.
-  dynamics_model->cudaInit(theta);
+  dynamics_model.cudaInit(theta);
 
   int global_idx = BLOCKSIZE_X*bdx + tdx;
   if (global_idx < NUM_ROLLOUTS) {
@@ -123,31 +123,31 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
     }
     __syncthreads();
     if (tdy == 0 && global_idx < NUM_ROLLOUTS){
-       dynamics_model->enforceConstraints(s, u);
+       dynamics_model.enforceConstraints(s, u);
     }
     __syncthreads();
     //Compute the cost of the being in the current state
     if (tdy == 0 && global_idx < NUM_ROLLOUTS && i > 0 && crash[0] > -1) {
       //Running average formula
-      running_cost += (mppi_costs->computeCost(s, u, du, nu, crash, i) - running_cost)/(1.0*i);
+      running_cost += (mppi_costs.computeCost(s, u, du, nu, crash, i) - running_cost)/(1.0*i);
     }
     //Compute the dynamics
     if (global_idx < NUM_ROLLOUTS){
-      dynamics_model->computeStateDeriv(s, u, s_der, theta);
+      dynamics_model.computeStateDeriv(s, u, s_der, theta);
     }
     __syncthreads();
     //Update the state
     if (global_idx < NUM_ROLLOUTS){
-      dynamics_model->incrementState(s, s_der);
+      dynamics_model.incrementState(s, s_der);
     }
     //Check to see if the rollout will result in a (physical) crash.
     if (tdy == 0 && global_idx < NUM_ROLLOUTS) {
-      mppi_costs->getCrash(s, crash);
+      mppi_costs.getCrash(s, crash);
     }
   }
   /* <------- End of the simulation loop ----------> */
   if (global_idx < NUM_ROLLOUTS && tdy == 0) {   //Write cost results back to global memory.
-    costs_d[(BLOCKSIZE_X)*bdx + tdx] = running_cost + mppi_costs->terminalCost(s);
+    costs_d[(BLOCKSIZE_X)*bdx + tdx] = running_cost + mppi_costs.terminalCost(s);
   }
 }
 
@@ -222,8 +222,14 @@ void launchRolloutKernel(int num_timesteps, float* state_d, float* U_d, float* d
   //transferMemToConst(dynamics_model.theta_d_);
   dim3 dimBlock(BLOCKSIZE_X, BLOCKSIZE_Y, 1);
   dim3 dimGrid(GRIDSIZE_X, 1, 1);
+  //printf("%d \n", sizeof(DYNAMICS_T));
+  //int dev;
+  //cudaGetDevice(&dev);
+  //printf("Device: %d \n", dev);
+  //HANDLE_ERROR(cudaMemPrefetchAsync(dynamics_model, sizeof(DYNAMICS_T), dev, stream) );
+  //HANDLE_ERROR(cudaMemPrefetchAsync(dynamics_model->control_rngs_d_, 2*sizeof(float2), dev, stream) );
   rolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>(num_timesteps, state_d, U_d, 
-    du_d, nu_d, costs_d, dynamics_model, mppi_costs, opt_delay);
+    du_d, nu_d, costs_d, *dynamics_model, *mppi_costs, opt_delay);
 }
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
