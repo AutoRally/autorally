@@ -32,12 +32,14 @@
 *
 ***********************************************/
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::NeuralNetModel(float delta_t, float2* control_rngs)
+#define MPPI_NNET_NONLINEARITY(ans) tanh(ans)
+#define MPPI_NNET_NONLINEARITY_DERIV(ans) (1 - powf(tanh(ans), 2))
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NeuralNetModel(float delta_t, float2* control_rngs)
 {
   int i;
   dt_ = delta_t;
-  kinematics_ = new K_FUNC();
   if (control_rngs == NULL){
     control_rngs_ = new float2[CONTROL_DIM];
     for (i = 0; i < CONTROL_DIM; i++){
@@ -58,14 +60,20 @@ NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::NeuralNetModel(float
   weights_ = new Eigen::Matrix<float, -1, -1, Eigen::RowMajor>[NUM_LAYERS-1];
   biases_ = new Eigen::Matrix<float, -1, -1, Eigen::RowMajor>[NUM_LAYERS-1];
   net_params_ = new float[NUM_PARAMS];
+
+  weighted_in_ = new Eigen::MatrixXf[NUM_LAYERS - 1];
+  for (i = 1; i < NUM_LAYERS; i++){
+    weighted_in_[i-1] = Eigen::MatrixXf::Zero(net_structure_[i], 1);
+  }
+
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::~NeuralNetModel()
+template<int S_DIM, int C_DIM,  int K_DIM, int... layer_args>
+NeuralNetModel<S_DIM, C_DIM,  K_DIM, layer_args...>::~NeuralNetModel()
 {}
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::loadParams(std::string model_path)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::loadParams(std::string model_path)
 {
   int i,j,k;
   std::string bias_name = "";
@@ -76,8 +84,8 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::loadParams(std:
     weight_name = "dynamics_W" + std::to_string(i);
     cnpy::NpyArray weight_i_raw = param_dict[weight_name];
     cnpy::NpyArray bias_i_raw = param_dict[bias_name];
-    double* weight_i = reinterpret_cast<double*>(weight_i_raw.data);
-    double* bias_i = reinterpret_cast<double*>(bias_i_raw.data);
+    double* weight_i = weight_i_raw.data<double>();
+    double* bias_i = bias_i_raw.data<double>();
     //Copy the data into eigen arrays.
     Eigen::MatrixXf weight_i_mat(net_structure_[i], net_structure_[i-1]);
     Eigen::MatrixXf bias_i_vec(net_structure_[i], 1);
@@ -96,8 +104,8 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::loadParams(std:
   paramsToDevice();
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::setParams(Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* weights, 
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::setParams(Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* weights, 
                                               Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* biases)
 {
   int i;
@@ -108,8 +116,8 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::setParams(Eigen
   paramsToDevice();
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::paramsToDevice()
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::paramsToDevice()
 {
   int i,j,k;
   int stride = 0;
@@ -140,8 +148,8 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::paramsToDevice(
   HANDLE_ERROR( cudaMemcpy(control_rngs_d_, control_rngs_, CONTROL_DIM*sizeof(float2), cudaMemcpyHostToDevice) );
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::printParamVec()
+template<int S_DIM, int C_DIM,  int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM,  K_DIM, layer_args...>::printParamVec()
 {
   int i;
   for (i = 0; i < NUM_PARAMS; i++){
@@ -149,8 +157,16 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::printParamVec()
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeKinematics(Eigen::MatrixXf &state)
+{
+  state_der_(0) = cosf(state(2))*state(4) - sinf(state(2))*state(5);
+  state_der_(1) = sinf(state(2))*state(4) + cosf(state(2))*state(5);
+  state_der_(2) = -state(6); //Pose estimate actually gives the negative yaw derivative
+}
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
 {
   int i,j;
   Eigen::MatrixXf acts(net_structure_[0], 1);
@@ -161,10 +177,16 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::computeDynamics
     acts(DYNAMICS_DIM + i) = control(i);
   }
   for (i = 0; i < NUM_LAYERS - 1; i++){
-    acts = (weights_[i]*acts + biases_[i]).eval();
+    weighted_in_[i] = (weights_[i]*acts + biases_[i]).eval();
+    acts = Eigen::MatrixXf::Zero(net_structure_[i+1], 1);
     if (i < NUM_LAYERS - 2) { //Last layer doesn't apply any non-linearity
       for (j = 0; j < net_structure_[i+1]; j++){
-        acts(j) = tanh(acts(j)); //Nonlinear component.
+        acts(j) = MPPI_NNET_NONLINEARITY( (weighted_in_[i])(j) ); //Nonlinear component.
+      }
+    }
+    else {
+      for (j = 0; j < net_structure_[i+1]; j++){
+        acts(j) = (weighted_in_[i])(j) ;
       }
     }
   }
@@ -173,8 +195,41 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::computeDynamics
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::enforceConstraints(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeGrad(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
+{
+  jac_ = Eigen::Matrix<float, STATE_DIM, STATE_DIM + CONTROL_DIM>::Zero();
+
+  //Start with the kinematic and physics model derivatives
+  jac_.row(0) << 0, 0, -sin(state(2))*state(4) - cos(state(2))*state(5), 0, cos(state(2)), -sin(state(2)), 0, 0, 0;
+  jac_.row(1) << 0, 0, cos(state(2))*state(4) - sin(state(2))*state(5), 0, sin(state(2)), cos(state(2)), 0, 0, 0;
+  jac_.row(2) << 0, 0, 0, 0, 0, 0, -1, 0, 0;
+
+  //First do the forward pass
+  computeDynamics(state, control);
+
+  //Start backprop
+  ip_delta_ = Eigen::MatrixXf::Identity(DYNAMICS_DIM, DYNAMICS_DIM);
+  Eigen::MatrixXf temp_delta = Eigen::MatrixXf::Identity(DYNAMICS_DIM, DYNAMICS_DIM);
+
+  //Main backprop loop
+  for (int i = NUM_LAYERS-2; i > 0; i--){
+    Eigen::MatrixXf zp = weighted_in_[i-1];
+    for (int j = 0; j < net_structure_[i]; j++){
+      zp(j) = MPPI_NNET_NONLINEARITY_DERIV(zp(j));
+    }
+    ip_delta_ =  ( (weights_[i]).transpose()*ip_delta_ ).eval();
+    for (int j = 0; j < DYNAMICS_DIM; j++){
+      ip_delta_.col(j) = ip_delta_.col(j).array() * zp.array();
+    }
+  }
+  //Finish the backprop loop
+  ip_delta_ = ( ((weights_[0]).transpose())*ip_delta_).eval();
+  jac_.bottomRightCorner(DYNAMICS_DIM, DYNAMICS_DIM + CONTROL_DIM) += ip_delta_.transpose();
+}
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::enforceConstraints(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
 {
   int i;
   for (i = 0; i < CONTROL_DIM; i++){
@@ -187,24 +242,24 @@ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::enforceConstrai
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::updateState(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::updateState(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
 {
   enforceConstraints(state, control);
-  kinematics_->computeKinematics(state.data(), state_der_.data());
+  computeKinematics(state);
   computeDynamics(state, control);
   state += state_der_*dt_;
   state_der_ *= 0;
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::freeCudaMem()
+template<int S_DIM, int C_DIM,  int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM,  K_DIM, layer_args...>::freeCudaMem()
 {
   HANDLE_ERROR(cudaFree(theta_d_));
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-__device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::cudaInit(float* theta_s)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::cudaInit(float* theta_s)
 {
   int i;
   int tdx = threadIdx.x;
@@ -215,8 +270,8 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::cuda
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-__device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::printCudaParamVec()
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::printCudaParamVec()
 {
   int i;
   if (threadIdx.x == 0 && blockIdx.x == 0) {
@@ -226,8 +281,8 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::prin
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-__device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::enforceConstraints(float* state, float* control)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::enforceConstraints(float* state, float* control)
 {
   int i;
   for (i = 0; i < CONTROL_DIM; i++){
@@ -240,17 +295,17 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::enfo
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-__device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::computeStateDeriv(float* state, float* control, float* state_der, float* theta_s)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeStateDeriv(float* state, float* control, float* state_der, float* theta_s)
 {
   if (threadIdx.y == 0){
-    kinematics_->computeKinematics(state, state_der);
+    computeKinematics(state, state_der);
   }
   computeDynamics(state, control, state_der, theta_s);
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-__device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::incrementState(float* state, float* state_der)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::incrementState(float* state, float* state_der)
 {
   int i;
   int tdy = threadIdx.y;
@@ -261,12 +316,21 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::incr
   }
 }
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
-__device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::computeDynamics(float* state, float* control, float* state_der, float* theta_s)
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeKinematics(float* state, float* state_der)
+{
+  state_der[0] = cosf(state[2])*state[4] - sinf(state[2])*state[5];
+  state_der[1] = sinf(state[2])*state[4] + cosf(state[2])*state[5];
+  state_der[2] = -state[6]; //Pose estimate actually gives the negative yaw derivative
+}
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+__device__ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::computeDynamics(float* state, float* control, float* state_der, float* theta_s)
 {
   float* curr_act;
   float* next_act;
   float* tmp_act;
+  float tmp;
   float* W;
   float* b;
   int tdx = threadIdx.x;
@@ -291,15 +355,16 @@ __device__ void NeuralNetModel<S_DIM, C_DIM, K_FUNC, K_DIM, layer_args...>::comp
     b = &theta_d_[stride_idcs_d_[2*i + 1]];
   #endif
     for (j = tdy; j < net_structure_d_[i+1]; j += blockDim.y) {
-      next_act[j] = 0;
+      tmp = 0;
       for (k = 0; k < net_structure_d_[i]; k++){
         //No atomic add necessary.
-        next_act[j] += W[j*net_structure_d_[i] + k]*curr_act[k];
+        tmp += W[j*net_structure_d_[i] + k]*curr_act[k];
       }
-      next_act[j] += b[j];
+      tmp += b[j];
       if (i < NUM_LAYERS - 2){
-        next_act[j] = tanh(next_act[j]);
+        tmp = tanh(tmp);
       }
+      next_act[j] = tmp;
     }
     //Swap the two pointers
     tmp_act = curr_act;

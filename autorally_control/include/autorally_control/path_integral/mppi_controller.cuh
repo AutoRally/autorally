@@ -63,6 +63,7 @@ public:
   DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
   COSTS_T *costs_; ///< Autorally system costs.
   float* traj_costs_; ///< Array of the trajectory costs.
+  float* importance_sampler_; ///< Host array for keeping track of the nomimal trajectory.
   float* nominal_traj_; ///< Host array for keeping track of the nomimal trajectory.
   /**
   * @brief Constructor for mppi controller class.
@@ -99,7 +100,7 @@ public:
 
   void savitskyGolay();
 
-  void computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state);
+  void computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state, float* traj);
 
   /**
   * @brief Compute the control given the current state of the system.

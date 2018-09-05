@@ -44,11 +44,11 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   mppi_node.getParam("debug_mode", debug_mode_);
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
-  std::string nominal_path_name = "nominal_path";
+  std::string nominal_path_name = "planned_trajectory";
   if (debug_mode_){
-    nominal_path_name = "nominal_path_debug";
+    nominal_path_name = "planned_trajectory_debug";
   }
-  path_pub_ = mppi_node.advertise<nav_msgs::Path>(nominal_path_name, 1);
+  default_path_pub_ = mppi_node.advertise<nav_msgs::Path>(nominal_path_name, 1);
   delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   //Initialize the pose subscriber.
@@ -112,8 +112,8 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.u_x = cos(full_state_.yaw)*full_state_.x_vel + sin(full_state_.yaw)*full_state_.y_vel;
   full_state_.u_y = -sin(full_state_.yaw)*full_state_.x_vel + cos(full_state_.yaw)*full_state_.y_vel;
   //Update the minus yaw derivative.
-  full_state_.yaw_mder = .5*full_state_.yaw_mder + .5*(-1.0/cos(full_state_.pitch)*(sin(full_state_.roll)*pose_msg.twist.twist.angular.y
-  						              + cos(full_state_.roll)*pose_msg.twist.twist.angular.z));
+  full_state_.yaw_mder = -pose_msg.twist.twist.angular.z;//.5*full_state_.yaw_mder + .5*(-1.0/cos(full_state_.pitch)*(sin(full_state_.roll)*pose_msg.twist.twist.angular.y
+  						            //  + cos(full_state_.roll)*pose_msg.twist.twist.angular.z));
 }
 
 void AutorallyPlant::servoCall(autorally_msgs::chassisState servo_msg)
@@ -130,6 +130,11 @@ void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
 }
 
 void AutorallyPlant::pubPath(float* nominal_traj, int num_timesteps, int hz)
+{
+  pubPath(nominal_traj, default_path_pub_, num_timesteps, hz);
+}
+
+void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int num_timesteps, int hz)
 {
   path_msg_.poses.clear();
   int i;

@@ -16,7 +16,6 @@
   <arg name="physics" default="dart"/>
   <arg name="verbose" default="false"/>
   <arg name="world_name" default="model://urdf/populated_AR.world"/>
-  <arg name="namespace" default=""/>
   <arg name="cmd_timeout" default="0.5"/>
   <!-- set use_sim_time flag -->
   <group if="$(arg use_sim_time)">
@@ -35,7 +34,11 @@
 
   <!-- start gazebo server-->
   <node name="gazebo" pkg="gazebo_ros" type="$(arg script_type)" respawn="false" output="screen"
-      args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_name)" />
+        args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_name)" >
+    <!-- Remap to same topics as the actual robot (this doesn't seem to work with multiple vehicles) -->
+    <remap from="camera/left" to="left_camera"/>
+    <remap from="camera/right" to="right_camera"/>
+  </node>
 
   <!-- start gazebo client -->
   <group if="$(arg gui)">

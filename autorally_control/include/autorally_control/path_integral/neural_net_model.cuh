@@ -35,15 +35,17 @@
 #ifndef NEURAL_NET_MODEL_CUH_
 #define NEURAL_NET_MODEL_CUH_
 
-#include <eigen3/Eigen/Dense>
-
+#include "managed.cuh"
 #include "meta_math.h"
 #include "gpu_err_chk.h"
 #include "cnpy.h"
 
+#include <eigen3/Eigen/Dense>
+
+
 namespace autorally_control {
 
-template<int S_DIM, int C_DIM, class K_FUNC, int K_DIM, int... layer_args>
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 class NeuralNetModel: public Managed
 {
 
@@ -53,15 +55,22 @@ public:
   static const int CONTROL_DIM = C_DIM;
   static const int DYNAMICS_DIM = STATE_DIM - K_DIM;
   static const int NUM_LAYERS = layer_counter(layer_args...); ///< Total number of layers (including in/out layer)
-  static const int LARGEST_LAYER = neuron_counter(layer_args...); ///< Number of neurons in the largest layer(including in/out neurons)
+  static const int PRIME_PADDING = 1; ///< Extra padding to largest layer to avoid shared mem bank conflicts  
+  static const int LARGEST_LAYER = neuron_counter(layer_args...) + PRIME_PADDING; ///< Number of neurons in the largest layer(including in/out neurons)
   static const int NUM_PARAMS = param_counter(layer_args...); ///< Total number of model parameters;
   static const int SHARED_MEM_REQUEST_GRD = 0; ///< Amount of shared memory we need per BLOCK.
-  static const int SHARED_MEM_REQUEST_BLK = 2*neuron_counter(layer_args...); ///< Amount of shared memory we need per ROLLOUT.
+  static const int SHARED_MEM_REQUEST_BLK = 2*LARGEST_LAYER; ///< Amount of shared memory we need per ROLLOUT.
 
   float* theta_d_; ///< GPU memory parameter array.
   int* stride_idcs_d_; ///< GPU memory for keeping track of parameter strides
   int* net_structure_d_; ///GPU memory for keeping track of the neural net structure.
   float2* control_rngs_;
+
+  Eigen::Matrix<float, STATE_DIM, 1> state_der_; ///< The state derivative.
+  float2* control_rngs_d_;
+
+  Eigen::MatrixXf ip_delta_; ///< The neural net state derivative.
+  Eigen::Matrix<float, STATE_DIM, STATE_DIM + CONTROL_DIM> jac_; //Total state derivative
 
   NeuralNetModel(float delta_t, float2* control_rngs = NULL);
 
@@ -82,8 +91,13 @@ public:
 
   void updateState(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
+  void computeKinematics(Eigen::MatrixXf &state);
+
   void computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
+  void computeGrad(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
+
+  __device__ void computeKinematics(float* state, float* state_der);
 
   __device__ void cudaInit(float* theta_s);
 
@@ -99,7 +113,6 @@ public:
 
 private:
   float dt_;
-  K_FUNC* kinematics_;
 
   //Neural net structure
   int net_structure_[NUM_LAYERS] = {layer_args...};
@@ -108,11 +121,35 @@ private:
   //Host fields
   Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* weights_; ///< Matrices of weights {W_1, W_2, ... W_n}
   Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* biases_; ///< Vectors of biases {b_1, b_2, ... b_n}
-  float* net_params_; 
 
-  Eigen::Matrix<float, STATE_DIM, 1> state_der_; ///< The state derivative.
-  float2* control_rngs_d_;
+  Eigen::MatrixXf* weighted_in_;
+
+  float* net_params_; 
 };
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::STATE_DIM;
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::CONTROL_DIM;
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::DYNAMICS_DIM;
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NUM_LAYERS; 
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::LARGEST_LAYER;
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NUM_PARAMS;
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::SHARED_MEM_REQUEST_GRD;
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::SHARED_MEM_REQUEST_BLK;
 
 #include "neural_net_model.cut"
 
