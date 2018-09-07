@@ -168,7 +168,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
     double optimizationTickTime = fp_ms.count();
     int count = 0;
-    while(is_alive->load() && (fp_ms < ms || (last_pose_update == robot->getLastPoseTime() && status==0))) {
+    while(is_alive->load() && ((fp_ms < ms || (robot->getLastPoseTime() - last_pose_update).toSec() < (1.0/params->hz - 0.0025)) && status==0)) {
       usleep(50);
       fp_ms = std::chrono::steady_clock::now() - loop_start;
       count++;
