@@ -25,7 +25,7 @@
     <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
-    <param name="model_path" value="$(find autorally_control)/src/path_integral/params/models/basis_function.npz"/>
+    <param name="model_path" value="$(env CATKIN_ROOT)/src/autorally/autorally_control/src/path_integral/params/models/basis_function.npz"/>
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
@@ -56,7 +56,7 @@
     <param name="throttle_coeff" value="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(find autorally_control)/src/path_integral/params/maps/gazebo_costmap.npz" />
+    <param name="map_path" value="$(env CATKIN_ROOT)/src/autorally/autorally_control/src/path_integral/params/maps/gazebo_costmap.npz" />
   </node>
 
   <node

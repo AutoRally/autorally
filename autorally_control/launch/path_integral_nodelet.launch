@@ -26,7 +26,7 @@
     <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
-    <param name="model_path" value="/home/autorally/catkin_ws/src/autorally_private/autorally_private_control/src/dynamics_models/models/NeuralNet/beta_model_2018_08_17.npz" />
+    <param name="model_path" value="$(env CATKIN_ROOT)/src/autorally/autorally_control/src/path_integral/params/models/beta_model_2018_08_17.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
@@ -55,7 +55,7 @@
     <param name="crash_coeff" value="10000.0" />
     <param name="steering_coeff" value ="0.0" />
     <param name="throttle_coeff" value ="0.0" />
-    <param name="map_path" value="/home/autorally/catkin_ws/src/autorally/autorally_control/src/path_integral/params/maps/ccrf_costmap.npz" />
+    <param name="map_path" value="$(env CATKIN_ROOT)/src/autorally/autorally_control/src/path_integral/params/maps/ccrf_costmap.npz" />
     <param name="boundary_threshold" value="0.75" />
     <param name="discount" value = "0.1" />
   </node>
