@@ -1,30 +1,18 @@
 #define __CUDACC_VER__ __CUDACC_VER_MAJOR__ * 10000 + __CUDACC_VER_MINOR__ * 100 + __CUDACC_VER_BUILD__
 
-#include <autorally_control/path_integral/mppi.cuh>
 #include <autorally_control/path_integral/meta_math.h>
-#include <autorally_control/path_integral/param_getter.h>
-
-#include <autorally_control/PathIntegralParamsConfig.h>
-#include <autorally_control/path_integral/costs.cuh>
 //Including neural net model
 #ifdef MPPI_NNET_USING_CONSTANT_MEM__
 __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #endif
 #include <autorally_control/path_integral/neural_net_model.cuh>
-
 #include <autorally_control/path_integral/car_bfs.cuh>
-#include <autorally_control/path_integral/car_kinematics.cuh>
 #include <autorally_control/path_integral/generalized_linear.cuh>
-
+#include <autorally_control/path_integral/car_kinematics.cuh>
+#include <autorally_control/path_integral/costs.cuh>
 #include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/run_control_loop.cuh>
-
-#include <ros/ros.h>
-#include <atomic>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <autorally_control/path_integral/mppi.cuh>
 
 #include <pluginlib/class_list_macros.h>
 
@@ -43,7 +31,7 @@ namespace autorally_control{
 
   //Convenience typedef for the MPPI Controller.
   typedef MPPIController<DynamicsModel,MPPICosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
-  typedef MPPI<Controller, DynamicsModel, MPPICosts> MPPI_NODELET;
+  typedef MPPI<Controller, DynamicsModel, MPPICosts> MPPINodelet;
 }
 
-PLUGINLIB_DECLARE_CLASS(autorally_control, MPPI_NODELET, autorally_control::MPPI_NODELET, nodelet::Nodelet)
+PLUGINLIB_DECLARE_CLASS(autorally_control, MPPINodelet, autorally_control::MPPINodelet, nodelet::Nodelet)

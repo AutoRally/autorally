@@ -5,7 +5,7 @@
     pkg = "nodelet" 
     type = "nodelet" 
     name = "mppi_controller"
-    args = "load autorally_control/MPPI autorally_core_manager"
+    args = "load autorally_control/MPPINodelet autorally_core_manager"
     output = "screen">
     
     <!--Pose topic configuration parameters -->

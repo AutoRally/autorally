@@ -73,7 +73,7 @@ remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
 add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
 
 cuda_add_library(mppi_nodelet 
-                 mppi.cu
+                 mppi_nodelet.cu
                  autorally_plant
                  param_getter)
 add_dependencies(mppi_nodelet autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)

@@ -99,6 +99,8 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   controller->resetControls();
   controller->computeFeedbackGains(state);
 
+  std::cout << "Hello" << std::endl;
+
   //Start the control loop.
   while (is_alive->load()) {
     std::chrono::steady_clock::time_point loop_start = std::chrono::steady_clock::now();

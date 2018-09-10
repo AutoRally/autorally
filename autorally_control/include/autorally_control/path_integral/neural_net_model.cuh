@@ -37,6 +37,7 @@
 
 #include "managed.cuh"
 #include "meta_math.h"
+#include "param_getter.h"
 #include "gpu_err_chk.h"
 #include "cnpy.h"
 
