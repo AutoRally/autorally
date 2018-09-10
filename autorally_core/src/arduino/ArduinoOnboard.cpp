@@ -41,7 +41,7 @@
 
 #include <numeric>
 
-PLUGINLIB_DECLARE_CLASS(autorally_core, ArduinoOnboard, autorally_core::ArduinoOnboard, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS( autorally_core::ArduinoOnboard,  nodelet::Nodelet)
 
 namespace autorally_core
 {

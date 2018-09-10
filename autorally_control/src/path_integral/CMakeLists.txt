@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 
 find_package(OpenCV REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include_directories(include ${OpenCV_INCLUDE_DIRS})
 include_directories(include ${EIGEN_INCLUDE_DIRS})
@@ -55,37 +55,31 @@ set(
 #Executable for the basis function model
 ####################################################################################
 
-add_definitions(-DUSE_BASIS_FUNC_MODEL__)
-
 cuda_add_executable(path_integral_bf
                     path_integral_main.cu
                     autorally_plant
                     param_getter
                     )
-
+target_compile_definitions(path_integral_bf PRIVATE PRIVATE USE_BASIS_FUNC_MODEL__)
 add_dependencies(path_integral_bf autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
-
 ###################################################################################
 #Executable for the neural network model
 ###################################################################################
-
-add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
 
 cuda_add_executable(path_integral_nn
                    	path_integral_main.cu
                     autorally_plant
                     param_getter
                     )
-
+target_compile_definitions(path_integral_nn PRIVATE
+		USE_NEURAL_NETWORK_MODEL__;
+		MPPI_NNET_USING_CONSTANT_MEM__)
 add_dependencies(path_integral_nn autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
-remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
 
 ####################################################################################
 #Executable for monitoring the status of mppi
