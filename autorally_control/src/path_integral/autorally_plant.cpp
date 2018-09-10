@@ -92,6 +92,13 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   //Debug image display signaller
   receivedDebugImg_ = false;
   is_nodelet_ = nodelet;
+
+  if (!debug_mode_){
+    ROS_INFO("DEBUG MODE is set to FALSE, waiting to receive first pose estimate...  ");
+  }
+  else{
+    ROS_WARN("DEBUG MODE is set to TRUE. DEBUG MODE must be FALSE in order to be launched from a remote machine. \n");
+  }
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
@@ -151,6 +158,9 @@ void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
 
 void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
 {
+  if (poseCount_ == 0){
+    ROS_INFO(" First pose estimate received. \n");
+  }
   boost::mutex::scoped_lock lock(access_guard_);
   //Update the timestamp
   last_pose_call_ = pose_msg.header.stamp;
