@@ -25,7 +25,7 @@
     <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
-    <param name="model_path" value="$(env CATKIN_ROOT)/src/autorally/autorally_control/src/path_integral/params/models/gazebo_nnet.npz" />
+    <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
@@ -33,9 +33,9 @@
 
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />
-    <param name="init_throttle" value="-.01" />
-    <param name="steering_std" value="0.175" />
-    <param name="throttle_std" value="0.175" />
+    <param name="init_throttle" value="0.0" />
+    <param name="steering_std" value="0.275" />
+    <param name="throttle_std" value="0.3" />
 
     <!-- Control Constraints -->
     <param name="max_throttle" value=".65" />
@@ -45,18 +45,19 @@
 
     <!-- Cost Parameters -->
     <param name="l1_cost" value="false" />
-    <param name="desired_speed" value="5.0" />
+    <param name="desired_speed" value="6.0" />
     <param name="speed_coefficient" value="4.25" />
     <param name="track_coefficient" value="200.0" />
     <param name="max_slip_angle" value="1.25" />
-    <param name="slip_penalty" value="250.0" />
+    <param name="slip_penalty" value="10.0" />
     <param name="track_slop" value="0.0" />
     <param name="crash_coeff" value="10000.0" />
-    <param name="steering_coeff" value="0.0" />
-    <param name="throttle_coeff" value="0.0" />
+    <param name="steering_coeff" value ="0.0" />
+    <param name="throttle_coeff" value ="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(env CATKIN_ROOT)/src/autorally/autorally_control/src/path_integral/params/maps/gazebo_costmap.npz" />
+    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/marietta_costmap.npz" />
+
   </node>
 
   <node
