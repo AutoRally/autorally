@@ -1,6 +1,6 @@
 # Data Format
 
-This folder contains contains costmaps used by MPPI in order to drive within the track boundaries. Each costmap contains the same data, but for a different track. The data arrays contained in the numpy archives are the following:
+This folder contains contains costmaps used by MPPI in order to drive within the track boundaries. Each costmap contains the same data, but for a different track. The data arrays contained in the numpy archives, and each archive has the following keys point got a numpy array:
 
 ## xBounds, yBounds 
 These are the bounds of the costmap, described in meters from the origin. Together they define a rectangular area that the track is entirely contained in.
