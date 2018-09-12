@@ -1,4 +1,4 @@
-#Data Format
+# Data Format
 
 This folder contains contains costmaps used by MPPI in order to drive within the track boundaries. Each costmap contains the same data, but for a different track. The data arrays contained in the numpy archives are the following:
 
@@ -10,7 +10,7 @@ channel0 - This channel contains the actual values describing the track surface.
 
 channel1, channel2, channel3 - These channels are currently all zero. They can be modified in order to include additional data about the track that can be used by classes inheriting from costs.cu.
 
-#Maps
+# Maps
 
 gazebo_costmap_09_08_2018.npz - Map of the gazebo simulation environment. Origin is the same as the spawn point for the car.
 
