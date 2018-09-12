@@ -25,7 +25,7 @@
     <param name="use_feedback_gains" value="true" />
 
     <!--Model parameters-->
-    <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet.npz" />
+    <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
