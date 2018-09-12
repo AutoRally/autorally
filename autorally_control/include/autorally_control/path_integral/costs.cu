@@ -66,9 +66,6 @@ inline MPPICosts::MPPICosts(ros::NodeHandle nh)
   debugging_ = false;
 }
 
-inline MPPICosts::~MPPICosts()
-{}
-
 inline void MPPICosts::allocateTexMem()
 {
   //Allocate memory for the cuda array which is bound the costmap_tex_
