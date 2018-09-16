@@ -219,7 +219,7 @@ void AutoRallyChassis::processChassisMessage(std::string msgType, std::string ms
           //std::cout << std::stoi(data[0]) << " " << std::stoi(data[1]) << std::endl;
           chassisCommand->steering = actuatorUsToCmd(std::stoi(data[0]), "steering");
           chassisCommand->throttle = actuatorUsToCmd(std::stoi(data[1]), "throttle");
-          chassisCommand->frontBrake = -5.0;
+          chassisCommand->frontBrake = 0.0; // setting to zero to make sure brake is neutral
           chassisCommand->sender = "RC";
           //this line is in here for compatibility with the old servoInterface
           chassisCommand->header.frame_id = "RC";
@@ -469,6 +469,18 @@ short AutoRallyChassis::actuatorCmdToMs(double actuatorValue, std::string actuat
 
   //don't need to check if actuatorValue is on [-1, 1] because it was already done
   short val = actuatorConfig_[actuator].center;
+  if(actuatorConfig_[actuator].reverse)
+  {
+    if(actuator == "frontBrake")
+    {
+      // flip range but still keep it in [0,1]
+      actuatorValue = 1.0-actuatorValue;
+    } else
+    {
+      // flip entire range for throttle and steering
+      actuatorValue = -actuatorValue;
+    }
+  }
   if(actuatorValue < 0)
   {
     val += (short)((actuatorConfig_[actuator].center-actuatorConfig_[actuator].min)*actuatorValue);
