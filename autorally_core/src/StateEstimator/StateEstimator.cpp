@@ -535,7 +535,7 @@ namespace autorally_core
     else dt = TIME(imu) - lastImuT_;
 
     lastImuT_ = TIME(imu);
-    ros::Time before = ros::Time::now();
+    //ros::Time before = ros::Time::now();
 
     // Push the IMU measurement to the optimization thread
     int qSize = imuOptQ_.size();
@@ -624,7 +624,7 @@ namespace autorally_core
 
     posePub_.publish(poseNew);
 
-    ros::Time after = ros::Time::now();
+    //ros::Time after = ros::Time::now();
     geometry_msgs::Point delays;
     delays.x = TIME(imu);
     delays.y = (ros::Time::now() - imu->header.stamp).toSec();
