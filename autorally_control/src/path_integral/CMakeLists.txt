@@ -50,7 +50,6 @@ set(
 	-w
 )
 
-
 ####################################################################################
 #Executable for the basis function model
 ####################################################################################
@@ -62,9 +61,7 @@ cuda_add_executable(path_integral_bf
                     autorally_plant
                     param_getter
                     )
-
 add_dependencies(path_integral_bf autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
-
 target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
@@ -75,14 +72,19 @@ remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
 
 add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
 
+cuda_add_library(mppi_nodelet 
+                 mppi_nodelet.cu
+                 autorally_plant
+                 param_getter)
+add_dependencies(mppi_nodelet autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
+target_link_libraries(mppi_nodelet /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 cuda_add_executable(path_integral_nn
                    	path_integral_main.cu
                     autorally_plant
                     param_getter
                     )
-
 add_dependencies(path_integral_nn autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
-
 target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
@@ -93,9 +95,7 @@ remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__
 
 add_executable(path_integral_monitor
 			   status_monitor.cpp)
-
 add_dependencies(path_integral_monitor autorally_core autorally_msgs_gencpp)
-
 target_link_libraries(path_integral_monitor ${catkin_LIBRARIES})
 
 endif(CUDA_FOUND)
