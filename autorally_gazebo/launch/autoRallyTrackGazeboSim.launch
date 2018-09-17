@@ -32,7 +32,7 @@ limitations under the License.
 <launch>
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
-  <arg name="namespace" default="alpha"/>
+  <arg name="namespace" default=""/>
   <arg name="world_name" default="model://urdf/worlds/ccrf_track.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
@@ -61,7 +61,7 @@ limitations under the License.
 
 
   <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
-        args="-param robot_description -urdf -model $(arg namespace)
+        args="-param robot_description -urdf -model Alpha
               -gazebo_namespace /gazebo
               -x $(arg x) -y $(arg y) -z $(arg z)
               -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
