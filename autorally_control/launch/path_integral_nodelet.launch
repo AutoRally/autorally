@@ -13,7 +13,7 @@
     <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
-    <param name="debug_mode" value="true" />
+    <param name="debug_mode" value="false" />
 
     <!--Setup parameters-->
     <param name="hz" value="50" />
@@ -23,7 +23,7 @@
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
-    <param name="use_feedback_gains" value="true" />
+    <param name="use_feedback_gains" value="false" />
 
     <!--Model parameters-->
     <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet.npz" />
