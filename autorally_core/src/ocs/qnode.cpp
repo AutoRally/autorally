@@ -75,6 +75,44 @@ QNode::QNode(int argc, char** argv ) :
     }
     exit(init_err);
   }
+  
+  init_err = pthread_mutex_init(&m_diagMutex, nullptr);
+  if(init_err != 0) {
+    switch(init_err) {
+      case EAGAIN:
+        std::cerr << "ERROR: Unable to initialize diag mutex due to lack of resource other than memory." << std::endl;
+        break;
+      case ENOMEM:
+        std::cerr << "ERROR: Unable to initialize diag mutex due to lack of memory." << std::endl;
+        break;
+      case EPERM:
+        std::cerr << "ERROR: Unable to initialize diag mutex due to insufficient priveleges." << std::endl;
+        break;
+      default:
+        std::cerr << "ERROR: Unable to initialize diag mutex for unknown reason." << std::endl;
+        break;
+    }
+    exit(init_err);
+  }
+
+  init_err = pthread_mutex_init(&m_runstopMutex, nullptr);
+  if(init_err != 0) {
+    switch(init_err) {
+      case EAGAIN:
+        std::cerr << "ERROR: Unable to initialize runstop mutex due to lack of resource other than memory." << std::endl;
+        break;
+      case ENOMEM:
+        std::cerr << "ERROR: Unable to initialize runstop mutex due to lack of memory." << std::endl;
+        break;
+      case EPERM:
+        std::cerr << "ERROR: Unable to initialize runstop mutex due to insufficient priveleges." << std::endl;
+        break;
+      default:
+        std::cerr << "ERROR: Unable to initialize runstop mutex for unknown reason." << std::endl;
+        break;
+    }
+    exit(init_err);
+  }
 }
 
 QNode::~QNode() {
@@ -124,16 +162,62 @@ bool QNode::init() {
 
   QStringList header;
   header << "Sender" << "Motion Enabled" << "Time since last message";
-	m_runstopModel.setColumnCount(3);
+	
+  int lock_ret = pthread_mutex_lock(&m_runstopMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("Runstop mutex lock error init():" << lock_ret);
+    return false;
+  }
+  
+  m_runstopModel.setColumnCount(3);
   m_runstopModel.setHorizontalHeaderLabels(header);
+  
+  int ret_val = pthread_mutex_unlock(&m_runstopMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Runstop mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Runstop mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking Runstop mutex. Skipping this frame.");
+    }
+    return false;
+  }
 
   double diagFreq;
   ros::param::param<double>("diagnosticsFrequency", diagFreq, 1.0);
   ros::param::param<double>("runstop/Timeout", m_runstopTimeout, 5.0);
 
+  lock_ret = pthread_mutex_lock(&m_diagMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("diag mutex lock error init():" << lock_ret);
+    return false;
+  }
   m_diagModel.setDiagnosticFrequency(diagFreq);
 
-	start();
+  ret_val = pthread_mutex_unlock(&m_diagMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Diag mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Diag mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking diag mutex. Skipping this frame.");
+    }
+    return false;
+  }
+
+  start();
 	return true;
 }
 
@@ -152,6 +236,12 @@ void QNode::run() {
 
 void QNode::runstopCallback(const autorally_msgs::runstopConstPtr& msg)
 {
+  int lock_ret = pthread_mutex_lock(&m_runstopMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("runstop mutex lock error init():" << lock_ret);
+    return;
+  }
   QList<QStandardItem *> items = m_runstopModel.findItems(
                                           QString::fromStdString(msg->sender) );
   if(items.isEmpty())
@@ -172,11 +262,50 @@ void QNode::runstopCallback(const autorally_msgs::runstopConstPtr& msg)
   {
     ROS_ERROR("Something is wrong with the OCS runstopModel!!!!!");
   }
+
+  int ret_val = pthread_mutex_unlock(&m_runstopMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Runstop mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Runstop mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking runstop mutex. Skipping this frame.");
+    }
+    return;
+  }
 }
 
 void QNode::runstopModelDoubleClicked(const QModelIndex& index)
 {
+  int lock_ret = pthread_mutex_lock(&m_runstopMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("Runstop mutex lock error init():" << lock_ret);
+    return;
+  }
+
   m_runstopModel.removeRows(index.row(), 1);
+
+  int ret_val = pthread_mutex_unlock(&m_runstopMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Runstop mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Runstop mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking Runstop mutex. Skipping this frame.");
+    }
+    return;
+  }
 }
 
 void QNode::wheelSpeedsCallback(const autorally_msgs::wheelSpeedsConstPtr& msg)
@@ -202,7 +331,29 @@ void QNode::setRunstop(const double& speed)
 
 void QNode::diagStatusCallback(const diagnostic_msgs::DiagnosticArray& msg)
 {
+  int lock_ret = pthread_mutex_lock(&m_diagMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("diag mutex lock error diagStatusCallback():" << lock_ret);
+    return;
+  }
   m_diagModel.update(msg);
+  
+  int ret_val = pthread_mutex_unlock(&m_diagMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Diag mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Diag mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking image mutex. Skipping this frame.");
+    }
+    return;
+  }
 }
 
 
@@ -231,10 +382,17 @@ QList<QStandardItem*> QNode::generateNewrunstop(
     return newrunstop;
 }
 
-void QNode::updateTimes()
+void QNode::updateRunstopTimes()
 {
   double time;
   QStandardItem* node;
+
+  int lock_ret = pthread_mutex_lock(&m_runstopMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("Runstop mutex lock error init():" << lock_ret);
+    return;
+  }
 
   if(m_currentTabText == "System Info")
   {
@@ -257,6 +415,106 @@ void QNode::updateTimes()
         }
       }
     }
+  }
+
+  int ret_val = pthread_mutex_unlock(&m_runstopMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Runstop mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Runstop mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking Runstop mutex. Skipping this frame.");
+    }
+    return;
+  }
+}
+
+void QNode::updateDiagTimes()
+{
+  int lock_ret = pthread_mutex_lock(&m_diagMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("Diag mutex lock, updateDiagTimes error:" << lock_ret);
+    return;
+  }
+
+  m_diagModel.updateTimes();
+
+  int ret_val = pthread_mutex_unlock(&m_diagMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Diag mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Diag mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking diag mutex. Skipping this frame.");
+    }
+    return;
+  }
+}
+
+void QNode::clearStaleDiag()
+{
+  int lock_ret = pthread_mutex_lock(&m_diagMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("Diag mutex lock, updateDiagTimes error:" << lock_ret);
+    return;
+  }
+
+  m_diagModel.clearStaleDiag();
+
+  int ret_val = pthread_mutex_unlock(&m_diagMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Diag mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Diag mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking diag mutex. Skipping this frame.");
+    }
+    return;
+  }
+}
+
+void QNode::diagModelDoubleClicked(const QModelIndex& index)
+{
+  int lock_ret = pthread_mutex_lock(&m_diagMutex);
+  if(lock_ret != 0)
+  {
+    ROS_WARN_STREAM("Diag mutex lock, updateDiagTimes error:" << lock_ret);
+    return;
+  }
+
+  m_diagModel.diagModelDoubleClicked(index);
+
+  int ret_val = pthread_mutex_unlock(&m_diagMutex);
+  if(ret_val != 0)
+  {
+    switch(ret_val) {
+      case EINVAL:
+        ROS_WARN("Diag mutex unlock error: The value specified for the argument is not correct");
+        break;
+      case EPERM:
+        ROS_WARN("Diag mutex unlock error: The mutex is not currently held by the caller");
+        break;
+      default:
+        ROS_WARN("Unknown error while locking diag mutex. Skipping this frame.");
+    }
+    return;
   }
 }
 

@@ -29,27 +29,46 @@
  * @date May 24, 2017
  * @copyright 2017 Georgia Institute of Technology
  * @brief Class to be inherited by classes passed 
- * by reference to CUDA kernels
+ * to CUDA kernels. Helps unify stream management.
  ***********************************************/
 
 #ifndef MPPI_MANAGED_CUH_
 #define MPPI_MANAGED_CUH_
 
+#include <cuda_runtime.h>
+
+namespace autorally_control {
+
+/**
+* @class Managed managed.cuh
+* @brief Class for setting the stream to be used by dynamics and cost functions used
+* by MPPIController. 
+*
+* This class has one variable, which is the CUDA stream, and a function which sets the 
+* stream. It is meant to be inherited by costs and dynamics classes which are passed into
+* the MPPIController kernels. In the past, this class used unified memory (hence the managed name),
+* so that classes could be passed by reference to CUDA kernels. However, as of right now,
+* the difficulties of using unified memory with multi-threaded CPU programs make getting
+* good performance with unified memory difficult, so this has been removed. Future implementations
+* may bring back the unified memory feature.
+*/
 class Managed 
 {
 public:
-  void *operator new(size_t len) {
-    void *ptr;
-    cudaMallocManaged(&ptr, len);
+
+  cudaStream_t stream_ = 0; ///< The CUDA Stream that the class is bound too. 0 is the default (NULL) stream.
+
+  /**
+  @brief Sets the stream and synchronizes the device.
+  @param stream is the CUDA stream that the object is assigned too.
+  */
+  void bindToStream(cudaStream_t stream) {
+    stream_ = stream;
     cudaDeviceSynchronize();
-    return ptr;
   }
 
-  void operator delete(void *ptr) {
-    cudaDeviceSynchronize();
-    cudaFree(ptr);
-  }
 };
 
+}
 
 #endif /* MPPI_MANAGED_CUH_*/

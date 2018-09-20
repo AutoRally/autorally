@@ -25,8 +25,8 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-  scripts=['nodes/autorally_controller.py'],
-  requires=['std_msgs', 'rospy', 'autorally_msgs']
+  scripts=['nodes/autorally_controller.py','nodes/ground_truth_republisher.py'],
+  requires=['std_msgs', 'nav_msgs', 'rospy', 'autorally_msgs']
 )
 
 setup(**d)
