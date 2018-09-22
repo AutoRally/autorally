@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <sdf version="1.5">
-  <model name="dirt_plane">
+  <model name="track">
     <static>true</static>
     <link name="link">
       <collision name="collision">
         <geometry>
-          <plane>
-            <normal>0 0 1</normal>
-            <size>60 45</size>
-          </plane>
+          <mesh>
+            <uri>model://urdf/cad/autoRallyTrackCCRF.dae</uri>
+            <scale>1.0 1.0 1.0</scale>
+          </mesh>
         </geometry>
         <surface>
           <friction>
@@ -22,15 +22,15 @@
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <plane>
-            <normal>0 0 1</normal>
-            <size>60 45</size>
-          </plane>
+          <mesh>
+            <uri>model://urdf/cad/autoRallyTrackCCRF.dae</uri>
+            <scale>1.0 1.0 1.0</scale>
+          </mesh>
         </geometry>
         <material>
           <script>
             <uri>model://urdf/gazebo.material</uri>
-            <name>Gazebo/Texture_blend_ccrf</name>
+            <name>Gazebo/Black</name>
           </script>
         </material>
       </visual>
