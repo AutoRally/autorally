@@ -82,8 +82,12 @@ public:
   QPixmap m_firewireImage2;
 
   DiagnosticsEntry m_diagModel;
+  pthread_mutex_t m_diagMutex;	
+  
   ImageMaskEntry m_imMaskModel;
   pthread_mutex_t m_imageMutex;
+
+  pthread_mutex_t m_runstopMutex;
 
   /**
   * @brief Constructor, just initializes internal variables
@@ -209,15 +213,31 @@ signals:
 public slots:
 
   /**
-  * @brief Update the time since last message received for all elements in OCS
+  * @brief Update the time since last message received for the runstop display in OCS
   */
-  void updateTimes();
+  void updateRunstopTimes();
+
+  /**
+  * @brief Update the time since last message received for all elements diagnostics display in OCS
+  */
+  void updateDiagTimes();
 
   /**
   * @brief Callback for a user click on a runstop entry
   * @param index the index for the item clicked
   */
   void runstopModelDoubleClicked(const QModelIndex& index);
+
+  /**
+  * @brief Callback for a user click on a runstop entry
+  * @param index the index for the item clicked
+  */
+  void diagModelDoubleClicked(const QModelIndex& index);
+
+  /**
+  * @brief Remove all stale diagnostic messages
+  */
+  void clearStaleDiag();
 
 private:
 	int init_argc; ///< Command line parameter count

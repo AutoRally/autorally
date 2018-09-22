@@ -86,10 +86,10 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(ui.controlButton, SIGNAL(clicked(const bool)),
                    this, SLOT(setControl(const bool)));
   QObject::connect(ui.clearStaleDiagButton, SIGNAL(released()),
-                   &qnode.m_diagModel, SLOT(clearStaleDiag()));
+                   &qnode, SLOT(clearStaleDiag()));
   QObject::connect(ui.diagMsgsTreeView,
                    SIGNAL(doubleClicked(const QModelIndex&)),
-                   &qnode.m_diagModel, SLOT(diagModelDoubleClicked(const QModelIndex&)));
+                   &qnode, SLOT(diagModelDoubleClicked(const QModelIndex&)));
   QObject::connect(ui.runstopTreeView,
                    SIGNAL(doubleClicked(const QModelIndex&)),
                    &qnode, SLOT(runstopModelDoubleClicked(const QModelIndex&)));
@@ -97,9 +97,9 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(&m_updateTimeBoxesTimer, SIGNAL(timeout()),
                    this, SLOT(updateTimeBoxes()));
   QObject::connect(&m_diagTimeTimer, SIGNAL(timeout()),
-                   &qnode, SLOT(updateTimes()));
+                   &qnode, SLOT(updateRunstopTimes()));
   QObject::connect(&m_diagTimeTimer, SIGNAL(timeout()),
-                   &qnode.m_diagModel, SLOT(updateTimes()));
+                   &qnode, SLOT(updateDiagTimes()));
   QObject::connect(&m_chassisCommandTimer, SIGNAL(timeout()),
                    this, SLOT(sendChassisCommand()));
 

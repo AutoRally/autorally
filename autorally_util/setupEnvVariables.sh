@@ -132,3 +132,11 @@ RESET=`tput sgr0`
 if [[ -z $AR_JOYSTICK ]]; then
     echo "${YELLOW}[WARNING] No joystick detected.${RESET}"
 fi
+
+if [[ $MASTER_HOSTNAME == "localhost" ]]
+    then
+        export AR_MPPI_PARAMS_PATH=`rospack find autorally_control`/src/path_integral/params/
+    else
+        export AR_MPPI_PARAMS_PATH=`ssh $user@$MASTER_HOSTNAME rospack find autorally_control`/src/path_integral/params/
+fi
+

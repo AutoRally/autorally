@@ -452,6 +452,49 @@ limitations under the License.
     <child link="camera_link"/>
   </joint>
 
+ <!-- <link name="odom">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+  <joint name="odom_joint" type="fixed">
+    <axis xyz="0 0 0" />
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="odom"/>
+    <child link="base_link"/>
+  </joint>
+-->
+
+
+ <link name="odom_ground_truth">
+    <collision>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+
+  <joint name="odom_ground_truth_joint" type="fixed">
+    <axis xyz="0 0 0" />
+    <origin xyz="-0.039 0 0.0859" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="odom_ground_truth"/>
+  </joint>
+
   <!-- Camera -->
   <link name="camera_link">
     <collision>
@@ -605,6 +648,19 @@ limitations under the License.
       <velocityDrift>0 0 0</velocityDrift>
       <velocityGaussianNoise>0.005 0.005 0.05</velocityGaussianNoise>
     </plugin>
+
+    <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>200.0</updateRate>
+      <bodyName>odom_ground_truth</bodyName>
+      <topicName>ground_truth/state_raw</topicName>
+      <gaussianNoise>0.00</gaussianNoise>
+      <frameName>world</frameName>
+      <!-- origin is at spawn location -->
+      <xyzOffset>0 8.5 0</xyzOffset>
+      <rpyOffset>0 0 0</rpyOffset>
+    </plugin>
+
     <!--<plugin name="tire_friction" filename="libTireFrictionPlugin.so">
       <link_name>left_rear_wheel</link_name>
       <collision_name>collision</collision_name>

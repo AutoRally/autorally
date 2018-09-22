@@ -36,22 +36,22 @@
 
 namespace autorally_control {
 
-void loadParams(SystemParams* params, ros::NodeHandle mppi_node)
+void loadParams(SystemParams* params, ros::NodeHandle nh)
 {
-  mppi_node.getParam("debug_mode", params->debug_mode);
-  mppi_node.getParam("hz", params->hz);
-  mppi_node.getParam("num_timesteps", params->num_timesteps);
-  mppi_node.getParam("num_iters", params->num_iters);
-  mppi_node.getParam("x_pos", params->x_pos);
-  mppi_node.getParam("y_pos", params->y_pos);
-  mppi_node.getParam("heading", params->heading);
-  mppi_node.getParam("gamma", params->gamma);
-  mppi_node.getParam("init_steering", params->init_steering);
-  mppi_node.getParam("init_throttle", params->init_throttle);
-  mppi_node.getParam("steering_std", params->steering_std);
-  mppi_node.getParam("throttle_std", params->throttle_std);
-  mppi_node.getParam("max_throttle", params->max_throttle);
-  mppi_node.getParam("model_path", params->model_path);
+  params->debug_mode = getRosParam<bool>("debug_mode", nh);
+  params->hz = getRosParam<int>("hz", nh);
+  params->num_timesteps = getRosParam<int>("num_timesteps", nh);
+  params->num_iters = getRosParam<int>("num_iters", nh);
+  params->x_pos = getRosParam<double>("x_pos", nh);
+  params->y_pos = getRosParam<double>("y_pos", nh);
+  params->heading = getRosParam<double>("heading", nh);
+  params->gamma = getRosParam<double>("gamma", nh);
+  params->init_steering = getRosParam<double>("init_steering", nh);
+  params->init_throttle = getRosParam<double>("init_throttle", nh);
+  params->steering_std = getRosParam<double>("steering_std", nh);
+  params->throttle_std = getRosParam<double>("throttle_std", nh);
+  params->max_throttle = getRosParam<double>("max_throttle", nh);
+  params->model_path = getRosParam<std::string>("model_path", nh);
 }
 
 }

@@ -36,6 +36,7 @@
   <run_depend>gazebo_ros_control</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>xacro</run_depend>
   <run_depend>hector_gazebo_plugins</run_depend>
