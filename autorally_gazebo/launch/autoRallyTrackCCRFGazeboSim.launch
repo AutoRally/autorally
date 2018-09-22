@@ -40,9 +40,9 @@ limitations under the License.
   <!--<param name="autorally_simulation" value"true"/> -->
 
   <!-- Vehicle pose -->
-  <arg name="x" default="0"/>
-  <arg name="y" default="0"/>
-  <arg name="z" default="0"/>
+  <arg name="x" default="-1.701299"/>
+  <arg name="y" default="-15.642976"/>
+  <arg name="z" default="0.2"/>
   <arg name="roll" default="0.0"/>
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.785498"/>
@@ -77,6 +77,11 @@ limitations under the License.
     <param name="vehicle_prefix" value="$(arg namespace)"/>
     <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
     <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
+  </node>
+
+  <!-- Run ground truth pose script, published on /ground_truth/state-->
+  <node name="ground_truth_republisher" pkg="autorally_gazebo"
+        type="ground_truth_republisher.py" output="screen">
   </node>
 
   <include file="$(find autorally_core)/launch/stateEstimator.launch">
