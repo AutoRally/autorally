@@ -21,10 +21,5 @@
       <uri>model://urdf/models/blended_track_ccrf</uri>
       <pose>-22.5 -19 0 0 0 0</pose>
     </include>
-    <include>
-      <name>track_ccrf</name>
-      <uri>model://urdf/models/track_ccrf</uri>
-      <pose>-22.4 -16.2 0 0 0 -1.57079632679</pose>
-    </include>
   </world>
 </sdf>
