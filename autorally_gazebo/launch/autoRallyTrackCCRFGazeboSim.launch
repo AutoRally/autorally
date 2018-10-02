@@ -40,8 +40,8 @@ limitations under the License.
   <!--<param name="autorally_simulation" value"true"/> -->
 
   <!-- Vehicle pose -->
-  <arg name="x" default="-1.701299"/>
-  <arg name="y" default="-15.642976"/>
+  <arg name="x" default="-3"/>
+  <arg name="y" default="-17"/>
   <arg name="z" default="0.2"/>
   <arg name="roll" default="0.0"/>
   <arg name="pitch" default="0.0"/>
