@@ -65,7 +65,7 @@ class Lap:
 		self.params = params
 		self.prefix = prefix
 		self.pub = rospy.Publisher('lap_stats', pathIntegralStats, queue_size = 1)
-		rospy.Subscriber("/pose_estimate", Odometry, self.process_pose)
+		rospy.Subscriber("/mppi_controller/subscribedPose", Odometry, self.process_pose)
 
 	def reset_lap(self):
 		self.last_eval = 0
@@ -108,14 +108,8 @@ class Lap:
 		x = pose_msg.pose.pose.position.x
 		y = pose_msg.pose.pose.position.y
 		z = pose_msg.pose.pose.position.z
-		x_dot = pose_msg.twist.twist.linear.x
-		y_dot = pose_msg.twist.twist.linear.y
-		r,p,ya = convert_quat_to_euler(pose_msg.pose.pose.orientation)
-		vel_wf = np.array([x_dot, y_dot])
-		rot_mat = np.array([[np.cos(ya), np.sin(ya)], [-np.sin(ya), np.cos(ya)]])
-		vel_bf = np.dot(rot_mat, vel_wf)
-		v_x = vel_bf[0]
-		v_y = vel_bf[1]
+		v_x = pose_msg.twist.twist.linear.x
+		v_y = pose_msg.twist.twist.linear.y
 		#Process the pose to get statistics
 		total_v = (v_x**2 + v_y**2)**.5
 		if (total_v > self.max_speed):

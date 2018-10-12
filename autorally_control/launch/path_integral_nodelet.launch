@@ -1,0 +1,79 @@
+<launch>
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+
+  <node
+    pkg = "nodelet" 
+    type = "nodelet" 
+    name = "mppi_controller"
+    args = "load autorally_control/MPPINodelet autorally_core_manager"
+    output = "screen">
+    
+    <!--Pose topic configuration parameters -->
+    <param name="pose_estimate" value="/ground_truth/state" />
+    <param name="path_topic" value="/mppi_controller/nominal_path" />
+
+    <!--Debug/Sim mode parameter -->
+    <param name="debug_mode" value="false" />
+
+    <!--Setup parameters-->
+    <param name="hz" value="50" />
+    <param name="num_timesteps" value="100" />
+    <param name="x_pos" value="5.0" />
+    <param name="y_pos" value="-5.0" />
+    <param name="heading" value="2.35" />
+    <!-- How many controls are executed between optimization loops -->
+    <param name="optimization_stride" value="1" />
+    <param name="use_feedback_gains" value="false" />
+
+    <!--Model parameters-->
+    <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet.npz" />
+
+    <!-- Control hyper-parameters-->
+    <param name="gamma" value=".15" />
+    <param name="num_iters" value="1" />
+
+    <!-- Control parameters -->
+    <param name="init_steering" value="0.0" />
+    <param name="init_throttle" value="0.0" />
+    <param name="steering_std" value="0.275" />
+    <param name="throttle_std" value="0.3" />
+
+    <!-- Control Constraints -->
+    <param name="max_throttle" value=".65" />
+    <param name="min_throttle" value="-.99" />
+    <param name="max_steering" value="0.99" />
+    <param name="min_steering" value="-0.99" />
+
+    <!-- Cost Parameters -->
+    <param name="l1_cost" value="false" />
+    <param name="desired_speed" value="6.0" />
+    <param name="speed_coefficient" value="4.25" />
+    <param name="track_coefficient" value="200.0" />
+    <param name="max_slip_angle" value="1.25" />
+    <param name="slip_penalty" value="10.0" />
+    <param name="track_slop" value="0.0" />
+    <param name="crash_coeff" value="10000.0" />
+    <param name="steering_coeff" value ="0.0" />
+    <param name="throttle_coeff" value ="0.0" />
+    <param name="boundary_threshold" value="0.65" />
+    <param name="discount" value = "0.1" />
+    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/gazebo_costmap.npz" />
+  </node>
+
+  <node
+    pkg = "autorally_control" 
+    type = "path_integral_monitor" 
+    name = "mppi_monitor"
+    output = "screen">
+  </node>
+
+  <node
+    pkg = "autorally_control" 
+    type = "lap_stats.py" 
+    name = "stat_tracker"
+    output = "screen">
+    <param name="controller_type" value="mppi_controller" />
+    <param name="tag" value="Neural Network Model - Path Integral"/>
+  </node>
+
+</launch>
