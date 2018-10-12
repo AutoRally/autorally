@@ -56,7 +56,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>

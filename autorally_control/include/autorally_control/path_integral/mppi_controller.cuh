@@ -40,7 +40,7 @@
 #include <autorally_control/ddp/ddp_tracking_costs.h>
 #include <autorally_control/ddp/ddp.h>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <cuda_runtime.h>
 #include <curand.h>
 
