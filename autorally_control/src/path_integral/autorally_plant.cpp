@@ -62,7 +62,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   pose_sub_ = global_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
                                   ros::TransportHints().tcpNoDelay());
   servo_sub_ = global_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
- 
+  model_sub_ = global_node.subscribe("/model_updater/model", 1, &AutorallyPlant::modelCall, this);
   //Timer callback for path publisher
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
   statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
@@ -252,6 +252,47 @@ void AutorallyPlant::servoCall(autorally_msgs::chassisState servo_msg)
   boost::mutex::scoped_lock lock(access_guard_);
   full_state_.steering = servo_msg.steering;
   full_state_.throttle = servo_msg.throttle;
+}
+
+void AutorallyPlant::modelCall(autorally_msgs::neuralNetModel model_msg)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  new_model_available_ = true;
+  dynamicsModel_ = model_msg;
+}
+
+bool AutorallyPlant::hasNewModel()
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  return new_model_available_;
+}
+
+void AutorallyPlant::getModel(std::vector<int> &description, std::vector<float> &data)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  //Copy network structure into description
+  description = dynamicsModel_.structure;
+  //Compute total number of weights
+  int numWeights = 0;
+  int numBiases = 0;
+  for (int i = 0; i < dynamicsModel_.numLayers; i++){
+    numWeights += dynamicsModel_.network[i].weight.size();
+    numBiases += dynamicsModel_.network[i].bias.size();
+  }
+  data.resize(numWeights + numBiases);
+  int weightStride = 0;
+  int biasStride = numWeights;
+  for (int i = 0; i < dynamicsModel_.numLayers; i++){
+    for (int j = 0; j < dynamicsModel_.network[i].weight.size(); j++){
+      data[weightStride + j] = dynamicsModel_.network[i].weight[j];
+    }
+    for (int j = 0; j < dynamicsModel_.network[i].bias.size(); j++){
+      data[biasStride + j] = dynamicsModel_.network[i].bias[j];
+    }
+    weightStride += dynamicsModel_.network[i].weight.size();
+    biasStride += dynamicsModel_.network[i].bias.size();
+  }
+  new_model_available_ = false;
 }
 
 void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)

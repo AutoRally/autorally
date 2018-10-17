@@ -75,6 +75,8 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   std::vector<float> obstacleData;
   std::vector<int> costmapDescription;
   std::vector<float> costmapData;
+  std::vector<int> modelDescription;
+  std::vector<float> modelData;
 
   //Counter, timing, and stride variables.
   int num_iter = 0;
@@ -130,7 +132,12 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       robot->getCostmap(costmapDescription, costmapData);
       controller->costs_->updateCostmap(costmapDescription, costmapData);
     }
-
+    //Update dynamics model
+    if (robot->hasNewModel()){
+      robot->getModel(modelDescription, modelData);
+      controller->model_->updateModel(modelDescription, modelData);
+    }
+  
     //Figure out how many controls have been published since we were last here and slide the 
     //control sequence by that much.
     int stride = round(optimizationLoopTime.toSec()*params->hz);

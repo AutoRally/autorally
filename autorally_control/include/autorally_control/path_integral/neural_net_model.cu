@@ -64,7 +64,6 @@ NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NeuralNetModel(float delta_t
   for (int i = 1; i < NUM_LAYERS; i++){
     weighted_in_[i-1] = Eigen::MatrixXf::Zero(net_structure_[i], 1);
   }
-
 }
 
 template<int S_DIM, int C_DIM,  int K_DIM, int... layer_args>
@@ -148,6 +147,36 @@ void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::paramsToDevice()
   HANDLE_ERROR( cudaMemcpyToSymbol(NNET_PARAMS, theta_d_, NUM_PARAMS*sizeof(float)) );
 #endif /*MPPI_NNET_USING_CONSTANT_MEM___*/
   HANDLE_ERROR( cudaMemcpy(control_rngs_d_, control_rngs_, CONTROL_DIM*sizeof(float2), cudaMemcpyHostToDevice) );
+}
+
+template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
+void NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::updateModel(std::vector<int> description, std::vector<float> data)
+{
+  //First make sure that the network structure matches the current network structure
+  bool validUpdate = true;
+  for (int i = 0; i < description.size(); i++){
+    if (description[i] != net_structure_[i]){
+      validUpdate = false;
+    }
+  }
+  //If the network structure is valid save the parameters
+  if (validUpdate){
+    int stride = 0;
+    for (int i = 0; i < NUM_LAYERS - 1; i++){
+      for (int j = 0; j < net_structure_[i+1]; j++){
+        for (int k = 0; k < net_structure_[i]; k++){
+          weights_[i](j,k) = data[stride + j*net_structure_[i] + k];
+        }
+      }
+      stride += net_structure_[i+1]*net_structure_[i];
+    }
+    for (int i = 0; i < NUM_LAYERS - 1; i++){
+      for (int j = 0; j < net_structure_[i+1]; j++){
+        biases_[i](j,0) = data[stride + j];
+      }
+      stride += net_structure_[i+1];
+    }
+  }
 }
 
 template<int S_DIM, int C_DIM,  int K_DIM, int... layer_args>

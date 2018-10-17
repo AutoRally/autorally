@@ -81,6 +81,8 @@ public:
 
   void computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
+  void updateModel(std::vector<int> description, std::vector<float> data){};
+
   __device__ void cudaInit(float* theta_s);
 
   __device__ void enforceConstraints(float* state, float* control);
