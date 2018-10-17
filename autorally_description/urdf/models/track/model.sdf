@@ -6,7 +6,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/autoRallyTrack.dae</uri>
+            <uri>model://urdf/cad/autoRallyTrack.dae</uri>
             <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
@@ -23,7 +23,7 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/autoRallyTrack.dae</uri>
+            <uri>model://urdf/cad/autoRallyTrack.dae</uri>
             <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
