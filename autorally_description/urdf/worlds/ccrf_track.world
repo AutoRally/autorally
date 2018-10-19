@@ -19,12 +19,12 @@
     <include>
       <name>blended_plane</name>
       <uri>model://urdf/models/blended_track_ccrf</uri>
-      <pose>-22.5 -19 0 0 0 0</pose>
+      <pose>-22.5 -18.5 0 0 0 0</pose>
     </include>
     <include>
       <name>blended_track</name>
       <uri>model://urdf/models/track_ccrf</uri>
-      <pose>-22.5 -19 0 0 0 0</pose>
+      <pose>-22.5 -18.5 0 0 0 0</pose>
     </include>
   </world>
 </sdf>
