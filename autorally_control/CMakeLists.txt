@@ -26,7 +26,7 @@ generate_dynamic_reconfigure_options(cfg/gpsWaypoint_params.cfg
 
 catkin_package(
   DEPENDS Boost
-  CATKIN-DEPENDS roscpp std_msgs geometry_msgs nav_msgs nodelet dynamic_reconfigure autorally_core autorally_msgs
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs nav_msgs nodelet dynamic_reconfigure autorally_core autorally_msgs
   INCLUDE_DIRS include
   LIBRARIES autorally_plant param_getter
 

@@ -22,3 +22,11 @@
   </class>
 </library>
 
+<library path="lib/libmppi_nodelet">
+  <class name="autorally_control/MPPINodelet" type="autorally_control::MPPINodelet" base_class_type="nodelet::Nodelet">
+    <description>
+    Nodeletized MPPI 
+    </description>
+  </class>
+</library>
+
