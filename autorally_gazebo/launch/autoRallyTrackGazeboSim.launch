@@ -36,7 +36,7 @@ limitations under the License.
   <arg name="world_name" default="model://urdf/worlds/populated_marietta.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
-  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
+  <!-- parameter for other programs to use to know if we are in simulation or real world-->
   <!--<param name="autorally_simulation" value"true"/> -->
 
   <!-- Vehicle pose -->
