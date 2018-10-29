@@ -3,7 +3,7 @@
   <model name="track">
     <static>true</static>
     <link name="link">
-      <collision name="collision">
+      <!--<collision name="collision">
         <geometry>
           <mesh>
             <uri>model://urdf/cad/autoRallyTrackCCRF.dae</uri>
@@ -18,7 +18,7 @@
             </ode>
           </friction>
         </surface>
-      </collision>
+      </collision>-->
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
