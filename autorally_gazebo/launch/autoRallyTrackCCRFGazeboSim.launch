@@ -79,11 +79,6 @@ limitations under the License.
     <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
   </node>
 
-  <!-- Run ground truth pose script, published on /ground_truth/state-->
-  <node name="ground_truth_republisher" pkg="autorally_gazebo"
-        type="ground_truth_republisher.py" output="screen">
-  </node>
-
   <include file="$(find autorally_core)/launch/stateEstimator.launch">
     <arg name="sim" value="true"/>
     <arg name="InvertY" value="false"/>

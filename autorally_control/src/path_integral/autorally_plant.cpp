@@ -323,7 +323,7 @@ void AutorallyPlant::pubControl(float steering, float throttle)
     control_msg.throttle = throttle;
     control_msg.frontBrake = -5.0;
     control_msg.header.stamp = ros::Time::now();
-    control_msg.sender = "mppImagei_controller";
+    control_msg.sender = "mppi_controller";
     control_pub_.publish(control_msg);
   }
 }
