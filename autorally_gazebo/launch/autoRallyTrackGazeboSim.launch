@@ -48,7 +48,7 @@ limitations under the License.
   <arg name="yaw" default="0.785498"/>
 
   <!-- Create the world. -->
-  <include file="$(find autorally_gazebo)/launch/autoRallyTrackCCRFWorld.launch">
+  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
