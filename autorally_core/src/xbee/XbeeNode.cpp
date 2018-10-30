@@ -14,21 +14,21 @@
 int main(int argc, char **argv)
 {
 
-	ros::init(argc, argv, "xbeeNode");
-	ros::NodeHandle nh;
+  ros::init(argc, argv, "xbeeNode");
+  ros::NodeHandle nh;
 
-	std::string xbeePort;
+  std::string xbeePort;
 
-	if(!nh.getParam("xbeeNode/port", xbeePort))
-	{
-		ROS_ERROR("Could not get xbeeNode parameters");
-		return -1;
-	}
+  if(!nh.getParam("xbeeNode/port", xbeePort))
+  {
+    ROS_ERROR("Could not get xbeeNode parameters");
+    return -1;
+  }
 
-	XbeeNode coordinator(nh, xbeePort);
+  XbeeNode coordinator(nh, xbeePort);
 
-	ros::spin();
-	return 0;
+  ros::spin();
+  return 0;
 }
 
 XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
@@ -44,28 +44,28 @@ XbeeNode::XbeeNode(ros::NodeHandle &nh, const std::string& port):
   {
     ROS_ERROR("Could not get all xbee parameters for %s", nName.c_str());
   }
- 
+
   //until a runstop is received from rf, it will publish runstops
   //with this name
   m_runstop.sender = "XbeeNode";
   m_runstop.motionEnabled = false;
 
-  //fill out space for incoming RTCM3 message sequences  
+  //fill out space for incoming RTCM3 message sequences
   for(unsigned char i = 'A'; i <= 'Z'; i++)
-  {  
+  {
     m_correctionPackets[i] = Rtcm3Packets();
   }
 
   m_runstopPublisher = nh.advertise<autorally_msgs::runstop>
-	                                    ("runstop", 1);
-	m_gpsRTCM3Publisher = nh.advertise<std_msgs::ByteMultiArray>
-	                                    ("gpsBaseRTCM3", 3);
+                                      ("runstop", 1);
+  m_gpsRTCM3Publisher = nh.advertise<std_msgs::ByteMultiArray>
+                                      ("gpsBaseRTCM3", 3);
 
   m_xbee.registerReceiveMessageCallback(boost::bind(&XbeeNode::processXbeeMessage, this, _1, _2, _3, _4) );
 
-	m_xbeeHeartbeatTimer = nh.createTimer(ros::Duration(0.5),
+  m_xbeeHeartbeatTimer = nh.createTimer(ros::Duration(0.5),
                                         &XbeeNode::xbeeHeartbeatState,
-	                                      this);
+                                        this);
   m_hiTimer = m_nh.createTimer(ros::Duration(1.0),
                                &XbeeNode::sendHi,
                                this);
@@ -103,7 +103,7 @@ void XbeeNode::sendHi(const ros::TimerEvent& /*time*/)
     m_hiTimer.stop();
     m_stateTimer = m_nh.createTimer(ros::Duration(1.0),
                                 &XbeeNode::sendState,
-	                              this);
+                                this);
   }
 }
 
@@ -204,12 +204,12 @@ m_runstop.header.stamp = m_lastrunstop;
       ROS_DEBUG_STREAM("Xbee sequence: " << seq << " seq length: " << seqLen <<
                        " packet num: " << packetNum);
 
-      //just received first packet of new RTCM3 message  
+      //just received first packet of new RTCM3 message
       if(ros::Time::now()-m_correctionPackets[seq].time > ros::Duration(2.0))
       {
         m_correctionPackets[seq].reset(seqLen);
       }
-      
+
       //check to make sure there is space in the packet vector (+1 since packets #s start at 1)
       if(packetNum < m_correctionPackets[seq].packets.size())
       {
@@ -220,7 +220,7 @@ m_runstop.header.stamp = m_lastrunstop;
         ROS_ERROR_STREAM("Xbee RTCM packet number " << packetNum << " larger than packet vector length " <<
                          m_correctionPackets[seq].packets.size());
       }
-      
+
       if(m_correctionPackets[seq].count == m_correctionPackets[seq].packets.size()-1)
       {
         ROS_DEBUG_STREAM("Xbee publishing RTCM3 msg seq " << seq);
@@ -240,12 +240,12 @@ m_runstop.header.stamp = m_lastrunstop;
 
         m_gpsCorrection->layout.dim.push_back(std_msgs::MultiArrayDimension());
         m_gpsCorrection->layout.dim.front().label = m_msgLabel;
-        
+
         for(size_t i = 0; i < gpsString.size(); i++)
         {
           m_gpsCorrection->data.push_back(gpsString[i]);
         }
-        
+
         //publish correction into ros
         m_gpsCorrection->layout.dim.front().size = m_gpsCorrection->data.size();
         m_gpsCorrection->layout.dim.front().stride = m_gpsCorrection->data.size();
@@ -255,14 +255,14 @@ m_runstop.header.stamp = m_lastrunstop;
       }
     } catch(boost::bad_lexical_cast &e)
     {
-      ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]); 
+      ROS_ERROR_STREAM("XbeeNode: caught bad lexical cast for GPS RTCM3 msgnum:" << data[4]);
     }
   } else if(msg == "HI" || msg == "ST")
   {} //These will be received but are only needed by coordinator
   else
   {
     ROS_ERROR("XbeeNode: Received unknown message \"%s\"", msg.c_str());
-  } 
+  }
 }
 void XbeeNode::odomCallback(const nav_msgs::OdometryConstPtr& odom)
 {
@@ -297,8 +297,12 @@ void XbeeNode::transmitPosition(const ros::TimerEvent& /*time*/)
     data += temp;
     sprintf(temp, "%8i", scaleAndClip(m_odometry.pose.pose.orientation.w, 1, 0.0000001));
     data += temp;
-    
-    /*ROS_WARN("[%f %f %f][%f %f %f][%f %f %f %f]", 
+    double timestamp = m_odometry.header.stamp.toSec();
+    double truncatedTime =  timestamp - std::floor(timestamp / 10) * 10;
+    sprintf(temp, "%10i", scaleAndClip(truncatedTime, 10, 0.00000001));
+    data += temp;
+
+    /*ROS_WARN("[%f %f %f][%f %f %f][%f %f %f %f][%f]",
              m_odometry.pose.pose.position.x,
              m_odometry.pose.pose.position.y,
              m_odometry.pose.pose.position.z,
@@ -308,9 +312,10 @@ void XbeeNode::transmitPosition(const ros::TimerEvent& /*time*/)
              m_odometry.pose.pose.orientation.x,
              m_odometry.pose.pose.orientation.y,
              m_odometry.pose.pose.orientation.z,
-             m_odometry.pose.pose.orientation.w);
-    */
-    //ROS_WARN_STREAM("Sending position:" << data);  
+             m_odometry.pose.pose.orientation.w,
+             m_odometry.header.stamp.toSec());*/
+
+    //ROS_WARN_STREAM("Sending position:" << data);
     m_xbee.sendTransmitPacket(data);
     m_xbee.m_port.tick("pose_estimate broadcast");
     m_lastXbeeOdomTransmit = m_odometry.header.stamp;
@@ -348,7 +353,8 @@ void XbeeNode::processXbeeOdom(const std::string& message, const std::string& se
   odom->pose.pose.orientation.y = unscaleAndClip(atoi(message.substr(38,8).c_str()), 1, 0.0000001);
   odom->pose.pose.orientation.z = unscaleAndClip(atoi(message.substr(46,8).c_str()), 1, 0.0000001);
   odom->pose.pose.orientation.w = unscaleAndClip(atoi(message.substr(54,8).c_str()), 1, 0.0000001);
-  /*ROS_WARN("[%f %f %f][%f %f %f][%f %f %f %f]", 
+  odom->header.stamp = ros::Time(unscaleAndClip(atoi(message.substr(62,10).c_str()), 10, 0.00000001) - std::floor(ros::Time::now().toSec() / 10) * 10);
+  /*ROS_WARN("[%f %f %f][%f %f %f][%f %f %f %f][%f]",
            odom->pose.pose.position.x,
            odom->pose.pose.position.y,
            odom->pose.pose.position.z,
@@ -358,8 +364,9 @@ void XbeeNode::processXbeeOdom(const std::string& message, const std::string& se
            odom->pose.pose.orientation.x,
            odom->pose.pose.orientation.y,
            odom->pose.pose.orientation.z,
-           odom->pose.pose.orientation.w);
-  */
+           odom->pose.pose.orientation.w,
+           odom->header.stamp.toSec());*/
+
 
   if(!m_recOdomPublishers[sender])
   {
