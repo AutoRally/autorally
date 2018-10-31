@@ -8,13 +8,13 @@
     <origin pose="0 0 0 0 0 0"/>
     <collision name="jump18deg_collision">
       <geometry>
-        <mesh filename="package://autorally_description/urdf/jump18deg.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/cad/jump18deg.stl" scale="0.01 0.01 0.01" />
       </geometry>
     </collision>
-    
+
     <visual name="jump18deg_visual" cast_shadows="false">
       <geometry>
-        <mesh filename="package://autorally_description/urdf/jump18deg.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://autorally_description/urdf/cad/jump18deg.stl" scale="0.01 0.01 0.01" />
       </geometry>
     </visual>
     <inertial>
@@ -28,5 +28,5 @@
     <mu1>1.0</mu1>
     <mu2>1.0</mu2>
   </gazebo>
-  
+
 </robot>

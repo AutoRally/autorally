@@ -33,26 +33,26 @@ limitations under the License.
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
   <arg name="namespace" default=""/>
-  <arg name="world_name" default="model://urdf/worlds/populated_marietta.world"/>
+  <arg name="world_name" default="model://urdf/worlds/ccrf_track.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
-  <!-- parameter for other programs to use to know if we are in simulation or real world-->
+  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
   <!--<param name="autorally_simulation" value"true"/> -->
 
   <!-- Vehicle pose -->
-  <arg name="x" default="0"/>
+  <arg name="x" default="0.0"/>
   <arg name="y" default="-8.5"/>
-  <arg name="z" default="0.3"/>
+  <arg name="z" default="0.2"/>
   <arg name="roll" default="0.0"/>
   <arg name="pitch" default="0.0"/>
-  <arg name="yaw" default="0.785498"/>
+  <arg name="yaw" default="1.57079632679"/>
 
   <!-- Create the world. -->
-  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
+  <include file="$(find autorally_gazebo)/launch/autoRallyTrackCCRFWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
-  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/ track:=ccrf"/>
 
   <node name="autoRally_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher">
@@ -77,11 +77,6 @@ limitations under the License.
     <param name="vehicle_prefix" value="$(arg namespace)"/>
     <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
     <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
-  </node>
-
-  <!-- Run ground truth pose script, published on /ground_truth/state-->
-  <node name="ground_truth_republisher" pkg="autorally_gazebo"
-        type="ground_truth_republisher.py" output="screen">
   </node>
 
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
