@@ -111,6 +111,8 @@ limitations under the License.
 
   <!-- arg to specify namespace -->
   <xacro:arg name="prefix" default=""/>
+  <!-- arg to specify the track-->
+  <xacro:arg name="track" default="marietta"/>
 
   <material name="chassis_mat">
     <color rgba="0.5 0.5 0.5 1"/>
@@ -328,7 +330,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformFrontWheelTextured.dae"
+                 wheel_model="package://autorally_description/urdf/cad/autoRallyPlatformFrontWheelTextured.dae"
                  cant="0.05"/>
   </xacro:macro>
 
@@ -343,7 +345,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformRearWheelTextured.dae"
+                 wheel_model="package://autorally_description/urdf/cad/autoRallyPlatformRearWheelTextured.dae"
                  cant="-0.03"/>
   </xacro:macro>
 
@@ -369,7 +371,7 @@ limitations under the License.
               rpy="0 0 0"/>
 
       <geometry>
-        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
+        <mesh filename="package://autorally_description/urdf/cad/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
     </visual>
 
@@ -378,7 +380,7 @@ limitations under the License.
               rpy="0 0 0"/>
 
       <geometry>
-        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
+        <mesh filename="package://autorally_description/urdf/cad/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
     </collision>
 
@@ -631,9 +633,16 @@ limitations under the License.
       <frameId>gps_link</frameId>
       <topicName>gpsRoverStatus</topicName>
       <velocityTopicName>fix_velocity</velocityTopicName>
-      <referenceLatitude>33.774497</referenceLatitude>
-      <referenceLongitude>-84.405001</referenceLongitude>
-      <referenceAltitude>309.0</referenceAltitude>
+      <xacro:if value="${ '$(arg track)' == 'marietta'}" >
+        <referenceLatitude>33.774497</referenceLatitude>
+        <referenceLongitude>-84.405001</referenceLongitude>
+        <referenceAltitude>309.0</referenceAltitude>
+      </xacro:if >
+      <xacro:if value="${ '$(arg track)' == 'ccrf'}" >
+        <referenceLatitude>33.911071</referenceLatitude>
+        <referenceLongitude>-84.530018</referenceLongitude>
+        <referenceAltitude>297.607097</referenceAltitude>
+      </xacro:if >
       <drift>0.001 0.001 0.001</drift>
       <gaussianNoise>0.0001 0.0001 0.0001</gaussianNoise>
       <velocityDrift>0 0 0</velocityDrift>

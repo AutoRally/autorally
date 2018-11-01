@@ -7,7 +7,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/bamboo_leaves.dae</uri>
+            <uri>model://urdf/cad/bamboo_leaves.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -24,7 +24,7 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/bamboo_leaves.dae</uri>
+            <uri>model://urdf/cad/bamboo_leaves.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
