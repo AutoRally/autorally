@@ -12,6 +12,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <std_msgs/ByteMultiArray.h>
+#include <std_msgs/Float64.h>
 #include <nav_msgs/Odometry.h>
 #include <autorally_msgs/runstop.h>
 
@@ -64,9 +65,12 @@ class XbeeNode
   ros::NodeHandle m_nh; ///< local copy
   ros::Publisher m_runstopPublisher; ///< Subscriber for runstop
   ros::Publisher m_gpsRTCM3Publisher; ///< Publisher for RTK correction data from xbee
+  
   ros::Subscriber m_poseSubscriber; ///<
   ///< publishers for odomoetry msgs received over xbee
   std::map<std::string, ros::Publisher> m_recOdomPublishers; 
+  // < Publishers for the time difference between the current time and the incoming message
+  std::map<std::string, ros::Publisher> m_timeDiffPublishers;
   ros::Timer m_hiTimer; ///< Startup timer to register with coordinator
   ros::Timer m_stateTimer; ///< timer to send heartbeat to xbee coordinator
   ros::Timer m_xbeeHeartbeatTimer; ///< timer to publish runstop into system

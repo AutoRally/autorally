@@ -141,7 +141,7 @@ void XbeeNode::processXbeeMessage(const std::string& sender,
   } else if (msg == "OD")
   {
     //ROS_ERROR("XbeeNode: Received pose estimate");
-    if(data.length() == 62)
+    if(data.length() == 72)
     {
       processXbeeOdom(data, sender);
     }
@@ -342,6 +342,7 @@ void XbeeNode::processXbeeOdom(const std::string& message, const std::string& se
 {
   //ROS_WARN_STREAM("Received:" << message << " from:" << sender);
   nav_msgs::OdometryPtr odom(new nav_msgs::Odometry);
+  ros::Time curTime = ros::Time::now(); 
 
   odom->pose.pose.position.x = unscaleAndClip(atoi(message.substr(3,5).c_str()), 500, 0.01);
   odom->pose.pose.position.y = unscaleAndClip(atoi(message.substr(8,5).c_str()), 500, 0.01);
@@ -353,7 +354,18 @@ void XbeeNode::processXbeeOdom(const std::string& message, const std::string& se
   odom->pose.pose.orientation.y = unscaleAndClip(atoi(message.substr(38,8).c_str()), 1, 0.0000001);
   odom->pose.pose.orientation.z = unscaleAndClip(atoi(message.substr(46,8).c_str()), 1, 0.0000001);
   odom->pose.pose.orientation.w = unscaleAndClip(atoi(message.substr(54,8).c_str()), 1, 0.0000001);
-  odom->header.stamp = ros::Time(unscaleAndClip(atoi(message.substr(62,10).c_str()), 10, 0.00000001) - std::floor(ros::Time::now().toSec() / 10) * 10);
+  
+  // catch if the timestamp is acutally from the last tenths place
+  // TODO magic number
+  if(static_cast<int>(curTime.toSec()) % 10 < 3 && unscaleAndClip(atoi(message.substr(62,10).c_str()), 10, 0.00000001) > 7) {
+  odom->header.stamp = ros::Time(unscaleAndClip(atoi(message.substr(62,10).c_str()), 10, 0.00000001) + (std::floor(curTime.toSec() / 10) * 10 - 10));
+  } else {
+    odom->header.stamp = ros::Time(unscaleAndClip(atoi(message.substr(62,10).c_str()), 10, 0.00000001) + std::floor(curTime.toSec() / 10) * 10);
+  }
+  
+  std_msgs::Float64 timeDiff;
+  timeDiff.data = curTime.toSec() - odom->header.stamp.toSec();
+  
   /*ROS_WARN("[%f %f %f][%f %f %f][%f %f %f %f][%f]",
            odom->pose.pose.position.x,
            odom->pose.pose.position.y,
@@ -373,11 +385,14 @@ void XbeeNode::processXbeeOdom(const std::string& message, const std::string& se
     ros::NodeHandle nh;
     m_recOdomPublishers[sender] = nh.advertise<nav_msgs::Odometry>
                                       ("/pose_estimate_"+sender, 1);
+                                      
+    m_timeDiffPublishers[sender] = nh.advertise<std_msgs::Float64>
+                                      ("/pose_estimate_"+sender+"_time_diff", 1);
 
   }
-  odom->header.stamp = ros::Time::now();
   odom->child_frame_id = sender;
   odom->header.frame_id = "odom";
   m_xbee.m_port.tick("/pose_estimate_"+sender);
   m_recOdomPublishers[sender].publish(odom);
+  m_timeDiffPublishers[sender].publish(timeDiff);
 }
