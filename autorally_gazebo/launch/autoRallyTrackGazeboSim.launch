@@ -36,7 +36,7 @@ limitations under the License.
   <arg name="world_name" default="model://urdf/worlds/populated_marietta.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
-  <!-- parameter for other programs to use to know if we are in simulation ro real world-->
+  <!-- parameter for other programs to use to know if we are in simulation or real world-->
   <!--<param name="autorally_simulation" value"true"/> -->
 
   <!-- Vehicle pose -->
@@ -48,7 +48,7 @@ limitations under the License.
   <arg name="yaw" default="0.785498"/>
 
   <!-- Create the world. -->
-  <include file="$(find autorally_gazebo)/launch/autoRallyTrackCCRFWorld.launch">
+  <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
   </include>
 
@@ -84,13 +84,6 @@ limitations under the License.
         type="ground_truth_republisher.py" output="screen">
   </node>
 
-  <!-- Run state estimator, publishes on /pose_estimate -->
-  <include file="$(find autorally_core)/launch/stateEstimator.launch">
-    <arg name="sim" value="true"/>
-    <arg name="InvertY" value="false"/>
-    <arg name="InvertZ" value="false"/>
-    <arg name="FixedInitialPose" value="true"/>
-  </include>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
   <include file="$(find autorally_control)/launch/joystickController.launch" />
 </launch>
