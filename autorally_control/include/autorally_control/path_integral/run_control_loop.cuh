@@ -79,6 +79,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   //Counter, timing, and stride variables.
   int num_iter = 0;
   int status = 1;
+  bool resetMppi = false;
   int optimization_stride = getRosParam<int>("optimization_stride", *mppi_node);
   bool use_feedback_gains = getRosParam<bool>("use_feedback_gains", *mppi_node);
   double avgOptimizationLoopTime = 0; //Average time between pose estimates
@@ -164,6 +165,12 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       }
     }
     
+    resetMppi = robot->resetMppi();
+    if(resetMppi)
+    {
+      controller->resetControls();
+    }
+
     //Sleep for any leftover time in the control loop
     std::chrono::duration<double, std::milli> fp_ms = std::chrono::steady_clock::now() - loop_start;
     double optimizationTickTime = fp_ms.count();
