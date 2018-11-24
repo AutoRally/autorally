@@ -15,13 +15,19 @@ import tf
 from nav_msgs.msg import Odometry
 
 class GroundTruthRepublisher(object):
-  
+
   def __init__(self, namespace='ground_truth_republisher'):
     """Initialize this _ground_truth_republisher"""
     rospy.init_node("ground_truth_republisher", anonymous = True)
     self.pub = rospy.Publisher("/ground_truth/state", Odometry, queue_size = 1)
+    self.pub_xbee = rospy.Publisher("/ground_truth/state_xbee", Odometry, queue_size = 1)
     self.sub = rospy.Subscriber("/ground_truth/state_raw", Odometry, self.handle_pose)
-  
+    rospy.Timer(rospy.Duration(0.2), self.xbee_callback)
+    self.msg = Odometry()
+
+  def xbee_callback(self, event):
+    self.pub_xbee.publish(self.msg)
+
   def handle_pose(self, msg):
     #set frame to be the same as state estimator output
     msg.header.frame_id='odom'
@@ -37,9 +43,9 @@ class GroundTruthRepublisher(object):
     msg.pose.pose.position.y = pos[1]
 
     #rotate orientation 90 deg around z-axis
-    q_rot = tf.transformations.quaternion_from_euler(0, 0, 1.57)  
+    q_rot = tf.transformations.quaternion_from_euler(0, 0, 1.57)
     q_new = tf.transformations.quaternion_multiply(q_rot,[msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
-    
+
     msg.pose.pose.orientation.x = q_new[0]
     msg.pose.pose.orientation.y = q_new[1]
     msg.pose.pose.orientation.z = q_new[2]
@@ -50,9 +56,10 @@ class GroundTruthRepublisher(object):
     msg.twist.twist.linear.x = lin[0]
     msg.twist.twist.linear.y = lin[1]
 
+    self.msg = msg
+
     self.pub.publish(msg)
 
 if __name__ == "__main__":
   ground_truth_republisher = GroundTruthRepublisher()
   rospy.spin()
-  
