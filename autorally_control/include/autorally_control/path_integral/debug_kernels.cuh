@@ -36,8 +36,8 @@
 
 namespace autorally_control {
 
-__global__ void debugCostKernel(float x, float y, float heading, int width_m ,int height_m, int ppm,
-                                cudaTextureObject_t tex, float* debug_data_d, float3 c1, 
+inline __global__ void debugCostKernel(float x, float y, float heading, int width_m ,int height_m, int ppm,
+                                cudaTextureObject_t tex, float* debug_data_d, float3 c1,
                                 float3 c2, float3 trs)
 {
   //Get the thread indices
@@ -76,7 +76,7 @@ __global__ void debugCostKernel(float x, float y, float heading, int width_m ,in
   }
 }
 
-void launchDebugCostKernel(float x, float y, float heading, int width_m, int height_m, int ppm,
+inline void launchDebugCostKernel(float x, float y, float heading, int width_m, int height_m, int ppm,
                            cudaTextureObject_t tex, float* debug_data_d, float3 c1,
                            float3 c2, float3 trs, cudaStream_t stream)
 {

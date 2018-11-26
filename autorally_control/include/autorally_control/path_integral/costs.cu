@@ -363,7 +363,7 @@ inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s, float *
   return stabilizing_cost;
 }
 
-  __host__ __device__ float MPPICosts::getStabilizingCost(float* s) {
+inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s) {
   return getStabilizingCost(s, &params_d_->slip_penalty, &params_d_->max_slip_ang, &params_d_->crash_coeff);
 }
 
