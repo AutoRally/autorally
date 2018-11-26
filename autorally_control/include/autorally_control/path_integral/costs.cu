@@ -102,25 +102,25 @@ inline void MPPICosts::initCostmap()
 inline void MPPICosts::costmapToTexture(float* costmap, int channel)
 {
     switch(channel){
-    case 0: 
+    case 0:
       for (int i = 0; i < width_*height_; i++){
         track_costs_[i].x = costmap[i];
-      } 
+      }
       break;
-    case 1: 
+    case 1:
       for (int i = 0; i < width_*height_; i++){
         track_costs_[i].y = costmap[i];
-      } 
+      }
       break;
-    case 2: 
+    case 2:
       for (int i = 0; i < width_*height_; i++){
         track_costs_[i].z = costmap[i];
-      } 
+      }
       break;
-    case 3: 
+    case 3:
       for (int i = 0; i < width_*height_; i++){
         track_costs_[i].w = costmap[i];
-      } 
+      }
       break;
   }
   costmapToTexture();
@@ -209,8 +209,8 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
 
   initCostmap();
 
-  std::vector<float4> track_costs(width_*height_);  
-  
+  std::vector<float4> track_costs(width_*height_);
+
   float* channel0 = map_dict["channel0"].data<float>();
   float* channel1 = map_dict["channel1"].data<float>();
   float* channel2 = map_dict["channel2"].data<float>();
@@ -275,7 +275,7 @@ inline cv::Mat MPPICosts::getDebugDisplay(float x, float y, float heading)
   if (!debugging_){
     debugDisplayInit();
   }
-  launchDebugCostKernel(x, y, heading, debug_img_width_, debug_img_height_, debug_img_ppm_, 
+  launchDebugCostKernel(x, y, heading, debug_img_width_, debug_img_height_, debug_img_ppm_,
                         costmap_tex_, debug_data_d_, params_.r_c1, params_.r_c2, params_.trs, stream_);
   //Now we just have to display debug_data_d_
   HANDLE_ERROR( cudaMemcpy(debug_data_, debug_data_d_, debug_img_size_*sizeof(float), cudaMemcpyDeviceToHost) );
@@ -304,49 +304,68 @@ inline __host__ __device__ void MPPICosts::getCrash(float* state, int* crash) {
   }
 }
 
-inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars)
+  inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars, float* steering_coeff, float* throttle_coeff)
 {
   float control_cost = 0;
-  control_cost += params_d_->steering_coeff*du[0]*(u[0] - du[0])/(vars[0]*vars[0]);
-  control_cost += params_d_->throttle_coeff*du[1]*(u[1] - du[1])/(vars[1]*vars[1]);
+  control_cost += *steering_coeff*du[0]*(u[0] - du[0])/(vars[0]*vars[0]);
+  control_cost += *throttle_coeff*du[1]*(u[1] - du[1])/(vars[1]*vars[1]);
   return control_cost;
 }
 
-inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash)
+  inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars) {
+  getControlCost(u, du, vars);
+}
+
+
+  inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash, float* desired_speed, float* speed_coeff)
 {
   float cost = 0;
-  float error = s[4] - params_d_->desired_speed;
+  float error = s[4] - *desired_speed;
   if (l1_cost_){
     cost = fabs(error);
   }
   else {
     cost = error*error;
   }
-  return (params_d_->speed_coeff*cost);
+  return (*speed_coeff*cost);
 }
 
-inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, int timestep)
+inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash) {
+  getSpeedCost(s, crash, &params_d_->desired_speed, &params_d_->speed_coeff);
+}
+
+  inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, int timestep, float* crash_coeff)
 {
   float crash_cost = 0;
   if (crash[0] > 0) {
-      crash_cost = params_d_->crash_coeff;
+      crash_cost = *crash_coeff;
   }
   return crash_cost;
 }
 
-inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s)
+  inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, int num_timestep) {
+  getCrashCost(s, crash, num_timestep, &params_d_->crash_coeff);
+}
+
+
+inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s, float * slip_penalty, float* max_slip_ang, float* crash_coeff)
 {
   float stabilizing_cost = 0;
   if (fabs(s[4]) > 0.001) {
     float slip = -atan(s[5]/fabs(s[4]));
-    stabilizing_cost = params_d_->slip_penalty*powf(slip,2);
-    if (fabs(-atan(s[5]/fabs(s[4]))) > params_d_->max_slip_ang) {
+    stabilizing_cost = *slip_penalty*powf(slip,2);
+    if (fabs(-atan(s[5]/fabs(s[4]))) > *max_slip_ang) {
       //If the slip angle is above the max slip angle kill the trajectory.
-      stabilizing_cost += params_d_->crash_coeff;
+      stabilizing_cost += *crash_coeff;
     }
   }
   return stabilizing_cost;
 }
+
+  __host__ __device__ float MPPICosts::getStabilizingCost(float* s) {
+  getStabilizingCost(s, &params_d_->slip_penalty, &params_d_->max_slip_ang, &params_d_->crash_coeff);
+}
+
 
 inline __host__ __device__ void MPPICosts::coorTransform(float x, float y, float* u, float* v, float* w)
 {
@@ -356,7 +375,7 @@ inline __host__ __device__ void MPPICosts::coorTransform(float x, float y, float
   w[0] = params_d_->r_c1.z*x + params_d_->r_c2.z*y + params_d_->trs.z;
 }
 
-inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
+  inline __device__ float MPPICosts::getTrackCost(float* s, int* crash, float* track_slop, float* track_coeff)
 {
   float track_cost = 0;
 
@@ -370,7 +389,7 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
 
   //Cost of front of the car
   coorTransform(x_front, y_front, &u, &v, &w);
-  float4 track_params_front = tex2D<float4>(costmap_tex_, u/w, v/w); 
+  float4 track_params_front = tex2D<float4>(costmap_tex_, u/w, v/w);
 
   //Cost for back of the car
   coorTransform(x_back, y_back, &u, &v, &w);
@@ -380,11 +399,11 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
   float track_cost_back = track_params_back.x;
 
   track_cost = (fabs(track_cost_front) + fabs(track_cost_back) )/2.0;
-  if (fabs(track_cost) < params_d_->track_slop) {
+  if (fabs(track_cost) < *track_slop) {
     track_cost = 0;
   }
   else {
-    track_cost = params_d_->track_coeff*track_cost;
+    track_cost = *track_coeff*track_cost;
   }
   if (track_cost_front >= params_d_->boundary_threshold || track_cost_back >= params_d_->boundary_threshold) {
     crash[0] = 1;
@@ -392,15 +411,20 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
   return track_cost;
 }
 
+  inline __device__ float MPPICosts::getTrackCost(float* s, int* crash) {
+  getTrackCost(s, crash, &params_d_->track_slop, &params_d_->track_coeff);
+}
+
+
 //Compute the immediate running cost.
-inline __device__ float MPPICosts::computeCost(float* s, float* u, float* du, 
+inline __device__ float MPPICosts::computeCost(float* s, float* u, float* du,
                                         float* vars, int* crash, int timestep)
 {
   float control_cost = getControlCost(u, du, vars);
   float track_cost = getTrackCost(s, crash);
   float speed_cost = getSpeedCost(s, crash);
   float crash_cost = (1.0 - params_.discount)*getCrashCost(s, crash, timestep);
-  float stabilizing_cost = getStabilizingCost(s);            
+  float stabilizing_cost = getStabilizingCost(s);
   float cost = control_cost + speed_cost + crash_cost + track_cost + stabilizing_cost;
   if (cost > 1e12 || isnan(cost)) {
     cost = 1e12;
@@ -414,5 +438,3 @@ inline __device__ float MPPICosts::terminalCost(float* s)
 }
 
 }
-
-

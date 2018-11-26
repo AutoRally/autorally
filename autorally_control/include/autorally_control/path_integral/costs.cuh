@@ -47,8 +47,8 @@ namespace autorally_control {
 
 /**
 * @class MPPICosts mppi_costs.cuh
-* @brief Standard cost funtion implementation for the MPPIController 
-*  
+* @brief Standard cost funtion implementation for the MPPIController
+*
 * Maintains a collection of variables and functions which are needed for
 * computing costs in the mppi framework. These include host side functions
 * which initialize/update variables, host side functions which handle the
@@ -59,7 +59,7 @@ namespace autorally_control {
 class MPPICosts: public Managed
 {
 public:
- 
+
   /**
   * @struct CostParams mppi_costs.cuh
   * @brief Collection of variables that are needed for cost functions computation.
@@ -87,7 +87,7 @@ public:
   CostParams params_; ///< Struct for cost parameters.
 
   /**
-  * @brief Simple constructor for MppiCost. 
+  * @brief Simple constructor for MppiCost.
   * @param width The width (# elements across one row) of the costmap.
   * @param height The height (# elements across one column) of the costmap.
   */
@@ -100,21 +100,21 @@ public:
   MPPICosts(ros::NodeHandle nh);
 
   /**
-  * @brief Allocates memory to cuda array which is bound to a texture. 
+  * @brief Allocates memory to cuda array which is bound to a texture.
   *
   * Allocates an array using the special cudaMallocArray function.
-  * The size of the array allocated by this function is determined based on 
+  * The size of the array allocated by this function is determined based on
   * the width and height of the costmap. This function is called by both constructors.
   */
   void allocateTexMem();
 
   /**
   * @brief Updates the cost parameters used by MPPI
-  * @param config Dynamic reconfigure variables 
+  * @param config Dynamic reconfigure variables
   *
   * It is assumed that dynamic reconfigure variables are received somewhere else in the system.
   * This function allows the dynamics reconfigure variables to be passed through directly to
-  * the cost function. 
+  * the cost function.
   */
   void updateParams_dcfg(autorally_control::PathIntegralParamsConfig config);
 
@@ -130,13 +130,13 @@ public:
 
   /**
   * @brief Binds the member variable costmap to a CUDA texture.
-  * 
+  *
   */
   void costmapToTexture();
-  
+
   /*
   * @brief Updates cost parameters by reading from the rosparam server
-  * @params mppi_node Node handle to the controller ROS node. 
+  * @params mppi_node Node handle to the controller ROS node.
   */
   void updateParams(ros::NodeHandle mppi_node);
 
@@ -145,7 +145,7 @@ public:
   /*
   * @brief Updates the current costmap coordinate transform.
   * @param h Matrix representing a transform from world to (offset) costmap coordinates.
-  * @param trs Array representing the offset. 
+  * @param trs Array representing the offset.
   */
   void updateTransform(Eigen::MatrixXf h, Eigen::ArrayXf trs);
 
@@ -193,7 +193,7 @@ public:
   /*
   * @brief Display the debug view centered around x and y.
   * @param x float representing the current x-coordinate
-  * @param y float representing the current y-coordinate 
+  * @param y float representing the current y-coordinate
   */
   cv::Mat getDebugDisplay(float x, float y, float heading);
 
@@ -214,21 +214,29 @@ public:
   /*
   * @brief Compute the control cost
   */
+  __host__ __device__ float getControlCost(float* u, float* du, float* vars, float* steering_coeff, float* throttle_coeff);
+
   __host__ __device__ float getControlCost(float* u, float* du, float* vars);
 
   /*
   * @brief Compute the cost for achieving a desired speed
   */
+  __host__ __device__ float getSpeedCost(float* s, int* crash, float* desired_speed, float* speed_coeff);
+
   __host__ __device__ float getSpeedCost(float* s, int* crash);
 
   /*
   * @brief Compute a penalty term for crashing
   */
+  __host__ __device__ float getCrashCost(float* s, int* crash, int num_timestep, float * crash_coeff);
+
   __host__ __device__ float getCrashCost(float* s, int* crash, int num_timestep);
 
   /*
   * @brief Compute some cost terms that help stabilize the car.
   */
+  __host__ __device__ float getStabilizingCost(float* s, float * slip_penalty, float* max_slip_ang, float* crash_coeff);
+
   __host__ __device__ float getStabilizingCost(float* s);
 
   /*
@@ -239,8 +247,9 @@ public:
   /*
   * @brief Compute the current track cost based on the costmap.
   */
-  __device__ float getTrackCost(float* s, int* crash);
 
+  __device__ float getTrackCost(float* s, int* crash, float* track_slop, float* track_coeff);
+  __device__ float getTrackCost(float* s, int* crash);
   /*
   * @brief Compute all of the individual cost terms and adds them together.
   */
