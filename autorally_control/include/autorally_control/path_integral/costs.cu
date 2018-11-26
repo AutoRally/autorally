@@ -312,8 +312,9 @@ inline __host__ __device__ void MPPICosts::getCrash(float* state, int* crash) {
   return control_cost;
 }
 
-  inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars) {
-  getControlCost(u, du, vars);
+  inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars)
+{
+  return getControlCost(u, du, vars);
 }
 
 
@@ -331,7 +332,7 @@ inline __host__ __device__ void MPPICosts::getCrash(float* state, int* crash) {
 }
 
 inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash) {
-  getSpeedCost(s, crash, &params_d_->desired_speed, &params_d_->speed_coeff);
+  return getSpeedCost(s, crash, &params_d_->desired_speed, &params_d_->speed_coeff);
 }
 
   inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, int timestep, float* crash_coeff)
@@ -344,7 +345,7 @@ inline __host__ __device__ float MPPICosts::getSpeedCost(float* s, int* crash) {
 }
 
   inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, int num_timestep) {
-  getCrashCost(s, crash, num_timestep, &params_d_->crash_coeff);
+  return getCrashCost(s, crash, num_timestep, &params_d_->crash_coeff);
 }
 
 
@@ -363,7 +364,7 @@ inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s, float *
 }
 
   __host__ __device__ float MPPICosts::getStabilizingCost(float* s) {
-  getStabilizingCost(s, &params_d_->slip_penalty, &params_d_->max_slip_ang, &params_d_->crash_coeff);
+  return getStabilizingCost(s, &params_d_->slip_penalty, &params_d_->max_slip_ang, &params_d_->crash_coeff);
 }
 
 
@@ -412,7 +413,7 @@ inline __host__ __device__ void MPPICosts::coorTransform(float x, float y, float
 }
 
   inline __device__ float MPPICosts::getTrackCost(float* s, int* crash) {
-  getTrackCost(s, crash, &params_d_->track_slop, &params_d_->track_coeff);
+  return getTrackCost(s, crash, &params_d_->track_slop, &params_d_->track_coeff);
 }
 
 
