@@ -106,13 +106,13 @@ To view code documentation open `autorally/doc/html/index.html` in a web browser
 
 You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the `joystick` node is **false**. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
 
-Verify runstop motion is enabled by looking at the `runstopMotionEnabled` paramter in the `/chassisState` topic.
+Verify runstop motion is enabled by looking at the `runstopMotionEnabled` field in the `/chassisState` topic (`rostopic echo /chassisState`).
 
 If you aren't using a gamepad, you will have to configure another source of runstop information for the platform to move:
 
-- Comment out line 89 of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
+- Comment out the line `<include file="$(find autorally_control)/launch/joystickController.launch" />` near the end of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
 
-- ```rosrun rqt_publisher rqt_publisher```
+- `rosrun rqt_publisher rqt_publisher`
 
 and configure rqt_publisher to publish a message to topic `/runstop` of type `autorally_msgs/runstop` at 1 Hz with `sender` set to `rqt_publisher` and  `motionEnabled` set to **true**.
 
