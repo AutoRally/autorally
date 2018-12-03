@@ -1,3 +1,4 @@
+time stamp
 int64 hz
 int64 num_timesteps
 int64 num_iters
