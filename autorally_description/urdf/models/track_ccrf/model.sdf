@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <sdf version="1.5">
-  <model name="jump22deg">
+  <model name="track">
     <static>true</static>
     <link name="link">
-      <collision name="collision">
+      <!--<collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/jump22deg.dae</uri>
-            <scale>1 1 1</scale>
+            <uri>model://urdf/cad/autoRallyTrackCCRF.dae</uri>
+            <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
         <surface>
@@ -18,19 +18,19 @@
             </ode>
           </friction>
         </surface>
-      </collision>
+      </collision>-->
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/cad/jump22deg.dae</uri>
-            <scale>1 1 1</scale>
+            <uri>model://urdf/cad/autoRallyTrackCCRF.dae</uri>
+            <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
         <material>
           <script>
-            <uri>model://urdf/cad/gazebo.material</uri>
-            <name>Gazebo/White</name>
+            <uri>model://urdf/gazebo.material</uri>
+            <name>Gazebo/Black</name>
           </script>
         </material>
       </visual>
