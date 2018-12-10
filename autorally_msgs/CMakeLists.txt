@@ -27,6 +27,11 @@ add_message_files(
   pathIntegralStats.msg
   pathIntegralStatus.msg
   pathIntegralTiming.msg
+  pathIntegralCosts.msg
+  resetObstacles.msg
+  spawnObstacles.msg
+  obstacleStatus.msg
+  chassisCommandTrajectory.msg
 )
 
 generate_messages(DEPENDENCIES
