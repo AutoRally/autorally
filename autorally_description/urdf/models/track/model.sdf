@@ -10,6 +10,7 @@
             <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
+        <laser_retro>20000000.0</laser_retro>
         <surface>
           <friction>
             <ode>

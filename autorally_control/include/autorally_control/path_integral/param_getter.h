@@ -70,7 +70,7 @@ T getRosParam(std::string paramName, ros::NodeHandle nh)
   T val;
   bool found = nh.searchParam(paramName, key);
   if (!found){
-    ROS_ERROR("Could not find parameter name '%s' in tree of node '%s'", 
+    ROS_ERROR("Could not find parameter name '%s' in tree of node '%s'",
               paramName.c_str(), nh.getNamespace().c_str());
   }
   else {

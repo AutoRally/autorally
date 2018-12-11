@@ -364,6 +364,12 @@ limitations under the License.
     <material>Gazebo/Grey</material>
   </gazebo>
 
+  <!-- Velodyne LIDAR -->
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+  <VLP-16 parent="base_link" name="velodyne" topic="/velodyne_points" hz="10" samples="440">
+    <origin xyz="0 0 ${chassis_height/2 + 0.075}" rpy="0 0 0" />
+  </VLP-16>
+
   <!-- Chassis -->
   <link name="chassis">
     <visual>
@@ -516,6 +522,16 @@ limitations under the License.
       <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
     </inertial>
 
+  </link>
+
+  <!-- Reference frame for left camera (for stereo camera)-->
+  <joint name="left_camera_optical_joint" type="fixed">
+    <origin xyz="0 0.07 0" rpy="0 0 0"/>
+    <parent link="camera_link"/>
+    <child link="left_camera_optical_frame"/>
+  </joint>
+
+  <link name="left_camera_optical_frame">
   </link>
 
   <!-- camera -->

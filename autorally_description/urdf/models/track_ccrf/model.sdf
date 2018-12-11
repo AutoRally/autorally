@@ -3,13 +3,14 @@
   <model name="track">
     <static>true</static>
     <link name="link">
-      <!--<collision name="collision">
+      <collision name="collision">
         <geometry>
           <mesh>
             <uri>model://urdf/cad/autoRallyTrackCCRF.dae</uri>
             <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
+        <laser_retro>20000000.0</laser_retro>
         <surface>
           <friction>
             <ode>
@@ -18,7 +19,7 @@
             </ode>
           </friction>
         </surface>
-      </collision>-->
+      </collision>
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
@@ -27,6 +28,7 @@
             <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
+        <laser_retro>20000000.0</laser_retro>
         <material>
           <script>
             <uri>model://urdf/gazebo.material</uri>

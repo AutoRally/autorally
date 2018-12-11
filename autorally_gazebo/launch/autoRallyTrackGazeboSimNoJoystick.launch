@@ -33,7 +33,7 @@ limitations under the License.
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
   <arg name="namespace" default=""/>
-  <arg name="world_name" default="model://urdf/worlds/populated_marietta.world"/>
+  <arg name="world_name" default="model://urdf/worlds/populated_obstacles_marietta.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- parameter for other programs to use to know if we are in simulation or real world-->
@@ -50,6 +50,7 @@ limitations under the License.
   <!-- Create the world. -->
   <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="debug" value="true"/>
   </include>
 
   <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/"/>
