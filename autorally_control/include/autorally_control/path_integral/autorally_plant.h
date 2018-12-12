@@ -42,6 +42,8 @@
 #include <autorally_msgs/runstop.h>
 #include <autorally_msgs/pathIntegralStatus.h>
 #include <autorally_msgs/pathIntegralTiming.h>
+#include <autorally_msgs/resetObstacles.h>
+#include <autorally_msgs/pathIntegralCosts.h>
 #include <autorally_control/PathIntegralParamsConfig.h>
 
 #include <ros/ros.h>
@@ -180,6 +182,11 @@ public:
 	void pubControl(float steering, float throttle);
 
   void pubStatus(const ros::TimerEvent&);
+
+  /**
+  * @brief Publishes the controller's cost along nominal trajectory.
+  */
+  void pubCosts(float* nominal_costs, ros::Publisher cost_pub, int num_timesteps);
 
   /**
   * @brief Returns the current state of the system.

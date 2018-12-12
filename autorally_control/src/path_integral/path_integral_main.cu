@@ -38,7 +38,7 @@
 
 #include <autorally_control/path_integral/meta_math.h>
 #include <autorally_control/path_integral/param_getter.h>
-#include <autorally_control/path_integral/autorally_plant.h>
+#include <autorally_control/path_integral/autorally_pc_plant.h>
 #include <autorally_control/PathIntegralParamsConfig.h>
 #include <autorally_control/path_integral/costs.cuh>
 
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
   Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
                                     init_u, params.num_iters, optimization_stride);
 
-  AutorallyPlant* robot = new AutorallyPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
+  AutorallyPlant* robot = new AutorallyPCPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
 
   //Setup dynamic reconfigure callback
   dynamic_reconfigure::Server<PathIntegralParamsConfig> server;
