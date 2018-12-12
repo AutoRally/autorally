@@ -19,8 +19,15 @@ class GroundTruthRepublisher(object):
   def __init__(self, namespace='ground_truth_republisher'):
     """Initialize this _ground_truth_republisher"""
     rospy.init_node("ground_truth_republisher", anonymous = True)
+    chassis_name = rospy.get_param('~chassis_name')
     self.pub = rospy.Publisher("ground_truth/state", Odometry, queue_size = 1)
+    self.pub_xbee = rospy.Publisher("/ground_truth/"+chassis_name+"_xbee", Odometry, queue_size = 1)
     self.sub = rospy.Subscriber("ground_truth/state_raw", Odometry, self.handle_pose)
+    rospy.Timer(rospy.Duration(0.2), self.xbee_callback)
+    self.msg = Odometry()
+
+  def xbee_callback(self, event):
+    self.pub_xbee.publish(self.msg)
 
   def handle_pose(self, msg):
     #set frame to be the same as state estimator output
@@ -49,6 +56,8 @@ class GroundTruthRepublisher(object):
     lin = np.dot(rotationNeg90Deg,np.array([msg.twist.twist.linear.x, msg.twist.twist.linear.y]))
     msg.twist.twist.linear.x = lin[0]
     msg.twist.twist.linear.y = lin[1]
+
+    self.msg = msg
 
     self.pub.publish(msg)
 

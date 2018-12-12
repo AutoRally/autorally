@@ -77,6 +77,7 @@ limitations under the License.
   <!-- Run ground truth pose publishing -->
   <node name="grount_truth_republisher" pkg="autorally_gazebo"
         type="ground_truth_republisher.py" output="screen">
+    <param name="chassis_name" value="$(arg namespace)"/>
   </node>
 
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
