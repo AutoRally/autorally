@@ -650,6 +650,7 @@ limitations under the License.
     </plugin>
 
     <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+      <robotNamespace>$(arg prefix)</robotNamespace>
       <alwaysOn>true</alwaysOn>
       <updateRate>200.0</updateRate>
       <bodyName>odom_ground_truth</bodyName>
