@@ -10,6 +10,7 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #include <autorally_control/path_integral/generalized_linear.cuh>
 #include <autorally_control/path_integral/car_kinematics.cuh>
 #include <autorally_control/path_integral/costs.cuh>
+#include <autorally_control/path_integral/costs_pc.cuh>
 #include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/run_control_loop.cuh>
 #include <autorally_control/path_integral/mppi.cuh>
@@ -29,9 +30,17 @@ namespace autorally_control{
   typedef GeneralizedLinear<CarBasisFuncs, 7, 2, 25, CarKinematics, 3> DynamicsModel;
   #endif
 
+  #ifdef WITH_POINT_CLOUD__ /*Use plant and cost function with support for point cloud processing*/
+  typedef AutorallyPCPlant ControllerPlant;
+  typedef MPPIPCCosts ControllerCosts;
+  #else
+  typedef AutorallyPlant ControllerPlant;
+  typedef MPPICosts ControllerCosts;
+  #endif
+
   //Convenience typedef for the MPPI Controller.
-  typedef MPPIController<DynamicsModel,MPPICosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
-  typedef MPPI<Controller, DynamicsModel, MPPICosts> MPPINodelet;
+  typedef MPPIController<DynamicsModel, ControllerCosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+  typedef MPPI<Controller, DynamicsModel, ControllerCosts, ControllerPlant> MPPINodelet;
 }
 
 PLUGINLIB_DECLARE_CLASS(autorally_control, MPPINodelet, autorally_control::MPPINodelet, nodelet::Nodelet)

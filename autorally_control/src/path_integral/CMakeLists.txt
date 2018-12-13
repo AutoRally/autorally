@@ -12,6 +12,9 @@ include_directories(include ${EIGEN_INCLUDE_DIRS})
 add_library(autorally_plant autorally_plant.cpp)
 target_link_libraries(autorally_plant ${catkin_LIBRARIES})
 
+add_library(autorally_pc_plant autorally_pc_plant.cpp autorally_plant.cpp)
+target_link_libraries(autorally_pc_plant ${catkin_LIBRARIES})
+
 add_library(param_getter param_getter.cpp)
 target_link_libraries(param_getter ${catkin_LIBRARIES})
 
@@ -44,7 +47,8 @@ add_definitions(-DUSE_BASIS_FUNC_MODEL__)
 
 cuda_add_executable(path_integral_bf
                     path_integral_main.cu
-                    autorally_plant
+                    autorally_pc_plant
+										autorally_plant
                     param_getter
                     )
 add_dependencies(path_integral_bf autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
@@ -56,24 +60,26 @@ remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
 #Executable for the neural network model
 ###################################################################################
 
-add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
+add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_POINT_CLOUD__)
 
-cuda_add_library(mppi_nodelet 
+cuda_add_library(mppi_nodelet
                  mppi_nodelet.cu
-                 autorally_plant
+                 autorally_pc_plant
+								 autorally_plant
                  param_getter)
 add_dependencies(mppi_nodelet autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
 target_link_libraries(mppi_nodelet /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 cuda_add_executable(path_integral_nn
                    	path_integral_main.cu
-                    autorally_plant
+                    autorally_pc_plant
+										autorally_plant
                     param_getter
                     )
 add_dependencies(path_integral_nn autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
 target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__)
+remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_POINT_CLOUD__)
 
 ####################################################################################
 #Executable for monitoring the status of mppi

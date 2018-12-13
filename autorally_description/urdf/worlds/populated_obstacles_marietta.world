@@ -85,19 +85,19 @@
     <include>
       <static>true</static>
       <name>cone_1</name>
-      <uri>model://construction_cone</uri>
+      <uri>model://urdf/models/construction_cone</uri>
       <pose>3.9 -10 0 0 0 0</pose>
     </include>
     <include>
       <static>true</static>
       <name>cone_2</name>
-      <uri>model://construction_cone</uri>
+      <uri>model://urdf/models/construction_cone</uri>
       <pose>3.6 -1.7 0 0 0 0</pose>
     </include>
     <include>
       <static>true</static>
       <name>cone_3</name>
-      <uri>model://construction_cone</uri>
+      <uri>model://urdf/models/construction_cone</uri>
       <pose>-1.3 10.9 0 0 0 0</pose>
     </include>
     <include>

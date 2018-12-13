@@ -35,6 +35,7 @@
 #ifndef RUN_CONTROLLER_CUH_
 #define RUN_CONTROLLER_CUH_
 
+#include "autorally_pc_plant.h"
 #include "autorally_plant.h"
 #include "param_getter.h"
 
@@ -54,8 +55,8 @@
 
 namespace autorally_control {
 
-template <class CONTROLLER_T> 
-void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParams* params, 
+template <class CONTROLLER_T, class PLANT_T>
+void runControlLoop(CONTROLLER_T* controller, PLANT_T* robot, SystemParams* params,
                     ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
 {  
   //Initial condition of the robot
@@ -86,6 +87,15 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
   double avgSleepTime = 0; //Average time spent sleeping
   ros::Time last_pose_update = robot->getLastPoseTime();
   ros::Duration optimizationLoopTime(optimization_stride/(1.0*params->hz));
+
+  #ifdef WITH_POINT_CLOUD__
+    ros::Time last_pc_update = robot->getLastPointCloudTime();
+    ros::Time last_track_pc_update = robot->getLastTrackPointCloudTime();
+    ros::Time last_obs_update = robot->getLastObstacleResetTime();
+
+    //Point cloud message
+    sensor_msgs::PointCloud2Ptr points;
+  #endif
 
   //Set the loop rate
   std::chrono::milliseconds ms{(int)(optimization_stride*1000.0/params->hz)};
@@ -130,6 +140,21 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       robot->getCostmap(costmapDescription, costmapData);
       controller->costs_->updateCostmap(costmapDescription, costmapData);
     }
+
+    #ifdef WITH_POINT_CLOUD__
+      //Update the obstacle map
+      if (last_pc_update != robot->getLastPointCloudTime()){
+        last_pc_update = robot->getLastPointCloudTime();
+        points = robot->getPointCloud();
+        controller->costs_->updateObstacleMap(points);
+      }
+      //Check for obstacle reset
+      if (robot->getResetObstacles() && last_obs_update != robot->getLastObstacleResetTime())
+      {
+        controller->costs_->resetObstacleMap();
+        last_obs_update = robot->getLastObstacleResetTime();
+      }
+    #endif
 
     //Figure out how many controls have been published since we were last here and slide the 
     //control sequence by that much.

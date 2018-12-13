@@ -39,8 +39,10 @@
 #include <autorally_control/path_integral/meta_math.h>
 #include <autorally_control/path_integral/param_getter.h>
 #include <autorally_control/path_integral/autorally_pc_plant.h>
+#include <autorally_control/path_integral/autorally_plant.h>
 #include <autorally_control/PathIntegralParamsConfig.h>
 #include <autorally_control/path_integral/costs.cuh>
+#include <autorally_control/path_integral/costs_pc.cuh>
 
 //Including neural net model
 #ifdef MPPI_NNET_USING_CONSTANT_MEM__
@@ -74,8 +76,15 @@ const int BLOCKSIZE_Y = 4;
 typedef GeneralizedLinear<CarBasisFuncs, 7, 2, 25, CarKinematics, 3> DynamicsModel;
 #endif
 
-//Convenience typedef for the MPPI Controller.
-typedef MPPIController<DynamicsModel, MPPICosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+#ifdef WITH_POINT_CLOUD__ /*Use plant and cost function with support for point cloud processing*/
+  typedef AutorallyPCPlant ControllerPlant;
+  typedef MPPIPCCosts ControllerCosts;
+#else
+  typedef AutorallyPlant ControllerPlant;
+  typedef MPPICosts ControllerCosts;
+#endif
+
+typedef MPPIController<DynamicsModel, ControllerCosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
 
 int main(int argc, char** argv) {
   //Ros node initialization
@@ -88,7 +97,7 @@ int main(int argc, char** argv) {
   loadParams(&params, mppi_node);
 
   //Define the mppi costs
-  MPPICosts* costs = new MPPICosts(mppi_node);
+  ControllerCosts* costs = new ControllerCosts(mppi_node);
 
   //Define the internal dynamics model for mppi
   float2 control_constraints[2] = {make_float2(-.99, .99), make_float2(-.99, params.max_throttle)};
@@ -103,18 +112,18 @@ int main(int argc, char** argv) {
   Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
                                     init_u, params.num_iters, optimization_stride);
 
-  AutorallyPlant* robot = new AutorallyPCPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
+  ControllerPlant* robot = new ControllerPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
 
   //Setup dynamic reconfigure callback
   dynamic_reconfigure::Server<PathIntegralParamsConfig> server;
   dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f;
-  callback_f = boost::bind(&AutorallyPlant::dynRcfgCall, robot, _1, _2);
+  callback_f = boost::bind(&ControllerPlant::dynRcfgCall, robot, _1, _2);
   server.setCallback(callback_f);
 
   boost::thread optimizer;
 
   std::atomic<bool> is_alive(true);
-  optimizer = boost::thread(&runControlLoop<Controller>, mppi, robot, &params, &mppi_node, &is_alive);
+  optimizer = boost::thread(&runControlLoop<Controller, ControllerPlant>, mppi, robot, &params, &mppi_node, &is_alive);
 
   ros::spin();
 

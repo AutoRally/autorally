@@ -259,11 +259,11 @@ protected:
 
   //Primary variables
   int width_, height_; ///< Width and height of costmap.
+  float ppm_, x_min_, y_min_;
   CostParams* params_d_; ///< Device side copy of params_.
   cudaArray *costmapArray_d_; ///< Cuda array for texture binding.
   cudaChannelFormatDesc channelDesc_; ///< Cuda texture channel description.
   cudaTextureObject_t costmap_tex_; ///< Cuda texture object.
-  //float4* costmap_;
   std::vector<float4> track_costs_;
 
   //Debugging variables

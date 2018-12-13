@@ -3,6 +3,7 @@
 
 #include "run_control_loop.cuh"
 #include "autorally_plant.h"
+#include "autorally_pc_plant.h"
 #include "param_getter.h"
 #include <autorally_control/PathIntegralParamsConfig.h>
 
@@ -14,7 +15,7 @@
 namespace autorally_control
 {
 
-template<class CONTROLLER_T, class DYNAMICS_T, class COSTS_T>
+template<class CONTROLLER_T, class DYNAMICS_T, class COSTS_T, class PLANT_T>
 class MPPI : public nodelet::Nodelet
 {
 
@@ -30,7 +31,7 @@ private:
     COSTS_T* costs;
     DYNAMICS_T* model;
     CONTROLLER_T* mppi;
-    AutorallyPlant* robot;
+    PLANT_T* robot;
     boost::thread optimizer;
     float2 control_constraints[2];
     float init_u[2];

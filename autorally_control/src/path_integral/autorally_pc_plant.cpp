@@ -31,6 +31,7 @@
  * @brief Implementation of the AutorallyPCPlant class
  ***********************************************/
 #include <autorally_control/path_integral/autorally_pc_plant.h>
+#include <autorally_control/path_integral/autorally_plant.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,9 +43,9 @@ AutorallyPCPlant::AutorallyPCPlant(ros::NodeHandle global_node, ros::NodeHandle 
                                    global_node, mppi_node, debug_mode, hz, nodelet)
 {
   //Initialize the subscribers.
-  points_sub_ = global_node.subscribe("/stereo/filtered_points2", 1, &AutorallyPlant::pointsCall, this);
-  track_points_sub_ = global_node.subscribe("/stereo/track_points2", 1, &AutorallyPlant::trackPointsCall, this);
-  obs_reset_sub_ = global_node.subscribe("obstacle_reset", 1, &AutorallyPlant::obsResetCall, this);
+  points_sub_ = global_node.subscribe("/stereo/filtered_points2", 1, &AutorallyPCPlant::pointsCall, this);
+  track_points_sub_ = global_node.subscribe("/stereo/track_points2", 1, &AutorallyPCPlant::trackPointsCall, this);
+  obs_reset_sub_ = global_node.subscribe("obstacle_reset", 1, &AutorallyPCPlant::obsResetCall, this);
 }
 
 AutorallyPCPlant::~AutorallyPCPlant(){}
@@ -108,5 +109,26 @@ sensor_msgs::PointCloud2Ptr AutorallyPCPlant::getTrackPointCloud()
   return track_points_;
 }
 
+void AutorallyPCPlant::dynRcfgCall(autorally_control::PathIntegralParamsConfig &config, int lvl) {
+  boost::mutex::scoped_lock lock(access_guard_);
+  costParams_.obstacle_coefficient = config.obstacle_coefficient;
+  costParams_.obstacle_decay = config.obstacle_decay;
+  costParams_.obstacle_buffer = config.obstacle_buffer;
+  costParams_.obstacle_pad = config.obstacle_pad;
+  lock.unlock();
+
+  AutorallyPlant::dynRcfgCall(config, lvl);
+}
+
+
+void AutorallyPCPlant::pubCosts(float* nominal_costs, ros::Publisher cost_pub, int num_costs)
+{
+  cost_msg_.costs.clear();
+  cost_msg_.header.stamp = ros::Time::now();
+  for (int i = 0; i < num_costs; i++) {
+    cost_msg_.costs.push_back(nominal_costs[i]);
+  }
+  cost_pub.publish(cost_msg_);
+}
 
 }

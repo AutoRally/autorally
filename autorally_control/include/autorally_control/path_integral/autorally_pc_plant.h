@@ -38,8 +38,12 @@
 
 #include <autorally_control/path_integral/autorally_plant.h>
 
+#include <sensor_msgs/PointCloud2.h>
+
 #include <autorally_msgs/resetObstacles.h>
 #include <autorally_msgs/pathIntegralCosts.h>
+
+#include <chrono>
 
 namespace autorally_control {
 
@@ -57,7 +61,8 @@ public:
   * publishers and subscribers.
   * @param mppi_node A ros node handle.
   */
-  AutorallyPCPlant(ros::NodeHandle mppi_node, bool debug_mode, int hz);
+  AutorallyPCPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node,
+                   bool debug_mode, int hz, bool nodelet);
 
   /**
   * @brief Destructor for AutorallyPlant.
@@ -78,6 +83,16 @@ public:
   * @brief Callback for track point cloud.
   */
   void trackPointsCall(sensor_msgs::PointCloud2Ptr points_msg);
+
+  /**
+  * @brief Publishes cost of nominal trajectory
+  */
+  void pubCosts(float* nominal_costs, ros::Publisher cost_pub, int num_timesteps);
+
+  /**
+  * @brief Returns the current value of obstacle reset.
+  */
+  bool getResetObstacles();
 
   /**
   * @brief Returns the timestamp of the last obstacle point cloud callback.
@@ -103,6 +118,9 @@ public:
   * @brief Returns the current track point cloud from the stereo camera
   */
   sensor_msgs::PointCloud2Ptr getTrackPointCloud();
+
+  void dynRcfgCall(autorally_control::PathIntegralParamsConfig &config, int lvl);
+
 private:
   bool reset_obstacles_; ///< Whether or not we should reset the obstacles cost.
 

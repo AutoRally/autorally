@@ -336,16 +336,6 @@ void AutorallyPlant::pubStatus(const ros::TimerEvent&){
   status_pub_.publish(status_msg_);
 }
 
-void AutorallyPlant::pubCosts(float* nominal_costs, ros::Publisher cost_pub, int num_costs)
-{
-  cost_msg_.costs.clear();
-  cost_msg_.header.stamp = ros::Time::now();
-  for (int i = 0; i < num_costs; i++) {
-    cost_msg_.costs.push_back(nominal_costs[i]);
-  }
-  cost_pub.publish(cost_msg_);
-}
-
 AutorallyPlant::FullState AutorallyPlant::getState()
 {
   boost::mutex::scoped_lock lock(access_guard_);

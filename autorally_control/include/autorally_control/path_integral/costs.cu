@@ -206,6 +206,9 @@ inline std::vector<float4> MPPICosts::loadTrackData(std::string map_path, Eigen:
 
   width_ = int((x_max - x_min)*ppm);
   height_ = int((y_max - y_min)*ppm);
+  ppm_ = ppm;
+  x_min_ = x_min*ppm;
+  y_min_ = y_min*ppm;
 
   initCostmap();
 
