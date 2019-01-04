@@ -6,7 +6,7 @@
     type = "path_integral_nn" 
     name = "mppi_controller"
     output = "screen">
-    
+
     <!--Pose topic configuration parameters -->
     <param name="pose_estimate" value="/ground_truth/state" />
     <param name="path_topic" value="/mppi_controller/nominal_path" />
@@ -56,7 +56,10 @@
     <param name="throttle_coeff" value ="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/marietta_costmap.npz" />
+    <!--<param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/marietta_costmap.npz" />-->
+    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/gazebo/gazebo_map.npz" />
+
+    launch-prefix="xterm -e gdb --args"
 
   </node>
 
@@ -73,7 +76,8 @@
     name = "stat_tracker"
     output = "screen">
     <param name="controller_type" value="mppi_controller" />
-    <param name="tag" value="Neural Network Model - Path Integral"/> 
+    <!--<param name="tag" value="Neural Network Model - Path Integral"/> -->
+    <param name="tag" value="Basis Function Model - Path Integral"/>
   </node>
 
 </launch>

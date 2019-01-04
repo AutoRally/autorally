@@ -78,7 +78,7 @@ namespace autorally_control {
 class AutorallyPlant //: public Diagnostics  
 {
 public:
-  static const int AUTORALLY_STATE_DIM = 7;
+  static const int AUTORALLY_STATE_DIM = 8;
   static const int AUTORALLY_CONTROL_DIM = 2;
   //Struct for holding the autorally pose.
   typedef struct
@@ -124,7 +124,7 @@ public:
   bool is_nodelet_;
   std::vector<float> controlSequence_;
   std::vector<float> stateSequence_;
-  util::EigenAlignedVector<float, 2, 7> feedback_gains_;
+  util::EigenAlignedVector<float, 2, 8> feedback_gains_;
   ros::Time solutionTs_;
 
   int numTimesteps_;
@@ -163,7 +163,7 @@ public:
 	void pubPath(const ros::TimerEvent&);
 
   void setSolution(std::vector<float> traj, std::vector<float> controls, 
-                   util::EigenAlignedVector<float, 2, 7> gains,
+                   util::EigenAlignedVector<float, 2, 8> gains,
                    ros::Time timestamp, double loop_speed);
 
   void setDebugImage(cv::Mat img);

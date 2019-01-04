@@ -102,7 +102,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
 }
 
 void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
-                                util::EigenAlignedVector<float, 2, 7> gains,
+                                util::EigenAlignedVector<float, 2, 8> gains,
                                 ros::Time ts, double loop_speed)
 {
   boost::mutex::scoped_lock lock(access_guard_);
@@ -222,12 +222,12 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
       throttle = throttle_ff;
     }
     else { //Compute the error between the current and actual state and apply feedback gains
-      Eigen::MatrixXf current_state(7,1);
-      Eigen::MatrixXf desired_state(7,1);
+      Eigen::MatrixXf current_state(8,1);
+      Eigen::MatrixXf desired_state(8,1);
       Eigen::MatrixXf deltaU;
-      current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
-      for (int i = 0; i < 7; i++){
-        desired_state(i) = (1 - alpha)*stateSequence_[7*lowerIdx + i] + alpha*stateSequence_[7*upperIdx + i];
+      current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder,full_state_.u_x/0.095;
+      for (int i = 0; i < 8; i++){
+        desired_state(i) = (1 - alpha)*stateSequence_[8*lowerIdx + i] + alpha*stateSequence_[8*upperIdx + i];
       }
       
       deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);

@@ -157,12 +157,114 @@ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeKinemati
 template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
 void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeDynamics(Eigen::MatrixXf &state, Eigen::MatrixXf &control)
 {
-  int i;
+  /*int i;
   //Now compute the basis functions.
   for (i = 0; i < NUM_BFS; i++){
     bf_vec_(i) = basisFunctions_->basisFuncX(i, state.data(), control.data());
   }
-  state_der_.block(STATE_DIM - DYNAMICS_DIM, 0, DYNAMICS_DIM, 1) = theta_*bf_vec_;
+  state_der_.block(STATE_DIM - DYNAMICS_DIM, 0, DYNAMICS_DIM, 1) = theta_*bf_vec_;*/
+float para[] =  {1.33883129559920,0.391701415322727,0.0950009708432143,2.95361615969189,0.828188220600163,0.957693850834835,-0.329780228856469,-0.0434960411161758,0.198419237769060,0.248873766728441,0.00981370687408516,7.79994311191890,21.1381472017746}; 
+    float L_axis = 0.57;
+    float g = 9.81;  //[kg*m/s^2]
+    float r_F=0.095; // front wheel radius [m]
+    float r_R=0.095; //rear wheel radius [m]
+     
+    float Iz=para[0];  // mass moment of inertia of vehicle around z-axis
+    float lf=para[1];  // distance from mass center to front axis [m]
+    float lr=L_axis-lf;  // distance from mass center to rear axis [m]
+    float h=para[2];  // height of mass center [m]
+     
+    float B=para[3];
+    float C=para[4]; 
+    float D=para[5]; 
+    float E=para[6];
+    float Sh=para[7];
+    float Sv=para[8];  // B - Sv  parameters in tire force model
+    
+    float scl=para[9];
+    float Iwr=para[10];   // mass moment of inertia of rear wheel
+    float Gear=para[11];  // gear ratio of the transmission
+    float m=para[12];   // vehicle mass [kg]
+
+    float delta = -scl*control(0);
+    float Tr = Gear*control(1);
+
+    float Vx = state(4);
+    float Vy = state(5);
+    float r = -state(6);
+    float wR = state(7);
+    
+    float V_fx = Vx;
+    float V_fy = Vy+r*lf;
+    float V_rx = Vx;
+    float V_ry = Vy-r*lr;
+
+    float VFx = V_fx*cosf(delta)+V_fy*sinf(delta);
+    float VFy = -V_fx*sinf(delta)+V_fy*cosf(delta);
+    float VRx = V_rx;
+    float VRy = V_ry;
+
+    std::cout<<para;
+ 
+    if (wR*r_R<0.05){ 
+       state_der_(3) = 0;
+       state_der_(5) = 0;
+       state_der_(6) = 0;
+       state_der_(7) = Tr/Iwr;
+       state_der_(4) = 0.8*state_der_(7)*r_R;
+	}
+ 
+    else {
+       float sFx = 0;
+       float sFy = VFy/VFx;
+       float sF = sqrtf( sFx*sFx+sFy*sFy );
+       float sRx = ( VRx-wR*r_R )/( wR*r_R );
+       float sRy = VRy/( wR*r_R ); 
+       float sR = sqrtf( sRx*sRx+sRy*sRy );
+       float mu_sF=D*sinf( C*atanf( B*( (1-E)*(sF+Sh)+E/B*atanf(B*(sF+Sh)) ) ) ) +Sv;
+       float mu_sR=D*sinf( C*atanf( B*( (1-E)*(sR+Sh)+E/B*atanf(B*(sR+Sh)) ) ) ) +Sv;
+       
+       float fFx,fFy,fRx,fRy;
+       if (sF==0){
+//	  float fFx=0;
+//	  float fFy=0; 
+
+	  fFx=0;
+	  fFy=0; 	     
+	  float muRx=-sRx*mu_sR/sR;
+	  float muRy=-sRy*mu_sR/sR;
+
+          float fFz=( lr-h*muRx )*m*g/( L_axis-h*muRx );
+          float fRz=m*g-fFz;
+ 
+//          float fRx=muRx*fRz;
+//          float fRy=muRy*fRz;
+          fRx=muRx*fRz;
+          fRy=muRy*fRz;        
+        }
+       else {
+	  float muFx=-sFx*mu_sF/sF;
+	  float muFy=-sFy*mu_sF/sF;  
+	  float muRx=-sRx*mu_sR/sR;
+	  float muRy=-sRy*mu_sR/sR; 
+
+          float fFz=( lr-h*muRx )*m*g/( L_axis+h*( muFx*cosf( delta )-muFy*sinf( delta )- muRx) );
+          float fRz=m*g-fFz;
+ 
+          fFx=muFx*fFz;
+          fFy=muFy*fFz;
+          fRx=muRx*fRz;
+          fRy=muRy*fRz;       
+        }
+
+        state_der_(3) = 0;
+	state_der_(4) = ( fFx*cosf( delta )-fFy*sinf( delta )+fRx )/m+Vy*r;
+        state_der_(5) = ( fFx*sinf( delta )+fFy*cosf( delta )+fRy )/m-Vx*r;
+        state_der_(6) = -( ( fFy*cosf( delta )+fFx*sinf( delta ) )*lf-fRy*lr )/Iz;
+        state_der_(7) = (Tr-fRx*r_R)/Iwr;
+
+        }
+
 }
 
 template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
@@ -225,7 +327,7 @@ __device__ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::comp
 template<class BF, int S_DIM, int C_DIM, int BF_DIM, class K_FUNC, int K_DIM>
 __device__ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::computeDynamics(float* s, float* u, float* s_der, float* theta_s)
 {
-  int i,j;
+  /*int i,j;
   int tdy = threadIdx.y;
   float bf_temp; //Temporary variable for storing basis function evaluations.
   float eval_temp[DYNAMICS_DIM]; //Temporary variable to reduce the number of atomic adds.
@@ -241,7 +343,104 @@ __device__ void GeneralizedLinear<BF, S_DIM, C_DIM, BF_DIM, K_FUNC, K_DIM>::comp
   //Add to state using atomic add.
   for (i = 0; i < DYNAMICS_DIM; i++){
     atomicAdd(&s_der[i+(STATE_DIM - DYNAMICS_DIM)], eval_temp[i]);
-  }
+  }*/
+float para[] = {1.33883129559920,0.391701415322727,0.0950009708432143,2.95361615969189,0.828188220600163,0.957693850834835,-0.329780228856469,-0.0434960411161758,0.198419237769060,0.248873766728441,0.00981370687408516,7.79994311191890,21.1381472017746}; 
+    float L_axis = 0.57;
+    float g = 9.81;  //[kg*m/s^2]
+    float r_F=0.095; // front wheel radius [m]
+    float r_R=0.095; //rear wheel radius [m]
+     
+    float Iz=para[0];  // mass moment of inertia of vehicle around z-axis
+    float lf=para[1];  // distance from mass center to front axis [m]
+    float lr=L_axis-lf;  // distance from mass center to rear axis [m]
+    float h=para[2];  // height of mass center [m]
+     
+    float B=para[3];
+    float C=para[4]; 
+    float D=para[5]; 
+    float E=para[6];
+    float Sh=para[7];
+    float Sv=para[8];  // B - Sv  parameters in tire force model
+    
+    float scl=para[9];
+    float Iwr=para[10];   // mass moment of inertia of rear wheel
+    float Gear=para[11];  // gear ratio of the transmission
+    float m=para[12];   // vehicle mass [kg]
+
+    float delta = -scl*u[0];
+    float Tr = Gear*u[1];
+
+    float Vx = s[4];
+    float Vy = s[5];
+    float r = -s[6];
+    float wR = s[7];
+    
+    float V_fx = Vx;
+    float V_fy = Vy+r*lf;
+    float V_rx = Vx;
+    float V_ry = Vy-r*lr;
+
+    float VFx = V_fx*cosf(delta)+V_fy*sinf(delta);
+    float VFy = -V_fx*sinf(delta)+V_fy*cosf(delta);
+    float VRx = V_rx;
+    float VRy = V_ry;
+
+//    std::cout<<para;
+ 
+    if (wR*r_R<0.05){ 
+       s_der[3] = 0;
+       s_der[5] = 0;
+       s_der[6] = 0;
+       s_der[7] = Tr/Iwr;
+       s_der[4] = 0.8*s_der[7]*r_R;
+	}
+    else {
+       float sFx = 0;
+       float sFy = VFy/VFx;
+       float sF = sqrtf( sFx*sFx+sFy*sFy );
+       float sRx = ( VRx-wR*r_R )/( wR*r_R );
+       float sRy = VRy/( wR*r_R ); 
+       float sR = sqrtf( sRx*sRx+sRy*sRy );
+       float mu_sF=D*sinf( C*atanf( B*( (1-E)*(sF+Sh)+E/B*atanf(B*(sF+Sh)) ) ) ) +Sv;
+       float mu_sR=D*sinf( C*atanf( B*( (1-E)*(sR+Sh)+E/B*atanf(B*(sR+Sh)) ) ) ) +Sv;
+       
+       float fFx,fFy,fRx,fRy;
+       if (sF==0){
+	  fFx=0;
+	  fFy=0; 
+	     
+	  float muRx=-sRx*mu_sR/sR;
+	  float muRy=-sRy*mu_sR/sR;
+
+          float fFz=( lr-h*muRx )*m*g/( L_axis-h*muRx );
+          float fRz=m*g-fFz;
+ 
+          fRx=muRx*fRz;
+          fRy=muRy*fRz;      
+        }
+       else {
+	  float muFx=-sFx*mu_sF/sF;
+	  float muFy=-sFy*mu_sF/sF;  
+	  float muRx=-sRx*mu_sR/sR;
+	  float muRy=-sRy*mu_sR/sR; 
+
+          float fFz=( lr-h*muRx )*m*g/( L_axis+h*( muFx*cosf( delta )-muFy*sinf( delta )- muRx) );
+          float fRz=m*g-fFz;
+ 
+          fFx=muFx*fFz;
+          fFy=muFy*fFz;
+          fRx=muRx*fRz;
+          fRy=muRy*fRz;       
+        }
+
+        s_der[3] = 0;
+	s_der[4] = ( fFx*cosf( delta )-fFy*sinf( delta )+fRx )/m+Vy*r;
+        s_der[5] = ( fFx*sinf( delta )+fFy*cosf( delta )+fRy )/m-Vx*r;
+        s_der[6] = -( ( fFy*cosf( delta )+fFx*sinf( delta ) )*lf-fRy*lr )/Iz;
+        s_der[7] = (Tr-fRx*r_R)/Iwr;
+
+        }
+
 }
 
 }

@@ -59,9 +59,9 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
                     ros::NodeHandle* mppi_node, std::atomic<bool>* is_alive)
 {  
   //Initial condition of the robot
-  Eigen::MatrixXf state(7,1);
+  Eigen::MatrixXf state(8,1);
   AutorallyPlant::FullState fs;
-  state << params->x_pos, params->y_pos, params->heading, 0, 0, 0, 0;
+  state << params->x_pos, params->y_pos, params->heading, 0, 0, 0, 0, 0.01;
   
   //Initial control value
   Eigen::MatrixXf u(2,1);
@@ -114,7 +114,7 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       optimizationLoopTime = robot->getLastPoseTime() - last_pose_update;
       last_pose_update = robot->getLastPoseTime();
       fs = robot->getState(); //Get the new state.
-      state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
+      state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder, fs.u_x/0.095+0.01;
     }
     //Update the cost parameters
     if (robot->hasNewDynRcfg()){

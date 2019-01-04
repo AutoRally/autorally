@@ -27,7 +27,7 @@ Arguments:
   <arg name="InvertZ" default="true"/>
   <arg name="FixedInitialPose" default="false"/>
 
-  <param name="/gps_imu/FixedInitialPose" value="$(arg sim)"/>
+  <param name="/gps_imu/FixedInitialPose" value="true"/>
 
 
   <node name="state_estimator" pkg="autorally_core" type="StateEstimator" output="screen" machine="autorally-master">
@@ -62,13 +62,13 @@ Arguments:
       <!-- To use in sumulation set "rosparam set /gps_imu/FixedInitialPose true" -->
       <!-- and <param name="InvertY" value="false"/> -->
       <!-- and <param name="InvertZ" value="false"/> -->
-      <param name="FixedInitialPose" value="$(arg FixedInitialPose)"/>
+      <param name="FixedInitialPose" value="true"/>
       <param name="initialRoll" value="0"/>
       <param name="intialPitch" value="0"/>
       <param name="initialYaw" value="0"/>
       <param name="InvertX" value="false"/>
-      <param name="InvertY" value="$(arg InvertY)"/>
-      <param name="InvertZ" value="$(arg InvertZ)"/>
+      <param name="InvertY" value="false"/>
+      <param name="InvertZ" value="false"/>
       <param name="GPSX" value="-0.37"/>
       <param name="GPSY" value="0"/>
       <param name="GPSZ" value="-0.06"/>

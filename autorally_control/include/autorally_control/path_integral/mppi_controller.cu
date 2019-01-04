@@ -355,10 +355,10 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::initDDP()
   ddp_solver_ = new DDP<ModelWrapperDDP<DYNAMICS_T>>(1.0/hz_, numTimesteps_, 1, &logger, verbose);
 
   Q_.setIdentity();
-  Q_.diagonal() << 0.5, 0.5, 0.25, 0.0, 0.05, 0.01, 0.01;
+  Q_.diagonal() << 0.5, 0.5, 0.25, 0.0, 0.05, 0.01, 0.01, 0.0;
 
   Qf_.setIdentity();
-  Qf_.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  Qf_.diagonal() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
   R_.setIdentity();
   R_.diagonal() << 10.0, 10.0;
@@ -449,7 +449,7 @@ template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::computeNominalTraj(Eigen::Matrix<float, STATE_DIM, 1> state)
 {
   int i,j;
-  Eigen::MatrixXf s(7,1);
+  Eigen::MatrixXf s(8,1);
   Eigen::MatrixXf u(2,1);
   s = state;
   for (i = 0; i < numTimesteps_; i++){
