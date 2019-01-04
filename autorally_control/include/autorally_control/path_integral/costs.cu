@@ -299,9 +299,9 @@ inline void MPPICosts::updateCostmap(std::vector<int> description, std::vector<f
 inline void MPPICosts::updateObstacles(std::vector<int> description, std::vector<float> data){}
 
 inline __host__ __device__ void MPPICosts::getCrash(float* state, int* crash) {
-  if (fabs(state[3]) > 1.57) {
-    crash[0] = 1;
-  }
+  //if (fabs(state[3]) > 1.57) {
+  //  crash[0] = 1;
+  //}
 }
 
 inline __host__ __device__ float MPPICosts::getControlCost(float* u, float* du, float* vars)

@@ -114,7 +114,8 @@ void runControlLoop(CONTROLLER_T* controller, AutorallyPlant* robot, SystemParam
       optimizationLoopTime = robot->getLastPoseTime() - last_pose_update;
       last_pose_update = robot->getLastPoseTime();
       fs = robot->getState(); //Get the new state.
-      state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
+      //state << fs.x_pos, fs.y_pos, fs.yaw, fs.roll, fs.u_x, fs.u_y, fs.yaw_mder;
+      state << fs.x_pos, fs.y_pos, fs.yaw, fs.u_x/0.095+1e-2, fs.u_x, fs.u_y, fs.yaw_mder;
     }
     //Update the cost parameters
     if (robot->hasNewDynRcfg()){

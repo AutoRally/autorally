@@ -205,6 +205,8 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
   full_state_.u_y = -sin(full_state_.yaw)*full_state_.x_vel + cos(full_state_.yaw)*full_state_.y_vel;
   //Update the minus yaw derivative.
   full_state_.yaw_mder = -pose_msg.twist.twist.angular.z;
+// to fix later
+  full_state_.wR = full_state_.u_x/0.095+1e-2;
 
   //Interpolate and publish the current control
   double timeFromLastOpt = (last_pose_call_ - solutionTs_).toSec();
@@ -225,7 +227,7 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
       Eigen::MatrixXf current_state(7,1);
       Eigen::MatrixXf desired_state(7,1);
       Eigen::MatrixXf deltaU;
-      current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
+      current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.wR, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
       for (int i = 0; i < 7; i++){
         desired_state(i) = (1 - alpha)*stateSequence_[7*lowerIdx + i] + alpha*stateSequence_[7*upperIdx + i];
       }
@@ -276,7 +278,7 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
     pose.pose.position.y = stateSequence_[i*(AUTORALLY_STATE_DIM) + 1];
     pose.pose.position.z = 0;
     psi = stateSequence_[i*(AUTORALLY_STATE_DIM) + 2];
-    phi = stateSequence_[i*(AUTORALLY_STATE_DIM) + 3];
+    phi = 0; //stateSequence_[i*(AUTORALLY_STATE_DIM) + 3];
     theta = 0;
     q0 = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2);
     q1 = -cos(phi/2)*sin(theta/2)*sin(psi/2) + cos(theta/2)*cos(psi/2)*sin(phi/2);

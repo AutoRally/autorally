@@ -105,6 +105,10 @@ public:
     float u_y;
     //Euler angle derivatives
     float yaw_mder;
+
+    // add wheel speed
+    float wR;
+
     //Current servo commands
     float steering;
     float throttle;
