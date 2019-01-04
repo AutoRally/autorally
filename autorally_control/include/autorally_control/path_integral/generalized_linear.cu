@@ -206,7 +206,7 @@ float para[] =  {1.33883129559920,0.391701415322727,0.0950009708432143,2.9536161
 
     //std::cout<<para;
  
-    if (wR*r_R<0.05){ 
+    if (wR*r_R<0.01){ 
 
        state_der_(5) = 0;
        state_der_(6) = 0;
@@ -371,7 +371,7 @@ float para[] = {1.33883129559920,0.391701415322727,0.0950009708432143,2.95361615
     float Vx = s[4];
     float Vy = s[5];
     float r = -s[6];
-    float wR = s[7];
+    float wR = s[3];
     
     float V_fx = Vx;
     float V_fy = Vy+r*lf;
@@ -385,7 +385,7 @@ float para[] = {1.33883129559920,0.391701415322727,0.0950009708432143,2.95361615
 
 //    std::cout<<para;
  
-    if (wR*r_R<0.05){ 
+    if (wR*r_R<0.01){ 
        s_der[5] = 0;
        s_der[6] = 0;
        s_der[3] = Tr/Iwr;

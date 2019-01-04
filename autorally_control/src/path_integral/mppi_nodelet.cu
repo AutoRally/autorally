@@ -25,7 +25,7 @@ namespace autorally_control{
   //#elif USE_BASIS_FUNC_MODEL__ /*Use the basis function model* */
   const int MPPI_NUM_ROLLOUTS__ = 2560;
   const int BLOCKSIZE_X = 16;
-  const int BLOCKSIZE_Y = 1;
+  const int BLOCKSIZE_Y = 4;
   typedef GeneralizedLinear<CarBasisFuncs, 7, 2, 25, CarKinematics, 3> DynamicsModel;
   //#endif
 
