@@ -85,5 +85,5 @@ limitations under the License.
   </node>
 
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_control)/launch/joystickController.launch" />
+  <!--<include file="$(find autorally_control)/launch/joystickController.launch" /> -->
 </launch>
