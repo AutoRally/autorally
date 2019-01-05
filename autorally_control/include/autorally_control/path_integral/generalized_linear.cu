@@ -204,7 +204,7 @@ float para[] =  {1.33883129559920,0.391701415322727,0.0950009708432143,2.9536161
     float VRx = V_rx;
     float VRy = V_ry;
 
-    std::cout<<para;
+   // std::cout<<para;
  
     if (wR*r_R<0.05){ 
        state_der_(3) = 0;
