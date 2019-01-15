@@ -92,7 +92,7 @@ Due to the additional requirement of ROS's distributed launch system, you must r
 
 before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki) for more information about how to set this system up for distributed launches on your vehicle platform.
 
-_Note:_ If you are unfamiliar with catkin, please know that you must run `source catkin_ws/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
+_Note:_ If you are unfamiliar with catkin, please know that you must run `source catkin_ws/devel/setup.sh` before ROS will be able to locate the autorally packages (and thus you must run this before sourcing `setupEnvLocal.sh`). This line can be added to your ~/.bashrc file so that it is automatically run on opening a terminal.
 
 ### 5. Generate Documentation
 
@@ -106,13 +106,13 @@ To view code documentation open `autorally/doc/html/index.html` in a web browser
 
 You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the `joystick` node is **false**. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
 
-Verify runstop motion is enabled by looking at the `runstopMotionEnabled` paramter in the `/chassisState` topic.
+Verify runstop motion is enabled by looking at the `runstopMotionEnabled` field in the `/chassisState` topic (`rostopic echo /chassisState`).
 
 If you aren't using a gamepad, you will have to configure another source of runstop information for the platform to move:
 
-- Comment out line 89 of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
+- Comment out the line `<include file="$(find autorally_control)/launch/joystickController.launch" />` near the end of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
 
-- ```rosrun rqt_publisher rqt_publisher```
+- `rosrun rqt_publisher rqt_publisher`
 
 and configure rqt_publisher to publish a message to topic `/runstop` of type `autorally_msgs/runstop` at 1 Hz with `sender` set to `rqt_publisher` and  `motionEnabled` set to **true**.
 
