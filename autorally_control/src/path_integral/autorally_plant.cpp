@@ -31,20 +31,21 @@
  * @brief Implementation of the AutorallyPlant class
  ***********************************************/
 #include <autorally_control/path_integral/autorally_plant.h>
+#include <autorally_control/PID_controller/pid_waypoint_follower.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 namespace autorally_control {
 
-AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
+AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node,
                                bool debug_mode, int hz, bool nodelet)
 {
-  nodeNamespace_ = mppi_node.getNamespace(); 
+  nodeNamespace_ = mppi_node.getNamespace();
   std::string pose_estimate_name = getRosParam<std::string>("pose_estimate", mppi_node);
   debug_mode_ = getRosParam<bool>("debug_mode", mppi_node);
   numTimesteps_ = getRosParam<int>("num_timesteps", mppi_node);
-  useFeedbackGains_ = getRosParam<bool>("use_feedback_gains", mppi_node);
+  useWhichGains_ = getRosParam<std::string>("use_which_gains", mppi_node);
   throttleMax_ = getRosParam<float>("max_throttle", mppi_node);
   deltaT_ = 1.0/hz;
 
@@ -57,12 +58,12 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   subscribed_pose_pub_ = mppi_node.advertise<nav_msgs::Odometry>("subscribedPose", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   timing_data_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralTiming>("timingInfo", 1);
-  
+
   //Initialize the subscribers.
   pose_sub_ = global_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
                                   ros::TransportHints().tcpNoDelay());
   servo_sub_ = global_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
- 
+
   //Timer callback for path publisher
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
   statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
@@ -75,7 +76,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   activated_ = false;
   new_model_available_ = false;
   last_pose_call_ = ros::Time::now();
-  
+
   //Initialize yaw derivative to zero
   full_state_.yaw_mder = 0.0;
   status_ = 1;
@@ -101,7 +102,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
   }
 }
 
-void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls, 
+void AutorallyPlant::setSolution(std::vector<float> traj, std::vector<float> controls,
                                 util::EigenAlignedVector<float, 2, 7> gains,
                                 ros::Time ts, double loop_speed)
 {
@@ -149,7 +150,7 @@ void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
       boost::mutex::scoped_lock lock(access_guard_);
       cv::namedWindow(nodeNamespace_, cv::WINDOW_AUTOSIZE);
       cv::imshow(nodeNamespace_, debugImg_);
-    } 
+    }
   }
   if (receivedDebugImg_.load() && !is_nodelet_){
     cv::waitKey(1);
@@ -217,11 +218,18 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
     steering_ff = (1 - alpha)*controlSequence_[2*lowerIdx] + alpha*controlSequence_[2*upperIdx];
     throttle_ff = (1 - alpha)*controlSequence_[2*lowerIdx + 1] + alpha*controlSequence_[2*upperIdx + 1];
 
-    if (!useFeedbackGains_){ //Just publish the computed open loop controls
+    if (useWhichGains_.compare("none") == 0){ //Just publish the computed open loop controls
       steering = steering_ff;
       throttle = throttle_ff;
     }
-    else { //Compute the error between the current and actual state and apply feedback gains
+    else if (useWhichGains_.compare("PID") == 0) {
+        //pid_waypoint_follower pid_instance = pid_waypoint_follower();
+        //tuple<double, double> throt_steer = pid_instance.z
+        //throttle = std::get<0>(throt_steer);
+        //steering = std::get<1>(throt_steer);
+        printf("HAVE NOT INTEGATED THE PID YET");
+    }
+    else if (useWhichGains_.compare("LQR") == 0) { //Compute the error between the current and actual state and apply feedback gains
       Eigen::MatrixXf current_state(7,1);
       Eigen::MatrixXf desired_state(7,1);
       Eigen::MatrixXf deltaU;
@@ -229,7 +237,7 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
       for (int i = 0; i < 7; i++){
         desired_state(i) = (1 - alpha)*stateSequence_[7*lowerIdx + i] + alpha*stateSequence_[7*upperIdx + i];
       }
-      
+
       deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);
 
       if (std::isnan( deltaU(0) ) || std::isnan( deltaU(1))){
@@ -281,7 +289,7 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
     q0 = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2);
     q1 = -cos(phi/2)*sin(theta/2)*sin(psi/2) + cos(theta/2)*cos(psi/2)*sin(phi/2);
     q2 = cos(phi/2)*cos(psi/2)*sin(theta/2) + sin(phi/2)*cos(theta/2)*sin(psi/2);
-    q3 = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*cos(psi/2)*sin(theta/2); 
+    q3 = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*cos(psi/2)*sin(theta/2);
     pose.pose.orientation.w = q0;
     pose.pose.orientation.x = q1;
     pose.pose.orientation.y = q2;
