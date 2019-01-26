@@ -47,7 +47,7 @@ namespace autorally_control {
 
 /**
 * @class MPPICosts mppi_costs.cuh
-* @brief Standard cost funtion implementation for the MPPIController 
+* @brief Standard cost funtion implementation for the MPPIAdaptiveController
 *  
 * Maintains a collection of variables and functions which are needed for
 * computing costs in the mppi framework. These include host side functions

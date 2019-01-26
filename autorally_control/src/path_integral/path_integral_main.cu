@@ -52,8 +52,12 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #include <autorally_control/path_integral/car_bfs.cuh>
 #include <autorally_control/path_integral/car_kinematics.cuh>
 #include <autorally_control/path_integral/generalized_linear.cuh>
-#include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/run_control_loop.cuh>
+#include <autorally_control/path_integral/mppi_controller.cuh>
+#include <autorally_control/path_integral/mppi_adaptive_controller.cuh>
+#include <autorally_control/path_integral/adam.cuh>
+#include <autorally_control/path_integral/sgd.cuh>
+#include <autorally_control/path_integral/rmsprop.cuh>
 
 #include <ros/ros.h>
 #include <atomic>
@@ -61,11 +65,12 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 using namespace autorally_control;
 
 #ifdef USE_NEURAL_NETWORK_MODEL__ /*Use neural network dynamics model*/
-const int MPPI_NUM_ROLLOUTS__ = 1920;
+const int MPPI_NUM_ROLLOUTS__ = 5000;//1920;
 const int BLOCKSIZE_X = 8;
 const int BLOCKSIZE_Y = 16;
 typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsModel;
@@ -83,8 +88,6 @@ typedef GeneralizedLinear<CarBasisFuncs, 7, 2, 25, CarKinematics, 3> DynamicsMod
   typedef AutorallyPlant ControllerPlant;
   typedef MPPICosts ControllerCosts;
 #endif
-
-typedef MPPIController<DynamicsModel, ControllerCosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
 
 int main(int argc, char** argv) {
   //Ros node initialization
@@ -109,8 +112,40 @@ int main(int argc, char** argv) {
   //Define the controller
   float init_u[2] = {(float)params.init_steering, (float)params.init_throttle};
   float exploration_std[2] = {(float)params.steering_std, (float)params.throttle_std};
-  Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
+
+  #ifdef WITH_ADAM__
+    typedef AdamOptimizer Optimizer;
+    Optimizer* optim = new Optimizer(params.num_timesteps*DynamicsModel::CONTROL_DIM, params.lr,
+                                                  params.weight_decay, params.beta1, params.beta2, params.eps,
+                                                  params.amsgrad);
+
+    typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+    Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
+                                      exploration_std, init_u, params.num_iters, optimization_stride, 0,
+                                      params.dist_type);
+  #elif WITH_SGD__
+    typedef SGDOptimizer Optimizer;
+    Optimizer* optim = new Optimizer(params.num_timesteps*DynamicsModel::CONTROL_DIM, params.lr, params.momentum,
+                                     params.dampening, params.weight_decay, params.nesterov);
+
+    typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+    Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
+                                      exploration_std, init_u, params.num_iters, optimization_stride, 0,
+                                      params.dist_type);
+  #elif WITH_RMSPROP__
+    typedef RMSpropOptimizer Optimizer;
+    Optimizer* optim = new Optimizer(params.num_timesteps*DynamicsModel::CONTROL_DIM, params.lr, params.alpha,
+                                     params.eps, params.weight_decay, params.momentum, params.centered);
+
+    typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+    Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
+                                      exploration_std, init_u, params.num_iters, optimization_stride, 0,
+                                      params.dist_type);
+  #else
+    typedef MPPIController<DynamicsModel, ControllerCosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+    Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std,
                                     init_u, params.num_iters, optimization_stride);
+  #endif
 
   ControllerPlant* robot = new ControllerPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
 

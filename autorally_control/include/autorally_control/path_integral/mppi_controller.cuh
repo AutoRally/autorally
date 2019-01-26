@@ -94,7 +94,7 @@ public:
   */
   MPPIController(DYNAMICS_T* model, COSTS_T* costs, int num_timesteps, int hz, float gamma,
                  float* exploration_var, float* init_control, int num_optimization_iters = 1,
-                 int opt_stride = 1, cudaStream_t = 0);
+                 int opt_stride = 1, cudaStream_t stream = 0);
 
   /**
   * @brief Destructor for mppi controller class.
@@ -142,7 +142,6 @@ public:
 
   std::vector<float> getStateSeq();
 
-private:
   int num_iters_;
   float gamma_; ///< Value of the temperature in the softmax.
   float normalizer_; ///< Variable for the normalizing term from sampling.

@@ -57,6 +57,19 @@ typedef struct
   float throttle_std;
   float max_throttle;
   std::string model_path;
+  std::string optim_type;
+  float lr;
+  float beta1;
+  float beta2;
+  float weight_decay;
+  float eps;
+  bool amsgrad;
+  float alpha;
+  float momentum;
+  bool centered;
+  float dampening;
+  bool nesterov;
+  std::string dist_type;
 } SystemParams;
 
 inline bool fileExists (const std::string& name) {

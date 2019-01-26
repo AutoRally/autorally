@@ -11,11 +11,12 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #include <autorally_control/path_integral/car_kinematics.cuh>
 #include <autorally_control/path_integral/costs.cuh>
 #include <autorally_control/path_integral/costs_pc.cuh>
-#include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/run_control_loop.cuh>
 #include <autorally_control/path_integral/mppi.cuh>
+#include <autorally_control/path_integral/mppi_controller.cuh>
 
 #include <pluginlib/class_list_macros.h>
+
 
 namespace autorally_control{
   #ifdef USE_NEURAL_NETWORK_MODEL__ /*Use neural network dynamics model*/

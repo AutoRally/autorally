@@ -3,7 +3,7 @@
 
   <node
     pkg = "autorally_control" 
-    type = "path_integral_nn" 
+    type = "path_integral_nn_sgd"
     name = "mppi_controller"
     output = "screen">
     
@@ -24,18 +24,33 @@
     <param name="optimization_stride" value="1" />
     <param name="use_feedback_gains" value="true" />
 
+    <!--Optimizer parameters-->
+    <param name="optim_type" value="" />
+    <param name="learning_rate" value="0.8" />
+    <param name="beta1" value="0.5" />
+    <param name="beta2" value="0.5" />
+    <param name="weight_decay" value="0" />
+    <param name="eps" value="0.00000001" />
+    <param name="amsgrad" value="false" />
+    <param name="alpha" value="0.99" />
+    <param name="momentum" value="0.0" />
+    <param name="centered" value="true" />
+    <param name="dampening" value="0" />
+    <param name="nesterov" value="false" />
+
     <!--Model parameters-->
     <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
     <param name="num_iters" value="1" />
+    <param name="dist_type" value="laplace" />
 
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />
     <param name="init_throttle" value="0.0" />
-    <param name="steering_std" value="0.275" />
-    <param name="throttle_std" value="0.3" />
+    <param name="steering_std" value="0.275" /> <!-- 0.275, 1 -->
+    <param name="throttle_std" value="0.3" /> <!-- 0.3, 10 -->
 
     <!-- Control Constraints -->
     <param name="max_throttle" value=".65" />
@@ -44,11 +59,11 @@
     <param name="min_steering" value="-0.99" />
 
     <!-- Cost Parameters -->
-    <param name="l1_cost" value="false" />
-    <param name="desired_speed" value="8.0" />
-    <param name="speed_coefficient" value="4.25" />
+    <param name="l1_cost" value="true" />
+    <param name="desired_speed" value="12.0" />
+    <param name="speed_coefficient" value="15" />
     <param name="track_coefficient" value="300.0" />
-    <param name="max_slip_angle" value="1.25" />
+    <param name="max_slip_angle" value="1" />
     <param name="slip_penalty" value="10.0" />
     <param name="track_slop" value="0.0" />
     <param name="crash_coeff" value="10000.0" />
@@ -56,7 +71,7 @@
     <param name="throttle_coeff" value ="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/gazebo_costmap_05_22_2016.npz" />
+    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/marietta_costmap_09_08_2018.npz" />
 
   </node>
 

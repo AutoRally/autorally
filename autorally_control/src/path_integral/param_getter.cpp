@@ -52,8 +52,19 @@ void loadParams(SystemParams* params, ros::NodeHandle nh)
   params->throttle_std = getRosParam<double>("throttle_std", nh);
   params->max_throttle = getRosParam<double>("max_throttle", nh);
   params->model_path = getRosParam<std::string>("model_path", nh);
+  params->optim_type = getRosParam<std::string>("optim_type", nh);
+  params->lr = getRosParam<double>("learning_rate", nh);
+  params->beta1 = getRosParam<double>("beta1", nh);
+  params->beta2 = getRosParam<double>("beta2", nh);
+  params->eps = getRosParam<double>("eps", nh);
+  params->weight_decay = getRosParam<double>("weight_decay", nh);
+  params->amsgrad = getRosParam<bool>("amsgrad", nh);
+  params->alpha = getRosParam<double>("alpha", nh);
+  params->momentum = getRosParam<double>("momentum", nh);
+  params->centered = getRosParam<bool>("centered", nh);
+  params->dampening = getRosParam<double>("dampening", nh);
+  params->nesterov = getRosParam<bool>("nesterov", nh);
+  params->dist_type = getRosParam<std::string>("dist_type", nh);
 }
 
 }
-
-

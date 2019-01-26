@@ -24,51 +24,62 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /**********************************************
- * @file managed.cuh
- * @author Grady Williams <gradyrw@gmail.com>
- * @date May 24, 2017
- * @copyright 2017 Georgia Institute of Technology
- * @brief Class to be inherited by classes passed 
- * to CUDA kernels. Helps unify stream management.
+ * @file sgd.cuh
+ * @author Jake Sacks <jsacks6@gatech.edu>
+ * @date January 16, 2019
+ * @copyright 2019 Georgia Institute of Technology
+ * @brief Class definition for the SGDOtimizer.
  ***********************************************/
 
-#ifndef MPPI_MANAGED_CUH_
-#define MPPI_MANAGED_CUH_
+#ifndef SGD_OPTIMIZER_CUH_
+#define SGD_OPTIMIZER_CUH_
 
-#include <cuda_runtime.h>
+#include <vector>
+#include <algorithm>
+#include <math.h>
 
-namespace autorally_control {
+namespace autorally_control{
 
-/**
-* @class Managed managed.cuh
-* @brief Class for setting the stream to be used by dynamics and cost functions used
-* by MPPIAdaptiveController.
-*
-* This class has one variable, which is the CUDA stream, and a function which sets the 
-* stream. It is meant to be inherited by costs and dynamics classes which are passed into
-* the MPPIAdaptiveController kernels. In the past, this class used unified memory (hence the managed name),
-* so that classes could be passed by reference to CUDA kernels. However, as of right now,
-* the difficulties of using unified memory with multi-threaded CPU programs make getting
-* good performance with unified memory difficult, so this has been removed. Future implementations
-* may bring back the unified memory feature.
-*/
-class Managed 
+class SGDOptimizer
 {
+
 public:
 
-  cudaStream_t stream_ = 0; ///< The CUDA Stream that the class is bound too. 0 is the default (NULL) stream.
+/**
+* @brief Constructor SGD optimizer class.
+* @param lr Learning rate
+* @param momentum Momentum factor
+* @param dampening Dampening for momentum
+* @param weight_decay Weight decay (L2 penalty)
+* @param nesterov Enables Nesterov momentum
+*/
 
-  /**
-  @brief Sets the stream and synchronizes the device.
-  @param stream is the CUDA stream that the object is assigned too.
-  */
-  void bindToStream(cudaStream_t stream) {
-    stream_ = stream;
-    cudaDeviceSynchronize();
-  }
+SGDOptimizer(int num_params, float lr=1e-3, float momentum=0, float dampening=0, float weight_decay=0,
+             bool nesterov=false);
 
+/**
+* @brief Destructor for Adam optimizer class.
+*/
+~SGDOptimizer();
+
+void slideRunningEstimates(int stride, int param_dim);
+void step(std::vector<float> &params, std::vector<float> &grads);
+
+private:
+  float lr_; ///< learning rate
+  float weight_decay_; ///< weight decay (L2 penalty)
+  float momentum_; ///< momentum factor
+  int num_params_; ///< number of parameters to optimize
+
+  float dampening_; ///< dampening for momentum
+  bool nesterov_; ///< enables Nesterov momentum
+  bool no_dampen_; ///< flag to enable dampening after first iteration of SGD
+
+  std::vector<float> momentum_buffer_;
 };
+
+#include "sgd.cu"
 
 }
 
-#endif /* MPPI_MANAGED_CUH_*/
+#endif /* SGD_OPTIMIZER_CUH_ */

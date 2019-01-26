@@ -33,7 +33,7 @@ limitations under the License.
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
   <arg name="namespace" default=""/>
-  <arg name="world_name" default="model://urdf/worlds/populated_obstacles_marietta_video.world"/>
+  <arg name="world_name" default="model://urdf/worlds/populated_obstacles_marietta.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- parameter for other programs to use to know if we are in simulation or real world-->

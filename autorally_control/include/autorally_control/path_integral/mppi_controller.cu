@@ -111,11 +111,11 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
           u[j] = U_d[i*CONTROL_DIM + j];
         }
         else if (global_idx >= .99*NUM_ROLLOUTS) {
-          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j]*nu[j];
+          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j];//*nu[j];
           u[j] = du[j];
         }
         else {
-          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j]*nu[j];
+          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j];//*nu[j];
           u[j] = U_d[i*CONTROL_DIM + j] + du[j];
         }
         du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j] = u[j];
@@ -265,7 +265,7 @@ MPPI Controller implementation
 *******************************************************************************************************************/
 
 template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DYNAMICS_T* model, COSTS_T* costs, 
+MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIController(DYNAMICS_T* model, COSTS_T* costs,
                                                                               int num_timesteps, int hz, float gamma, 
                                                                               float* exploration_var, float* init_u, 
                                                                               int num_optimization_iters, int opt_stride,

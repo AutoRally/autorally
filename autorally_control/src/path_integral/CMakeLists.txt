@@ -57,7 +57,7 @@ target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_L
 remove_definitions(-DUSE_BASIS_FUNC_MODEL__)
 
 ###################################################################################
-#Executable for the neural network model
+#Executable for the neural network model with point cloud
 ###################################################################################
 
 add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_POINT_CLOUD__)
@@ -80,6 +80,60 @@ add_dependencies(path_integral_nn autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
 target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_POINT_CLOUD__)
+
+###################################################################################
+#Executable for the neural network model without point cloud and with Adam
+###################################################################################
+
+add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_ADAM__)
+
+cuda_add_executable(path_integral_nn_adam
+path_integral_main.cu
+autorally_pc_plant
+autorally_plant
+param_getter
+)
+add_dependencies(path_integral_nn_adam autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
+target_link_libraries(path_integral_nn_adam /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES}
+${OpenCV_LIBRARIES})
+
+remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_ADAM__)
+
+###################################################################################
+#Executable for the neural network model without point cloud and with SGD
+###################################################################################
+
+add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_SGD__)
+
+cuda_add_executable(path_integral_nn_sgd
+path_integral_main.cu
+autorally_pc_plant
+autorally_plant
+param_getter
+)
+add_dependencies(path_integral_nn_sgd autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
+target_link_libraries(path_integral_nn_sgd /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES}
+${OpenCV_LIBRARIES})
+
+remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_SGD__)
+
+###################################################################################
+#Executable for the neural network model without point cloud and with RMSprop
+###################################################################################
+
+add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_RMSPROP__)
+
+cuda_add_executable(path_integral_nn_rmsprop
+path_integral_main.cu
+autorally_pc_plant
+autorally_plant
+param_getter
+)
+add_dependencies(path_integral_nn_rmsprop autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
+target_link_libraries(path_integral_nn_rmsprop /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES}
+${OpenCV_LIBRARIES})
+
+remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_RMSPROP__)
 
 ####################################################################################
 #Executable for monitoring the status of mppi
