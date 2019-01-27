@@ -44,7 +44,7 @@
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />
     <param name="num_iters" value="1" />
-    <param name="dist_type" value="laplace" />
+    <param name="dist_type" value="normal" />
 
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />

@@ -70,7 +70,7 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 using namespace autorally_control;
 
 #ifdef USE_NEURAL_NETWORK_MODEL__ /*Use neural network dynamics model*/
-const int MPPI_NUM_ROLLOUTS__ = 5000;//1920;
+const int MPPI_NUM_ROLLOUTS__ = 1920;
 const int BLOCKSIZE_X = 8;
 const int BLOCKSIZE_Y = 16;
 typedef NeuralNetModel<7,2,3,6,32,32,4> DynamicsModel;

@@ -37,8 +37,8 @@
 #define NUM_ROLLOUTS MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::NUM_ROLLOUTS
 
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-__global__ void weightedReductionLaplaceKernel(float* states_d, float* du_d, float* nu_d,
-                                               float normalizer, int num_timesteps)
+__global__ void weightedReductionNormalKernel(float* states_d, float* U_d, float* du_d, float* nu_d,
+                                        float normalizer, int num_timesteps)
 {
   int tdx = threadIdx.x;
   int bdx = blockIdx.x;
@@ -58,6 +58,58 @@ __global__ void weightedReductionLaplaceKernel(float* states_d, float* du_d, flo
   }
   __syncthreads();
 
+  if (BLOCKSIZE_WRX*tdx < NUM_ROLLOUTS) {
+    float weight = 0;
+    for (i = 0; i < stride; i++) {
+      if (stride*tdx + i < NUM_ROLLOUTS) {
+        weight = states_d[stride*tdx + i]/normalizer;
+        for (j = 0; j < CONTROL_DIM; j++) {
+          u[j] = U_d[bdx*CONTROL_DIM + j];
+          u[j] -= du_d[(stride*tdx + i)*(num_timesteps*CONTROL_DIM) + bdx*CONTROL_DIM + j];
+          u_system[tdx*CONTROL_DIM + j] += weight*u[j];
+        }
+      }
+    }
+  }
+  __syncthreads();
+  if (tdx == 0 && bdx < num_timesteps) {
+    for (i = 0; i < CONTROL_DIM; i++) {
+      u[i] = 0;
+    }
+    for (i = 0; i < (NUM_ROLLOUTS-1)/BLOCKSIZE_WRX + 1; i++) {
+      for (j = 0; j < CONTROL_DIM; j++) {
+        u[j] += u_system[CONTROL_DIM*i + j];
+      }
+    }
+    for (i = 0; i < CONTROL_DIM; i++) {
+      du_d[CONTROL_DIM*bdx + i] = u[i];
+    }
+  }
+}
+
+template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+__global__ void weightedReductionLaplaceKernel(float* states_d, float* U_d, float* du_d, float* nu_d,
+                                               float normalizer, int num_timesteps)
+{
+  int tdx = threadIdx.x;
+  int bdx = blockIdx.x;
+
+  __shared__ float u_system[STATE_DIM*((NUM_ROLLOUTS-1)/BLOCKSIZE_WRX + 1)];
+  int stride = BLOCKSIZE_WRX;
+
+  float u[CONTROL_DIM];
+  float du[CONTROL_DIM];
+
+  int i,j;
+  for (i = 0; i < CONTROL_DIM; i++) {
+    u[i] = 0;
+  }
+
+  for (j = 0; j < CONTROL_DIM; j++) {
+    u_system[tdx*CONTROL_DIM + j] = 0;
+  }
+  __syncthreads();
+
   float sign;
   if (BLOCKSIZE_WRX*tdx < NUM_ROLLOUTS) {
     float weight = 0;
@@ -65,7 +117,8 @@ __global__ void weightedReductionLaplaceKernel(float* states_d, float* du_d, flo
       if (stride*tdx + i < NUM_ROLLOUTS) {
         weight = states_d[stride*tdx + i]/normalizer;
         for (j = 0; j < CONTROL_DIM; j++) {
-          u[j] = du_d[(stride*tdx + i)*(num_timesteps*CONTROL_DIM) + bdx*CONTROL_DIM + j];
+          du[j] = du_d[(stride*tdx + i)*(num_timesteps*CONTROL_DIM) + bdx*CONTROL_DIM + j];
+          u[j] =  U_d[bdx*CONTROL_DIM + j] - du[j];
           sign = u[j]>0 ? 1. : -1.;
           if (u[j] == 0) sign = 0.;
           u_system[tdx*CONTROL_DIM + j] += weight * nu_d[j] * sign;
@@ -90,7 +143,7 @@ __global__ void weightedReductionLaplaceKernel(float* states_d, float* du_d, flo
 }
 
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-__global__ void weightedReductionCauchyKernel(float* states_d, float* du_d, float* nu_d,
+__global__ void weightedReductionCauchyKernel(float* states_d, float* U_d, float* du_d, float* nu_d,
                                               float normalizer, int num_timesteps)
 {
   int tdx = threadIdx.x;
@@ -119,6 +172,7 @@ __global__ void weightedReductionCauchyKernel(float* states_d, float* du_d, floa
         weight = states_d[stride*tdx + i]/normalizer;
         for (j = 0; j < CONTROL_DIM; j++) {
           u[j] = du_d[(stride*tdx + i)*(num_timesteps*CONTROL_DIM) + bdx*CONTROL_DIM + j];
+          u[j] = U_d[bdx*CONTROL_DIM + j] - u[j];
           u_system[tdx*CONTROL_DIM + j] += weight * 4 * u[j] / (1 + pow(u[j]/nu_d[j], 2));
         }
       }
@@ -141,25 +195,33 @@ __global__ void weightedReductionCauchyKernel(float* states_d, float* du_d, floa
 }
 
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-void launchWeightedReductionLaplaceKernel(float* state_costs_d, float* du_d, float* nu_d,
+void launchWeightedReductionNormalKernel(float* state_costs_d, float* U_d, float* du_d, float* nu_d,
                                    float normalizer, int num_timesteps, cudaStream_t stream)
 {
   dim3 dimBlock((NUM_ROLLOUTS-1)/BLOCKSIZE_WRX + 1, 1, 1);
   dim3 dimGrid(num_timesteps, 1, 1);
-  ROS_INFO("INSIDE LAUNCH KERNEL.");
-  weightedReductionLaplaceKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>
-    (state_costs_d, du_d, nu_d, normalizer, num_timesteps);
+  weightedReductionNormalKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0,
+  stream>>> (state_costs_d, U_d, du_d, nu_d, normalizer, num_timesteps);
 }
 
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
-void launchWeightedReductionCauchyKernel(float* state_costs_d, float* du_d, float* nu_d,
+void launchWeightedReductionLaplaceKernel(float* state_costs_d, float* U_d, float* du_d, float* nu_d,
+                                   float normalizer, int num_timesteps, cudaStream_t stream)
+{
+  dim3 dimBlock((NUM_ROLLOUTS-1)/BLOCKSIZE_WRX + 1, 1, 1);
+  dim3 dimGrid(num_timesteps, 1, 1);
+  weightedReductionLaplaceKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>
+    (state_costs_d, U_d, du_d, nu_d, normalizer, num_timesteps);
+}
+
+template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void launchWeightedReductionCauchyKernel(float* state_costs_d, float* U_d, float* du_d, float* nu_d,
                                           float normalizer, int num_timesteps, cudaStream_t stream)
 {
   dim3 dimBlock((NUM_ROLLOUTS-1)/BLOCKSIZE_WRX + 1, 1, 1);
   dim3 dimGrid(num_timesteps, 1, 1);
-  ROS_INFO("INSIDE LAUNCH KERNEL.");
   weightedReductionCauchyKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>
-    (state_costs_d, du_d, nu_d, normalizer, num_timesteps);
+    (state_costs_d, U_d, du_d, nu_d, normalizer, num_timesteps);
 }
 
 #undef BLOCKSIZE_WRX
@@ -285,27 +347,24 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
 
     //Compute the cost weighted average.
      if (dist_type_ == NORMAL) {
-       launchWeightedReductionKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(
-         Base::traj_costs_d_, Base::du_d_, Base::nu_d_, Base::normalizer_, Base::numTimesteps_, Base::stream_);
+       launchWeightedReductionNormalKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>(
+         Base::traj_costs_d_, Base::U_d_, Base::du_d_, Base::nu_d_, Base::normalizer_, Base::numTimesteps_,
+         Base::stream_);
      } else if (dist_type_ == LAPLACE) {
        launchWeightedReductionLaplaceKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>(
-         Base::traj_costs_d_, Base::du_d_, Base::nu_d_, Base::normalizer_, Base::numTimesteps_, Base::stream_);
+         Base::traj_costs_d_, Base::U_d_, Base::du_d_, Base::nu_d_, Base::normalizer_, Base::numTimesteps_,
+         Base::stream_);
      } else if (dist_type_ == CAUCHY) {
        launchWeightedReductionCauchyKernel<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>(
-         Base::traj_costs_d_, Base::du_d_, Base::nu_d_, Base::normalizer_, Base::numTimesteps_, Base::stream_);
+         Base::traj_costs_d_, Base::U_d_, Base::du_d_, Base::nu_d_, Base::normalizer_, Base::numTimesteps_,
+         Base::stream_);
      }
     //Transfer control update to host.
     HANDLE_ERROR( cudaMemcpyAsync(Base::du_.data(), Base::du_d_, Base::numTimesteps_*CONTROL_DIM*sizeof(float),
                                   cudaMemcpyDeviceToHost, Base::stream_));
     cudaStreamSynchronize(Base::stream_);
 
-    for (int i=0; i<Base::numTimesteps_; i++) {
-      for (int j=0; j<CONTROL_DIM; j++) {
-        grads_[i*CONTROL_DIM + j] = Base::U_[i*CONTROL_DIM + j] - Base::du_[i*CONTROL_DIM + j];
-        //ROS_INFO("u[%d, %d]: %f, grad[%d, %d]: %f", i, j, Base::U_[i*CONTROL_DIM + j, grads_[i*CONTROL_DIM + j]]);
-      }
-    }
-    optim_->step(Base::U_, grads_);
+    optim_->step(Base::U_, Base::du_);
   }
   //Smooth for the next optimization round
   Base::savitskyGolay();
