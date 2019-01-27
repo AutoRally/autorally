@@ -68,7 +68,7 @@ class Lap:
 		self.prefix = prefix
 		self.pub = rospy.Publisher('lap_stats', pathIntegralStats, queue_size = 1)
 		rospy.Subscriber('obstacle_reset', resetObstacles, self.reset_callback)
-		rospy.Subscriber("/pose_estimate", Odometry, self.process_pose)
+		rospy.Subscriber("/mppi_controller/subscribedPose", Odometry, self.process_pose)
 
 	def reset_lap(self):
 		self.last_eval = 0

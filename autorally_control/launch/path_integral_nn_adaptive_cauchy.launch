@@ -26,7 +26,7 @@
 
     <!--Optimizer parameters-->
     <param name="optim_type" value="" />
-    <param name="learning_rate" value="0.9" />
+    <param name="learning_rate" value="1.0" />
     <param name="beta1" value="0.5" />
     <param name="beta2" value="0.5" />
     <param name="weight_decay" value="0" />
@@ -42,15 +42,15 @@
     <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
 
     <!-- Control hyper-parameters-->
-    <param name="gamma" value="0.2" />
+    <param name="gamma" value="0.1" />
     <param name="num_iters" value="1" />
     <param name="dist_type" value="cauchy" />
 
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />
     <param name="init_throttle" value="0.0" />
-    <param name="steering_std" value="0.21" /> <!-- 0.275, 1 -->
-    <param name="throttle_std" value="0.21" /> <!-- 0.3, 10 -->
+    <param name="steering_std" value="0.275" />
+    <param name="throttle_std" value="0.3" />
 
     <!-- Control Constraints -->
     <param name="max_throttle" value=".65" />
@@ -61,8 +61,8 @@
     <!-- Cost Parameters -->
     <param name="l1_cost" value="true" />
     <param name="desired_speed" value="12.0" />
-    <param name="speed_coefficient" value="25" />
-    <param name="track_coefficient" value="500.0" />
+    <param name="speed_coefficient" value="15" />
+    <param name="track_coefficient" value="250.0" />
     <param name="max_slip_angle" value="1.25" />
     <param name="slip_penalty" value="10.0" />
     <param name="track_slop" value="0.0" />
