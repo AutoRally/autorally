@@ -26,7 +26,7 @@
 
     <!--Optimizer parameters-->
     <param name="optim_type" value="" />
-    <param name="learning_rate" value="1" />
+    <param name="learning_rate" value="0.9" />
     <param name="beta1" value="0.5" />
     <param name="beta2" value="0.5" />
     <param name="weight_decay" value="0" />
@@ -63,7 +63,7 @@
     <param name="desired_speed" value="12.0" />
     <param name="speed_coefficient" value="15" />
     <param name="track_coefficient" value="300.0" />
-    <param name="max_slip_angle" value="1" />
+    <param name="max_slip_angle" value="1.25" />
     <param name="slip_penalty" value="10.0" />
     <param name="track_slop" value="0.0" />
     <param name="crash_coeff" value="10000.0" />

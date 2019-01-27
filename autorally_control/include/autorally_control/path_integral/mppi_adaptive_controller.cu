@@ -302,7 +302,6 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
           //ROS_INFO("du: %f", noise_[i*CONTROL_DIM + j]);
         } else {
           noise_[i*CONTROL_DIM + j] = cauchy_dist_[j](rng_);
-          //ROS_INFO("du: %f", noise_[i*CONTROL_DIM + j]);
         }
       }
     }

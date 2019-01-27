@@ -42,15 +42,15 @@
     <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
 
     <!-- Control hyper-parameters-->
-    <param name="gamma" value="0.2" />
+    <param name="gamma" value="0.22" />
     <param name="num_iters" value="1" />
     <param name="dist_type" value="laplace" />
 
     <!-- Control parameters -->
     <param name="init_steering" value="0.0" />
     <param name="init_throttle" value="0.0" />
-    <param name="steering_std" value="0.33" /> <!-- 0.275, 1 -->
-    <param name="throttle_std" value="0.33" /> <!-- 0.3, 10 -->
+    <param name="steering_std" value="0.21" /> <!-- 0.275, 1 -->
+    <param name="throttle_std" value="0.21" /> <!-- 0.3, 10 -->
 
     <!-- Control Constraints -->
     <param name="max_throttle" value=".65" />
