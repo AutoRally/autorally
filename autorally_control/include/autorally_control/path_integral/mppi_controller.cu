@@ -329,7 +329,7 @@ void MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::allocateCuda
   HANDLE_ERROR( cudaMalloc((void**)&state_d_, STATE_DIM*sizeof(float)));
   HANDLE_ERROR( cudaMalloc((void**)&nu_d_, STATE_DIM*sizeof(float)));
   HANDLE_ERROR( cudaMalloc((void**)&traj_costs_d_, NUM_ROLLOUTS*sizeof(float)));
-  HANDLE_ERROR( cudaMalloc((void**)&U_d_, CONTROL_DIM*NUM_ROLLOUTS));
+  HANDLE_ERROR( cudaMalloc((void**)&U_d_, CONTROL_DIM*numTimesteps_*sizeof(float)));
   HANDLE_ERROR( cudaMalloc((void**)&du_d_, NUM_ROLLOUTS*numTimesteps_*CONTROL_DIM*sizeof(float)));
 }
 
