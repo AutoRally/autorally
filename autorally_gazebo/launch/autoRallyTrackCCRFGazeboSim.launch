@@ -84,12 +84,6 @@ limitations under the License.
         type="ground_truth_republisher.py" output="screen">
   </node>
 
-  <include file="$(find autorally_core)/launch/stateEstimator.launch">
-    <arg name="sim" value="true"/>
-    <arg name="InvertY" value="false"/>
-    <arg name="InvertZ" value="false"/>
-    <arg name="FixedInitialPose" value="true"/>
-  </include>
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
   <include file="$(find autorally_control)/launch/joystickController.launch" />
 </launch>

@@ -43,7 +43,7 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
    * cmake-curses-gui
    * synaptic
    * python-termcolor
-   
+
    ```sudo apt-get install cutecom cmake-curses-gui synaptic python-termcolor```
 
 3. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
@@ -92,7 +92,7 @@ Due to the additional requirement of ROS's distributed launch system, you must r
 
 before using any AutoRally components. See the [wiki](https://github.com/AutoRally/autorally/wiki) for more information about how to set this system up for distributed launches on your vehicle platform.
 
-_Note:_ If you are unfamiliar with catkin, please know that you must run `source catkin_ws/devel/setup.sh` before ROS will be able to locate the autorally packages. This line can be added to your ~/.bashrc file.
+_Note:_ If you are unfamiliar with catkin, please know that you must run `source catkin_ws/devel/setup.sh` before ROS will be able to locate the autorally packages (and thus you must run this before sourcing `setupEnvLocal.sh`). This line can be added to your ~/.bashrc file so that it is automatically run on opening a terminal.
 
 ### 5. Generate Documentation
 
@@ -106,13 +106,13 @@ To view code documentation open `autorally/doc/html/index.html` in a web browser
 
 You can use a USB gamepad to drive the simulated platform around. On startup, the `runstop` message published by the `joystick` node is **false**. Press any of the buttons by the right stick (normally labelled X, Y, A, B or square, triangle, X, circle) to toggle the published value.
 
-Verify runstop motion is enabled by looking at the `runstopMotionEnabled` paramter in the `/chassisState` topic.
+Verify runstop motion is enabled by looking at the `runstopMotionEnabled` field in the `/chassisState` topic (`rostopic echo /chassisState`).
 
 If you aren't using a gamepad, you will have to configure another source of runstop information for the platform to move:
 
-- Comment out line 89 of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
+- Comment out the line `<include file="$(find autorally_control)/launch/joystickController.launch" />` near the end of `autorally_gazebo/launch/autoRallyTrackGazeboSim.launch`
 
-- ```rosrun rqt_publisher rqt_publisher```
+- `rosrun rqt_publisher rqt_publisher`
 
 and configure rqt_publisher to publish a message to topic `/runstop` of type `autorally_msgs/runstop` at 1 Hz with `sender` set to `rqt_publisher` and  `motionEnabled` set to **true**.
 
@@ -147,6 +147,6 @@ More detailed explanations of the controllers and state estimator can be found o
 
 [Controlling the AutoRally platform](https://github.com/AutoRally/autorally/wiki/Controlling%20the%20AutoRally%20Platform) is a tutorial for how your own controller can control the AutoRally platform (in simulation or on hardware).
 
-[Multiple AutoRally Platforms In Simulation](https://github.com/AutoRally/autorally/wiki/Running-Multiple-Vehicles-In-Simulation-(Gazebo)) is a tutorial on how to launch and control 2 or more platforms in simulation.
+[Running Vehicles in Simulation](https://github.com/AutoRally/autorally/wiki/AutoRally-Gazebo-Simulation) is a tutorial on how run gazebo in the two different worlds and with multiple vehicles.
 
 If you are configuring a physical AutoRally platform, the next step is to configure the compute box, all of the peripherals, and the launch system. Those instructions are found in the [Platform Configuration Instructions](https://github.com/AutoRally/autorally/wiki/Platform%20Configuration%20Instructions).
