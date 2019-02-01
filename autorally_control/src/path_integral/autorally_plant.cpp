@@ -31,7 +31,7 @@
  * @brief Implementation of the AutorallyPlant class
  ***********************************************/
 #include <autorally_control/path_integral/autorally_plant.h>
-#include <autorally_control/PID_controller/pid_waypoint_follower.h>
+#include <autorally_control/PID_controller/pid_waypoint_follower.h>     //TODO: Matthieu, check this
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +51,8 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
   stateSequence_.resize(AUTORALLY_STATE_DIM*numTimesteps_);
+
+  pid_instance_ = pid_waypoint_follower();
 
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
@@ -222,34 +224,36 @@ void AutorallyPlant::poseCall(nav_msgs::Odometry pose_msg)
       steering = steering_ff;
       throttle = throttle_ff;
     }
-    else if (useWhichGains_.compare("PID") == 0) {
-        //pid_waypoint_follower pid_instance = pid_waypoint_follower();
-        //tuple<double, double> throt_steer = pid_instance.z
-        //throttle = std::get<0>(throt_steer);
-        //steering = std::get<1>(throt_steer);
-        printf("HAVE NOT INTEGATED THE PID YET");
-    }
-    else if (useWhichGains_.compare("LQR") == 0) { //Compute the error between the current and actual state and apply feedback gains
-      Eigen::MatrixXf current_state(7,1);
-      Eigen::MatrixXf desired_state(7,1);
-      Eigen::MatrixXf deltaU;
-      current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
-      for (int i = 0; i < 7; i++){
-        desired_state(i) = (1 - alpha)*stateSequence_[7*lowerIdx + i] + alpha*stateSequence_[7*upperIdx + i];
-      }
+    else {
+        Eigen::MatrixXf current_state(7,1);
+        Eigen::MatrixXf desired_state(7,1);
+        Eigen::MatrixXf deltaU;
+        current_state << full_state_.x_pos, full_state_.y_pos, full_state_.yaw, full_state_.roll, full_state_.u_x, full_state_.u_y, full_state_.yaw_mder;
 
-      deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);
+        for (int i = 0; i < 7; i++){
+          desired_state(i) = (1 - alpha)*stateSequence_[7*lowerIdx + i] + alpha*stateSequence_[7*upperIdx + i];
+        }
 
-      if (std::isnan( deltaU(0) ) || std::isnan( deltaU(1))){
-        steering = steering_ff;
-        throttle = throttle_ff;
-      }
-      else {
-        steering_fb = deltaU(0);
-        throttle_fb = deltaU(1);
-        steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
-        throttle = fmin(throttleMax_, fmax(-0.99, throttle_ff + throttle_fb));
-      }
+        if (useWhichGains_.compare("PID") == 0) {
+            printf("--- TESTING NEW PID CONTROLLER! ---");
+            tuple<float, float> throt_steer = pid_instance_.process_pose(/*pose_msg, */current_state, desired_state);
+            throttle = std::get<0>(throt_steer);
+            steering = std::get<1>(throt_steer);
+        }
+        else if (useWhichGains_.compare("LQR") == 0) { //Compute the error between the current and actual state and apply feedback gains
+            deltaU = ((1-alpha)*feedback_gains_[lowerIdx] + alpha*feedback_gains_[upperIdx])*(current_state - desired_state);
+
+            if (std::isnan( deltaU(0) ) || std::isnan( deltaU(1))){
+              steering = steering_ff;
+              throttle = throttle_ff;
+            }
+            else {
+              steering_fb = deltaU(0);
+              throttle_fb = deltaU(1);
+              steering = fmin(0.99, fmax(-0.99, steering_ff + steering_fb));
+              throttle = fmin(throttleMax_, fmax(-0.99, throttle_ff + throttle_fb));
+          }
+        }
     }
     pubControl(steering, throttle);
   }

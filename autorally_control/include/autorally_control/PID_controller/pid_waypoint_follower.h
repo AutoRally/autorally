@@ -33,9 +33,17 @@
  * @details Autonomously drives system around a given set of waypoints using a PID compute throttle values and to compute steering values.
  ***********************************************/
 
+// TODO: Make a launch file
+// When debugging ROS: Look at topics your program is supposed to be taking in and check they're all there
+
+
+#ifndef PID_WAYPOINT_FOLLOWER
+#define PID_WAYPOINT_FOLLOWER
+
 // General Imports:
 #include <chrono>
 #include <vector>
+
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -62,6 +70,8 @@ class pid_waypoint_follower {
         pid_waypoint_follower();
         ~pid_waypoint_follower();
 
+        tuple<float, float> process_pose(/*nav_msgs::Odometry pose_msg, */Eigen::MatrixXf current_state, Eigen::MatrixXf desired_state); // Callback function
+
     private:
         /** --- VARIABLES --- **/
         // ROS Imports
@@ -69,7 +79,7 @@ class pid_waypoint_follower {
         ros::Subscriber _controller_sub;
 
         // Final variables
-        double _DEFAULT_FRONTBRAKE_VALUE = -5.0;
+        double _DEFAULT_FRONTBRAKE_VALUE = -5;
 
         // Path variables
         string _WAYPOINTS_SOURCE_FILE = "/home/capuanomat/catkin_ws/src/autorally_private/autorally_private_control/src/matthieu_path_follower/FastDataShort1D.npz";
@@ -102,11 +112,12 @@ class pid_waypoint_follower {
         double _last_time;
 
         /** --- METHODS --- **/
-        void process_pose(nav_msgs::Odometry pose_msg); // Callback function
-        vector<double> convert_quat_to_euler(geometry_msgs::Pose_<std::allocator<void> >::_orientation_type quat);
-        tuple<double, double> run_main_controllers(double x_current, double y_current, double heading_current, double v_x_current, double v_y_current);
+        //vector<double> convert_quat_to_euler(geometry_msgs::Pose_<std::allocator<void> >::_orientation_type quat);
+        tuple<float, float> run_main_controllers(double x_current, double y_current, double heading_current, double v_x_current, double v_y_current, Eigen::MatrixXf desired_state);
         tuple<double, double> find_nearest(std::vector<double> &t_path, double value);
-        double throttlePID(double x_current, double y_current, double heading_current, double x_target, double y_target, double velocity_current, double velocity_target, double dtime);
-        double steeringPID(double x_current, double y_current, double heading_current, double x_target, double y_target, double dtime);
+        float throttlePID(double x_current, double y_current, double heading_current, double x_target, double y_target, double velocity_current, double velocity_target, double dtime);
+        float steeringPID(double x_current, double y_current, double heading_current, double x_target, double y_target, double dtime);
         Eigen::Matrix3d get_transformation_matrix(double x_current, double y_current, double x_target, double y_target, double heading);
 };
+
+#endif

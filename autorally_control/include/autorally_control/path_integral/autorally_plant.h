@@ -37,6 +37,7 @@
 #include "param_getter.h"
 
 #include <autorally_control/ddp/util.h>
+#include <autorally_control/PID_controller/pid_waypoint_follower.h>
 #include <autorally_msgs/chassisCommand.h>
 #include <autorally_msgs/chassisState.h>
 #include <autorally_msgs/runstop.h>
@@ -114,7 +115,7 @@ public:
   float throttleMax_ = 0.99;
   int heading_multiplier_ = 0;
 
-	boost::mutex access_guard_;
+  boost::mutex access_guard_;
   std::string nodeNamespace_;
 
   bool new_model_available_;
@@ -126,6 +127,8 @@ public:
   std::vector<float> stateSequence_;
   util::EigenAlignedVector<float, 2, 7> feedback_gains_;
   ros::Time solutionTs_;
+
+  pid_waypoint_follower pid_instance_;
 
   int numTimesteps_;
   double deltaT_;
@@ -223,7 +226,7 @@ public:
 protected:
   //SystemParams mppiParams_;
   int poseCount_ = 0;
-  std::string useWhichGains_ = "none";   // Can be: "none", "PID", "LQR"
+  std::string useWhichGains_ = "PID";   // Can be: "none", "PID", "LQR"
   std::atomic<bool> receivedDebugImg_;
   std::atomic<bool> debugShutdownSignal_;
   std::atomic<bool> debugShutdownSignalAcknowledged_;

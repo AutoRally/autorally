@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   //Define the controller
   float init_u[2] = {(float)params.init_steering, (float)params.init_throttle};
   float exploration_std[2] = {(float)params.steering_std, (float)params.throttle_std};
-  Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
+  Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std,
                                     init_u, params.num_iters, optimization_stride);
 
   AutorallyPlant* robot = new AutorallyPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);

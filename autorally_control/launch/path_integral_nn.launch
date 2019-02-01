@@ -2,11 +2,11 @@
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
   <node
-    pkg = "autorally_control" 
-    type = "path_integral_nn" 
+    pkg = "autorally_control"
+    type = "path_integral_nn"
     name = "mppi_controller"
     output = "screen">
-    
+
     <!--Pose topic configuration parameters -->
     <param name="pose_estimate" value="/ground_truth/state" />
     <param name="path_topic" value="/mppi_controller/nominal_path" />
@@ -22,7 +22,7 @@
     <param name="heading" value="2.35" />
     <!-- How many controls are executed between optimization loops -->
     <param name="optimization_stride" value="1" />
-    <param name="use_feedback_gains" value="true" />
+    <param name="use_which_gains" value="PID" />
 
     <!--Model parameters-->
     <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
@@ -61,19 +61,19 @@
   </node>
 
   <node
-    pkg = "autorally_control" 
-    type = "path_integral_monitor" 
+    pkg = "autorally_control"
+    type = "path_integral_monitor"
     name = "mppi_monitor"
     output = "screen">
   </node>
 
   <node
-    pkg = "autorally_control" 
-    type = "lap_stats.py" 
+    pkg = "autorally_control"
+    type = "lap_stats.py"
     name = "stat_tracker"
     output = "screen">
     <param name="controller_type" value="mppi_controller" />
-    <param name="tag" value="Neural Network Model - Path Integral"/> 
+    <param name="tag" value="Neural Network Model - Path Integral"/>
   </node>
 
 </launch>

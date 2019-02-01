@@ -34,21 +34,11 @@
  ***********************************************/
 
 #include "pid_waypoint_follower.h"
-
 using namespace std;
 
 
 pid_waypoint_follower::pid_waypoint_follower() {
-
-    // Creating NodeHandle, which is necessary to create subscribers and publishers as below
-    ros::NodeHandle n;
-    _controller_sub = n.subscribe("/pose_estimate", 1, &pid_waypoint_follower::process_pose, this);
-    _m_chassisCommandPub = n.advertise<autorally_msgs::chassisCommand>("/pid_waypoint_follower/chassisCommand", 1);
-
-    // Using cnpy to read in .npz file with waypoints to follow. npz file should be a 1D array.
-    cnpy::npz_t path_array = cnpy::npz_load(_WAYPOINTS_SOURCE_FILE);
-    cnpy::NpyArray path_raw = path_array["oneD_path"];
-    _path = path_raw.as_vec<double>();
+    // Nothing to see here people. Move along.
 }
 
 
@@ -59,12 +49,14 @@ pid_waypoint_follower::~pid_waypoint_follower() {
 }
 
 
-void pid_waypoint_follower::process_pose(nav_msgs::Odometry pose_msg) {
+tuple<float, float> pid_waypoint_follower::process_pose(/*nav_msgs::Odometry pose_msg, */Eigen::MatrixXf current_state, Eigen::MatrixXf desired_state) {
+
+    /*
     // Get the pose from the message. This is the actual real time pose estimate from the sensors.
     double x = pose_msg.pose.pose.position.x;
     double y = pose_msg.pose.pose.position.y;
-    double x_dot = pose_msg.twist.twist.linear.x;
-    double y_dot = pose_msg.twist.twist.linear.y;
+    double x_dot = pose_msg.twist.twist.linear.x; // x_vel
+    double y_dot = pose_msg.twist.twist.linear.y; // y_vel
 
     vector<double> r_p_ya = convert_quat_to_euler(pose_msg.pose.pose.orientation);
     double r = r_p_ya[0];
@@ -85,28 +77,16 @@ void pid_waypoint_follower::process_pose(nav_msgs::Odometry pose_msg) {
     vel_bf = vel_wf * rot_mat;
     double v_x = vel_bf[0];
     double v_y = vel_bf[1];
+    */
 
     // The PIDs are called every time a new pose estimate is generated, which happens at 200Hz
-    tuple<double, double> throt_steer = run_main_controllers(x, y, ya, v_x, v_y);
-    double throttle = std::get<0>(throt_steer);
-    double steering = std::get<1>(throt_steer);
+    //tuple<float, float> throt_steer = run_main_controllers(x, y, ya, v_x, v_y);
+    tuple<float, float> throt_steer = run_main_controllers(current_state.x_pos, current_state.y_pos, current_state.yaw, current_state.u_x, current_state.u_y, desired_state);
 
-    //printf("Throttle: %f --- Steering: %f \n", throttle, steering);
-
-    autorally_msgs::chassisCommand cmd;
-    cmd.throttle = throttle;
-    cmd.steering = steering;
-    cmd.frontBrake = _DEFAULT_FRONTBRAKE_VALUE;
-    cmd.header.stamp = pose_msg.header.stamp;
-    cmd.header.frame_id = "pid_waypoint_follower";
-    cmd.sender = "pid_waypoint_follower";
-
-    _m_chassisCommandPub.publish(cmd);
-
-    printf("(PUBLISHED) Throttle: %f --- Steering: %f \n", cmd.throttle, cmd.steering);
+    return throt_steer;
 }
 
-
+/*
 vector<double> pid_waypoint_follower::convert_quat_to_euler(geometry_msgs::Pose_<std::allocator<void>>::_orientation_type quat) {
     double q0 = quat.w;
     double q1 = quat.x;
@@ -119,16 +99,13 @@ vector<double> pid_waypoint_follower::convert_quat_to_euler(geometry_msgs::Pose_
     double yaw = atan2(2*q1*q2 + 2*q0*q3, pow(q1, 2) + pow(q0, 2) - pow(q3, 2) - pow(q2, 2));
     return {roll, pitch, yaw};
 }
+*/
 
+tuple<float, float> pid_waypoint_follower::run_main_controllers(double x_current, double y_current, double heading_current, double v_x_current, double v_y_current, Eigen::MatrixXf desired_state) {
 
-tuple<double, double> pid_waypoint_follower::run_main_controllers(double x_current, double y_current, double heading_current, double v_x_current, double v_y_current) {
+    cout << "\n--- Running pid_waypoint_follower function un_main_controllers ---" << endl;
+
     /*
-    The primary method for calling the PID controllers. It finds the current target waypoints, and runs the throttle and steering PID controllers
-    NOTE: We use time-indexing
-    */
-
-    cout << "\n--- Running run_main_controllers ---" << endl;
-
     // Getting the NOMINAL path around the track
     std::vector<double> t_path, x_path, y_path, heading_path, roll_path, v_x_path, v_y_path, negative_heading_rate_path, steering_path, throttle_path;
 
@@ -146,6 +123,7 @@ tuple<double, double> pid_waypoint_follower::run_main_controllers(double x_curre
         steering_path.push_back(                _path[8 * _STRIDE + i]);
         throttle_path.push_back(                _path[9 * _STRIDE + i]);
     }
+    */
 
     // If this is the firts time calling run_main_controllers, we start the chronometer.
     if (!_time_flag) {
@@ -160,6 +138,7 @@ tuple<double, double> pid_waypoint_follower::run_main_controllers(double x_curre
 
     printf("TIMMMEE ====> %f\n", time_current);
 
+    /*
     // Find the entry in t (the time vector) that is closes to the current time and find corresponding x & y (WHERE WE WANT TO BE AT TIME T)
     tuple<double, double> closest_index_and_t = find_nearest(t_path, time_current);
     int index_target = get<0>(closest_index_and_t);
@@ -169,12 +148,18 @@ tuple<double, double> pid_waypoint_follower::run_main_controllers(double x_curre
     double t_target = t_path[index_target];
     double x_target = x_path[index_target];
     double y_target = y_path[index_target];
+    */
+
+    float x_target = desired_state(0);
+    float y_target = desired_state(1);
+    float velocity_target = desired_state(4);
+
 
     // 1. Compute throttle PID
-    double velocity_target = v_x_path[index_target];
+    //double velocity_target = v_x_path[index_target];
     double velocity_current = v_x_current;
 
-    double throttle = throttle_path[index_target] + throttlePID(x_current, y_current, heading_current, x_target, y_target, velocity_current, velocity_target, (time_current - _last_time));
+    float throttle = throttle_path[index_target] + throttlePID(x_current, y_current, heading_current, x_target, y_target, velocity_current, velocity_target, (time_current - _last_time));
     if (throttle > 1.0) {
         throttle = 1.0;
     } else if (throttle < -1.0) {
@@ -182,8 +167,7 @@ tuple<double, double> pid_waypoint_follower::run_main_controllers(double x_curre
     }
 
     // 2. Compute steering PID
-    double steering = steering_path[index_target] + steeringPID(x_current, y_current, heading_current, x_target, y_target, (time_current - _last_time));
-    printf("GIVEN STEERING: %f\n", steering);
+    float steering = steering_path[index_target] + steeringPID(x_current, y_current, heading_current, x_target, y_target, (time_current - _last_time));
     if (steering > 1.0) {
         steering = 1.0;
     } else if (steering < -1.0) {
@@ -198,7 +182,7 @@ tuple<double, double> pid_waypoint_follower::run_main_controllers(double x_curre
     return std::make_tuple(throttle, steering);
 }
 
-
+/*
 tuple<double, double> pid_waypoint_follower::find_nearest(std::vector<double> &t_path, double t_current) {
     // To find the element in t_path closest to the current time we:
     // 1. Subtract t_current from all entries in t_path
@@ -224,9 +208,9 @@ tuple<double, double> pid_waypoint_follower::find_nearest(std::vector<double> &t
 
     return std::make_tuple(min_index, min);
 }
+*/
 
-
-double pid_waypoint_follower::throttlePID(double x_current, double y_current, double heading_current, double x_target, double y_target, double velocity_current, double velocity_target, double dtime) {
+float pid_waypoint_follower::throttlePID(double x_current, double y_current, double heading_current, double x_target, double y_target, double velocity_current, double velocity_target, double dtime) {
     double min_I_term = -5;
     double max_I_term = 5;
 
@@ -251,12 +235,12 @@ double pid_waypoint_follower::throttlePID(double x_current, double y_current, do
     double D = velocity_target - velocity_current;
 
     // Finally, the PID value for the throttle is:
-    double PID = _throttle_kP * P + _throttle_kI * I + _throttle_kD * D;
+    float PID = _throttle_kP * P + _throttle_kI * I + _throttle_kD * D;
     return PID;
 }
 
 
-double pid_waypoint_follower::steeringPID(double x_current, double y_current, double heading_current, double x_target, double y_target, double dtime) {
+float pid_waypoint_follower::steeringPID(double x_current, double y_current, double heading_current, double x_target, double y_target, double dtime) {
     double min_I_term = -1.0;
     double max_I_term = 1.0;
 
@@ -313,7 +297,7 @@ double pid_waypoint_follower::steeringPID(double x_current, double y_current, do
     double D = 0.0;
 
     // Finally, the PID value for the throttle is:
-    double PID = -_steering_kP * P - _steering_kI * I - _steering_kD * D;
+    float PID = -_steering_kP * P - _steering_kI * I - _steering_kD * D;
     return PID;
 }
 
@@ -326,17 +310,4 @@ Eigen::Matrix3d pid_waypoint_follower::get_transformation_matrix(double x_curren
                             -sin(heading), cos(heading), ty,
                             0, 0, 1;
     return transformation_matrix;
-}
-
-
-int main(int argc, char** argv) {
-    // TODO: Should we put main function in different file?
-    cout << "--- Starting pid_waypoint_follower.cpp ---" << endl;
-
-    ros::init(argc, argv, "pid_waypoint_follower");
-    pid_waypoint_follower pid_instance = pid_waypoint_follower();
-    ros::spin();
-    return 0;
-
-    cout << "--- Ending pid_waypoint_follower.cpp ---" << endl;
 }
