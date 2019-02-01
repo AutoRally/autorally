@@ -97,6 +97,8 @@ public:
 
   void computeGrad(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
+  void updateModel(std::vector<int> description, std::vector<float> data);
+
   __device__ void computeKinematics(float* state, float* state_der);
 
   __device__ void cudaInit(float* theta_s);

@@ -42,6 +42,7 @@
 #include <autorally_msgs/runstop.h>
 #include <autorally_msgs/pathIntegralStatus.h>
 #include <autorally_msgs/pathIntegralTiming.h>
+#include <autorally_msgs/neuralNetModel.h>
 #include <autorally_control/PathIntegralParamsConfig.h>
 
 #include <ros/ros.h>
@@ -152,6 +153,10 @@ public:
   */
   void servoCall(autorally_msgs::chassisState servo_msg);
 
+  bool hasNewModel();
+  virtual void modelCall(autorally_msgs::neuralNetModel model_msg);
+  virtual void getModel(std::vector<int> &description, std::vector<float> &data);
+
   /**
   * @brief Callback for safe speed subscriber.
   */
@@ -227,6 +232,7 @@ protected:
   std::atomic<bool> receivedDebugImg_;
   std::atomic<bool> debugShutdownSignal_;
   std::atomic<bool> debugShutdownSignalAcknowledged_;
+  autorally_msgs::neuralNetModel dynamicsModel_;
   autorally_control::PathIntegralParamsConfig costParams_;
   bool hasNewCostParams_ = false;
 
@@ -252,6 +258,7 @@ protected:
   ros::Publisher timing_data_pub_;
   ros::Subscriber pose_sub_; ///< Subscriber to /pose_estimate.
   ros::Subscriber servo_sub_;
+  ros::Subscriber model_sub_;
   ros::Timer pathTimer_;
   ros::Timer statusTimer_;
   ros::Timer debugImgTimer_;
@@ -261,8 +268,6 @@ protected:
   geometry_msgs::Point time_delay_msg_; ///< Point message for publishing the observed delay.
   autorally_msgs::pathIntegralStatus status_msg_; ///<pathIntegralStatus message for publishing mppi status
   autorally_msgs::pathIntegralTiming timingData_; ///<pathIntegralStatus message for publishing mppi status
-  std::vector<float> model_params_; ///< Array for holding the updated model parameters
-
 };
 
 }
