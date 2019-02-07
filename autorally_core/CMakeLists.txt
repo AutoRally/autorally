@@ -55,7 +55,7 @@ add_subdirectory(src/ImageRepublisher)
 add_subdirectory(src/StateEstimator)
 add_subdirectory(src/autorally_chassis)
 add_subdirectory(src/camera_trigger)
-add_subdirectory(src/CameraAutoBalance)
+# add_subdirectory(src/CameraAutoBalance)
 add_subdirectory(src/WheelOdometry)
 
 #install(TARGETS

@@ -7,39 +7,34 @@
   <!-- nodelet manager process -->
   <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" unless="$(arg nodelet_manager_launched)" />
   
-  <!-- camera driver nodelet -->
   <param name="/camera/image_raw/compressed/jpeg_quality" type="int" value="10"/>
 
-  <node pkg="nodelet" type="nodelet" name="$(arg side)_camera_nodelet" machine="autorally-master" output="screen" args="
-    load pointgrey_camera_driver/PointGreyCameraNodelet camera_nodelet_manager" >
-    <param name="serial" value="$(arg serial)" />
-    <param name="video_mode" value="format7_mode0"/>
-    <param name="format7_roi_width" value="1280"/>
-    <param name="format7_roi_height" value="1024"/>
-    <param name="format7_x_offset" value="0"/>
-    <param name="format7_y_offset" value="0"/>
+  <!-- camera driver nodelet -->
+  <node pkg="nodelet" type="nodelet" name="$(arg side)_camera_nodelet"
+        args="load spinnaker_camera_driver/SpinnakerCameraNodelet camera_nodelet_manager" >
+
+    <param name="frame_id" value="camera"/>
+    <param name="serial" value="$(arg serial)"/>
     <param name="camera_info_url" value="file://$(env AR_CONFIG_PATH)/camera_calibration_$(arg serial).yaml" />
-    <param name="format7_color_coding" value="raw8"/>
-    <param name="frame_rate" value="60" />
-    <param name="auto_exposure" value="false"/>
-    <param name="exposure" value="1.25"/>
-    <param name="auto_brightness" value="false"/>
-    <param name="brightness" value="0"/>
-    <param name="auto_white_balance" value="false"/>
-    <param name="auto_shutter" value="false"/>
-    <param name="auto_gain" value="false"/>
-    <param name="enable_trigger" value="$(arg enable_trigger)"/>
 
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />
     <remap from="set_camera_info" to="$(arg side)_camera/set_camera_info"/>
-    <remap from="image" to="$(arg side)_camera/image_diagnostic" />
+    <remap from="image" to="$(arg side)_camera/image_diagnostic"/>
   </node>
+
+  <!-- load parameters for camera nodelet -->
+  <node pkg="dynamic_reconfigure" type="dynparam" name="dynamic_configurator"
+        args="load spinnaker_camera_nodelet $(dirname)/flir_test_dynparams.yaml">
+  </node>
+
+  <!-- No debayering is needed; using this mostly for republishing on correct topics -->
   <node pkg="nodelet" type="nodelet" name="$(arg side)_image_proc_debayer" args="load image_proc/debayer camera_nodelet_manager">
     <remap from="image_raw" to="$(arg side)_camera/image_raw" />
     <remap from="image_mono" to="$(arg side)_camera/image_mono" />
     <remap from="image_color" to="$(arg side)_camera/image_color" />
     <param name="debayer" value="0"/>
   </node>
+
   <node pkg="nodelet" type="nodelet" name="$(arg side)_image_proc_rect_mono" args="load image_proc/rectify camera_nodelet_manager">
     <remap from="image_mono" to="$(arg side)_camera/image_mono" />
     <remap from="image_rect" to="$(arg side)_camera/image_mono_rect" />
@@ -48,6 +43,7 @@
     <remap from="image_mono" to="$(arg side)_camera/image_color" />
     <remap from="image_rect" to="$(arg side)_camera/image_color_rect" />
   </node>
+
   <node pkg="nodelet" type="nodelet" name="$(arg side)_ImageRepublisher" args="load autorally_core/ImageRepublisher camera_nodelet_manager" output="screen" machine="autorally-master" >
     <param name="fps" value="10" />
     <param name="resizeHeight" value="480" />
@@ -55,9 +51,9 @@
     <remap from="camera/image_display" to="$(arg side)_camera/image_display" />
   </node>
   
-  <include file="$(find autorally_core)/launch/camera_auto_balance.launch">
+  <!-- <include file="$(find autorally_core)/launch/camera_auto_balance.launch">
     <arg name="serial" value="$(arg serial)" />
     <arg name="side" value="$(arg side)" />
-  </include>
-  
+  </include> -->
+
 </launch>

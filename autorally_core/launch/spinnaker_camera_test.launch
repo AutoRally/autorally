@@ -39,18 +39,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
       <param name="frame_id" value="camera" />
       <param name="serial" value="$(arg camera_serial)" />
 
-      <!-- When unspecified, the driver will use the default framerate as given by the
-           camera itself. Use this parameter to override that value for cameras capable of
-           other framerates. -->
-      <param name="frame_rate" value="15" />
-
       <!-- Use the camera_calibration package to create this file -->
       <param name="camera_info_url" if="$(arg calibrated)"
              value="file://$(env HOME)/.ros/camera_info/$(arg camera_serial).yaml" />
+
+      <remap from="image_raw" to="image_color"/>
     </node>
 
-    <node pkg="nodelet" type="nodelet" name="image_proc_debayer"
-          args="load image_proc/debayer camera_nodelet_manager">
+    <node pkg="dynamic_reconfigure" type="dynparam" name="dynamic_configurator"
+          args="load spinnaker_camera_nodelet $(dirname)/flir_test_dynparams.yaml">
     </node>
   </group>
 </launch>

@@ -1,0 +1,51 @@
+# ref http://softwareservices.ptgrey.com/BFS-U3-51S5P/latest/Model/public/
+
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  image_format_color_coding: RGB8Packed
+
+  acquisition_frame_rate_enable: true
+  acquisition_frame_rate: 60.0
+
+  exposure_mode: Timed
+  exposure_auto: 'Off'
+  exposure_time: 10000
+  auto_exposure_time_upper_limit: 15000
+
+  gain_selector: All
+  auto_gain: 'Off'  # Changing this to Continuous sometimes fixes a color issue
+  gain: 5.0
+  brightness: 0
+
+  gamma_enable: false
+  gamma: 1.0
+
+  saturation_enable: false
+  saturation: 1.0
+
+  sharpening_enable: false
+  auto_sharpness: false
+  sharpening_threshold: 0.1
+  sharpness: 1024.0
+
+  auto_white_balance: Continuous  # 'Off' not supported by Spinnaker and/or FLIR ROS driver
+
+  enable_trigger: 'Off'
+  line_mode: Input
+  line_selector: Line0
+  line_source: 'Off'
+  trigger_activation_mode: FallingEdge
+  trigger_overlap_mode: ReadOut
+  trigger_selector: FrameStart
+  trigger_source: Line0
+
+  image_format_roi_height: 0
+  image_format_roi_width: 0
+  image_format_x_binning: 1
+  image_format_x_decimation: 1
+  image_format_x_offset: 0
+  image_format_y_binning: 1
+  image_format_y_decimation: 1
+  image_format_y_offset: 0
+
+state: []
