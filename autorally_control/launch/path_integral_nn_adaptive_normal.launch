@@ -61,9 +61,9 @@
     <!-- Cost Parameters -->
     <param name="l1_cost" value="true" />
     <param name="desired_speed" value="12.0" />
-    <param name="speed_coefficient" value="15" />
+    <param name="speed_coefficient" value="30" />
     <param name="track_coefficient" value="250.0" />
-    <param name="max_slip_angle" value="1.25" />
+    <param name="max_slip_angle" value="0.275" />
     <param name="slip_penalty" value="10.0" />
     <param name="track_slop" value="0.0" />
     <param name="crash_coeff" value="10000.0" />
