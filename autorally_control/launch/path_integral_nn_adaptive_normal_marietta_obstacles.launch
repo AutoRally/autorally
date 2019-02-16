@@ -3,7 +3,7 @@
 
   <node
     pkg = "autorally_control" 
-    type = "path_integral_nn"
+    type = "path_integral_nn_sgd_pc"
     name = "mppi_controller"
     output = "screen">
     
