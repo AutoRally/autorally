@@ -135,6 +135,24 @@ ${OpenCV_LIBRARIES})
 
 remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_RMSPROP__)
 
+########################################################################################################
+#Executable for the neural network model without point cloud and with SGD and identity mapping for cost
+########################################################################################################
+
+add_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_SGD__ -DUSE_IDENTITY_COST__)
+
+cuda_add_executable(path_integral_nn_sgd_identity
+path_integral_main.cu
+autorally_pc_plant
+autorally_plant
+param_getter
+)
+add_dependencies(path_integral_nn_sgd_identity autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
+target_link_libraries(path_integral_nn_sgd_identity /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES}
+${OpenCV_LIBRARIES})
+
+remove_definitions(-DUSE_NEURAL_NETWORK_MODEL__ -DMPPI_NNET_USING_CONSTANT_MEM__ -DWITH_SGD__  -DUSE_IDENTITY_COST__)
+
 ####################################################################################
 #Executable for monitoring the status of mppi
 ####################################################################################
