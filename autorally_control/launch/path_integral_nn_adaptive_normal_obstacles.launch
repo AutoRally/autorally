@@ -3,7 +3,7 @@
 
   <node
     pkg = "autorally_control" 
-    type = "path_integral_nn_sgd"
+    type = "path_integral_nn_sgd_pc"
     name = "mppi_controller"
     output = "screen">
     
@@ -72,6 +72,13 @@
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
     <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/gazebo_costmap_05_22_2016.npz" />
+
+     <!-- Obstacle Parameters -->
+     <param name="obstacle_coefficient" value="50.0" />
+     <param name="obs_boundary_threshold" value="0.5" />
+     <param name="obstacle_pad" value = "20" />
+     <param name="obstacle_buffer" value = "2" />
+     <param name="obstacle_decay" value = "1.0" />
 
   </node>
 

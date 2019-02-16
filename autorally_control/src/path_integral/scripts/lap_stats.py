@@ -14,7 +14,7 @@ from autorally_msgs.msg import pathIntegralStats, resetObstacles
 
 #Slope, Offset, X min, X max
 gazebo_line = [1.0, 5.0, -13, -9]
-marietta_line = [1.0, -13, -3, 0]
+marietta_line = [1.0, -2., -1.5, 1.5]
 ccrf_line = [1.0, -26.4, -2, 2.25]
 
 def convert_quat_to_euler(quat):
@@ -138,7 +138,7 @@ class Lap:
 			slip = -np.arctan(v_y/np.abs(v_x))
 		if (slip > self.max_slip):
 			self.max_slip = slip
-		line_eval = (y > self.line[0]*x + self.line[1])
+		line_eval = int(y > self.line[0]*x + self.line[1])
 		#Check if we've completed the last
 		if ((self.last_eval is not 0) and (line_eval is not self.last_eval) and (x > self.line[2]) and (x < self.line[3])):
 			if (self.start_time is None):

@@ -3,7 +3,7 @@
 
   <node
     pkg = "autorally_control" 
-    type = "path_integral_nn_sgd"
+    type = "path_integral_nn_sgd_identity"
     name = "mppi_controller"
     output = "screen">
     
@@ -26,7 +26,7 @@
 
     <!--Optimizer parameters-->
     <param name="optim_type" value="" />
-    <param name="learning_rate" value="1.0" />
+    <param name="learning_rate" value="0.05" />
     <param name="beta1" value="0.5" />
     <param name="beta2" value="0.5" />
     <param name="weight_decay" value="0" />

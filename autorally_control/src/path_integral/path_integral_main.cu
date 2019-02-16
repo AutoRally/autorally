@@ -55,6 +55,7 @@ __device__ __constant__ float NNET_PARAMS[param_counter(6,32,32,4)];
 #include <autorally_control/path_integral/run_control_loop.cuh>
 #include <autorally_control/path_integral/mppi_controller.cuh>
 #include <autorally_control/path_integral/mppi_adaptive_controller.cuh>
+#include <autorally_control/path_integral/mppi_adaptive_identity_controller.cuh>
 #include <autorally_control/path_integral/adam.cuh>
 #include <autorally_control/path_integral/sgd.cuh>
 #include <autorally_control/path_integral/rmsprop.cuh>
@@ -118,33 +119,30 @@ int main(int argc, char** argv) {
     Optimizer* optim = new Optimizer(params.num_timesteps*DynamicsModel::CONTROL_DIM, params.lr,
                                                   params.weight_decay, params.beta1, params.beta2, params.eps,
                                                   params.amsgrad);
-
-    typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
-    Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
-                                      exploration_std, init_u, params.num_iters, optimization_stride, 0,
-                                      params.dist_type);
   #elif WITH_SGD__
     typedef SGDOptimizer Optimizer;
     Optimizer* optim = new Optimizer(params.num_timesteps*DynamicsModel::CONTROL_DIM, params.lr, params.momentum,
                                      params.dampening, params.weight_decay, params.nesterov);
-
-    typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
-    Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
-                                      exploration_std, init_u, params.num_iters, optimization_stride, 0,
-                                      params.dist_type);
-  #elif WITH_RMSPROP__
+  #else
     typedef RMSpropOptimizer Optimizer;
     Optimizer* optim = new Optimizer(params.num_timesteps*DynamicsModel::CONTROL_DIM, params.lr, params.alpha,
                                      params.eps, params.weight_decay, params.momentum, params.centered);
+  #endif
 
+  #ifdef USE_IDENTITY_COST__ /*Use an identity mapping on cost instead of exponentiated*/
+    typedef MPPIAdaptiveIdentityController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
+    Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
+                                  exploration_std, init_u, params.num_iters, optimization_stride, 0,
+                                  params.dist_type);
+  #elif WITH_ADAM__ || WITH_SGD__ || WITH_RMSPROP__
     typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
     Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
-                                      exploration_std, init_u, params.num_iters, optimization_stride, 0,
-                                      params.dist_type);
+                                  exploration_std, init_u, params.num_iters, optimization_stride, 0,
+                                  params.dist_type);
   #else
     typedef MPPIController<DynamicsModel, ControllerCosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
     Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std,
-                                    init_u, params.num_iters, optimization_stride);
+                                      init_u, params.num_iters, optimization_stride, 0);
   #endif
 
   ControllerPlant* robot = new ControllerPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
