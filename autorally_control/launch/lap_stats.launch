@@ -1,0 +1,16 @@
+<launch>
+  
+  <include file="$(find autorally_core)/launch/hardware.machine" />
+  
+  <node
+    pkg = "autorally_control" 
+    type = "lap_stats_standalone.py" 
+    name = "stat_tracker"
+    output = "screen">
+    <param name="track_name" value="CCRF" />
+    <param name="rl_mode" value="false" />
+    <param name="pose_estimate" value="/particle_filter/pose_estimate" />
+    <param name="starting_gate" value="3" />
+  </node>
+
+</launch>

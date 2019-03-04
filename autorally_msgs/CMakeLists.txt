@@ -24,6 +24,7 @@ add_message_files(
   stateEstimatorStatus.msg
   pathIntegralParams.msg
   lapStats.msg
+  lapStatsStamped.msg
   pathIntegralStats.msg
   pathIntegralStatus.msg
   pathIntegralTiming.msg
