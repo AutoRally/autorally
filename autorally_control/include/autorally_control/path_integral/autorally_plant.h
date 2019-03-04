@@ -223,6 +223,8 @@ public:
   virtual bool hasNewCostmap(){return false;};
   virtual void getCostmap(std::vector<int> &description, std::vector<float> &data){};
 
+  virtual bool resetMppi(){return false;};
+
   virtual void shutdown();
 
 protected:
