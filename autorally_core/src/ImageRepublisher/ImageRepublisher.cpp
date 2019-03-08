@@ -3,7 +3,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 
-PLUGINLIB_EXPORT_CLASS( autorally_core::ImageRepublisher,  nodelet::Nodelet)
+PLUGINLIB_DECLARE_CLASS(autorally_core, ImageRepublisher, autorally_core::ImageRepublisher, nodelet::Nodelet)
 
 namespace autorally_core
 {
