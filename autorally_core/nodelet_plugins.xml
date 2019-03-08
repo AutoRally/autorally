@@ -14,8 +14,13 @@
   </class>
 </library>
 
-<library path="lib/libCameraAutoBalance">
-  <class name="autorally_core/CameraAutoBalance" type="autorally_core::CameraAutoBalance" base_class_type="nodelet::Nodelet">
+<library path="lib/libCameraAutoBalancePtGrey">
+  <class name="autorally_core/CameraAutoBalancePtGrey" type="autorally_core::CameraAutoBalancePtGrey" base_class_type="nodelet::Nodelet">
+  </class>
+</library>
+
+<library path="lib/libCameraAutoBalanceFLIR">
+  <class name="autorally_core/CameraAutoBalanceFLIR" type="autorally_core::CameraAutoBalanceFLIR" base_class_type="nodelet::Nodelet">
   </class>
 </library>
 

@@ -57,7 +57,7 @@ export AR_RIGHTCAM_CONNECTED=false
 export AR_LEFTCAM_CONNECTED=false
 export AR_RIGHTCAM=none
 export AR_LEFTCAM=none
-
+PREV_IFS=$IFS
 IFS=$'\n'
 
 ## Get list of PointGrey Flea3 devices connected to computer
@@ -132,6 +132,7 @@ RESET=`tput sgr0`
 if [[ -z $AR_JOYSTICK ]]; then
     echo "${YELLOW}[WARNING] No joystick detected.${RESET}"
 fi
+IFS=$PREV_IFS
 
 if [[ $MASTER_HOSTNAME == "localhost" ]]
     then
