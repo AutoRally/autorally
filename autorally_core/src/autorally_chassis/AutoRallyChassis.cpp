@@ -41,7 +41,7 @@
 
 #include "AutoRallyChassis.h"
 
-PLUGINLIB_EXPORT_CLASS( autorally_core::AutoRallyChassis,  nodelet::Nodelet)
+PLUGINLIB_DECLARE_CLASS(autorally_core, AutoRallyChassis, autorally_core::AutoRallyChassis, nodelet::Nodelet)
 
 namespace autorally_core
 {

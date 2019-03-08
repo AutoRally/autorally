@@ -1,12 +1,9 @@
 <launch>
   <include file="$(find autorally_core)/launch/hardware.machine" />
 
-  <arg name="enable_trigger" default="false"/>
+  <arg name="enable_trigger" default="true"/>
 
   <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" required="false" respawn="false"/>
-  <!-- <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" 
-        output="screen" args="manager" required="true" respawn="false" 
-        launch-prefix="gdb -ex run - -args"/> -->
 
   <group if="$(optenv AR_CHASSIS_NEW true)">
     <group if="$(arg enable_trigger)">

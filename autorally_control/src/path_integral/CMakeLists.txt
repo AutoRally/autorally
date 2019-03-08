@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 2.8.3)
 find_package(OpenCV REQUIRED)
 find_package(Eigen REQUIRED)
 
-include_directories(include ${OpenCV_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS})
+include_directories(include ${OpenCV_INCLUDE_DIRS})
+include_directories(include ${EIGEN_INCLUDE_DIRS})
 
 ################################################################################
 #First make the helper libraries

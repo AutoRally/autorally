@@ -41,7 +41,7 @@
 
 #include <numeric>
 
-PLUGINLIB_EXPORT_CLASS( autorally_core::CameraTrigger,  nodelet::Nodelet)
+PLUGINLIB_DECLARE_CLASS(autorally_core, CameraTrigger, autorally_core::CameraTrigger, nodelet::Nodelet)
 
 namespace autorally_core
 {
