@@ -1,11 +1,15 @@
-#include "CameraAutoBalance.hpp"
+#include "CameraAutoBalance.h"
 #include <pluginlib/class_list_macros.h>
 
 #include "FlycaptureAdjuster.h"
 
 namespace autorally_core {
 
-using CameraAutoBalancePtGrey = CameraAutoBalance<FlycaptureAdjuster>;
+class CameraAutoBalancePtGrey : public CameraAutoBalance {
+public:
+    CameraAutoBalancePtGrey() : CameraAutoBalance(new FlycaptureAdjuster)
+    {}
+};
 
 }
 

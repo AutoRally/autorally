@@ -1,11 +1,15 @@
-#include "CameraAutoBalance.hpp"
+#include "CameraAutoBalance.h"
 #include <pluginlib/class_list_macros.h>
 
 #include "SpinnakerAdjuster.h"
 
 namespace autorally_core {
 
-using CameraAutoBalanceFLIR = CameraAutoBalance<SpinnakerAdjuster>;
+class CameraAutoBalanceFLIR : public CameraAutoBalance {
+public:
+    CameraAutoBalanceFLIR() : CameraAutoBalance(new SpinnakerAdjuster)
+    {}
+};
 
 }
 

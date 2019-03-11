@@ -1,12 +1,17 @@
+add_library(CameraAutoBalance CameraAutoBalance.cpp)
+add_dependencies(CameraAutoBalance autorally_msgs_gencpp)
+set_target_properties(CameraAutoBalance PROPERTIES COMPILE_FLAGS "-march=native -O3 -ffast-math")
+target_link_libraries(CameraAutoBalance ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${cv_bridge_LIBRARIES})
+
+
 find_library(FLYCAP_LIB flycapture)
 if(FLYCAP_LIB)
   add_library(FlycapAdjuster FlycaptureAdjuster.cpp)
   target_link_libraries(FlycapAdjuster ${FLYCAP_LIB})
 
   add_library(CameraAutoBalancePtGrey CameraAutoBalancePtGrey.cpp)
-  add_dependencies(CameraAutoBalancePtGrey autorally_msgs_gencpp FlycapAdjuster)
-  set_target_properties(CameraAutoBalancePtGrey PROPERTIES COMPILE_FLAGS "-march=native -O3 -ffast-math")
-  target_link_libraries(CameraAutoBalancePtGrey FlycapAdjuster ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${cv_bridge_LIBRARIES})
+  add_dependencies(CameraAutoBalancePtGrey FlycapAdjuster)
+  target_link_libraries(CameraAutoBalancePtGrey CameraAutoBalance FlycapAdjuster)
 
   install(TARGETS
     CameraAutoBalancePtGrey
@@ -26,9 +31,8 @@ if(Spinnaker_LIB)
   target_link_libraries(SpinnakerAdjuster ${Spinnaker_LIB})
 
   add_library(CameraAutoBalanceFLIR CameraAutoBalanceFLIR.cpp)
-  add_dependencies(CameraAutoBalanceFLIR autorally_msgs_gencpp SpinnakerAdjuster)
-  set_target_properties(CameraAutoBalanceFLIR PROPERTIES COMPILE_FLAGS "-march=native -O3 -ffast-math")
-  target_link_libraries(CameraAutoBalanceFLIR SpinnakerAdjuster ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${cv_bridge_LIBRARIES})
+  add_dependencies(CameraAutoBalanceFLIR SpinnakerAdjuster)
+  target_link_libraries(CameraAutoBalanceFLIR CameraAutoBalance SpinnakerAdjuster)
 
   install(TARGETS
     CameraAutoBalanceFLIR
