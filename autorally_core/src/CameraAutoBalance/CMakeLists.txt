@@ -1,7 +1,7 @@
 add_library(CameraAutoBalance CameraAutoBalance.cpp)
 add_dependencies(CameraAutoBalance autorally_msgs_gencpp)
 set_target_properties(CameraAutoBalance PROPERTIES COMPILE_FLAGS "-march=native -O3 -ffast-math")
-target_link_libraries(CameraAutoBalance ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${cv_bridge_LIBRARIES})
+target_link_libraries(CameraAutoBalance ${catkin_LIBRARIES})
 
 
 find_library(FLYCAP_LIB flycapture)

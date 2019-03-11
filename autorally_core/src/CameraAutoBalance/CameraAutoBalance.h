@@ -68,18 +68,20 @@ namespace autorally_core
  *  gray histogram. A dynamic reconfigure server is created for
  *  changing these parameters.
  *
- *  It is templated on the CameraAdjuster implementation so that it
- *  can be built for either FlyCapture2 or Spinnaker independently
+ *  The constructor is templated on the CameraAdjuster implementation so that it
+ *  can be built once and used with either FlyCapture2 or Spinnaker
  */
 class CameraAutoBalance : public nodelet::Nodelet {
 public:
     /**
-     * Constructor that initializes image transport.
-     * All othter initializations are done in method
-     * onInit().
+     * Constructor that initializes the camera adjuster. All other initialization is done
+     * in onInit().
      */
     template <typename CameraAdjusterType>
-    CameraAutoBalance(CameraAdjusterType* ca);
+    CameraAutoBalance(CameraAdjusterType* ca)
+    {
+        cam_adjuster_.reset(ca);
+    }
 
     /**
      * Initializes variables, gets parameters from ROS server,

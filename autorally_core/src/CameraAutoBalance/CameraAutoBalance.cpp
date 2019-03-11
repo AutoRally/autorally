@@ -18,13 +18,6 @@ double saturate(double x, double min, double max){
     return x;
 }
 
-
-template <typename CameraAdjusterType>
-CameraAutoBalance::CameraAutoBalance(CameraAdjusterType* ca)
-{
-    cam_adjuster_.reset(ca);
-}
-
 void CameraAutoBalance::onInit()
 {
     ros::NodeHandle nh = getNodeHandle();
