@@ -30,10 +30,14 @@
 #include "CameraAdjuster.hpp"
 #include <flycapture/FlyCapture2.h>
 
-
 namespace autorally_core
 {
 
+/**
+ *  @class FlycaptureAdjuster FlycaptureAdjuster.h
+ *  "CameraAutoBalance/FlycaptureAdjuster.h"
+ *  @brief Implementation of CameraAdjuster for FlyCapture2
+ */
 class FlycaptureAdjuster : public CameraAdjuster {
   public:
     FlycaptureAdjuster() = default;
@@ -43,9 +47,9 @@ class FlycaptureAdjuster : public CameraAdjuster {
     void SetGain(double x) override;
 
   protected:
-    FlyCapture2::Camera cam_;    ///<PointGrey camera handle
-    FlyCapture2::Property prop_; ///<PointGrey property handle
-    FlyCapture2::Error err_;     ///<PointGrey error handle
+    FlyCapture2::Camera cam_;    // PointGrey camera handle
+    FlyCapture2::Property prop_; // PointGrey property handle
+    FlyCapture2::Error err_;     // PointGrey error handle
 };
 
 }  // namespace autorally_core

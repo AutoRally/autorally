@@ -30,13 +30,40 @@
 namespace autorally_core
 {
 
+/**
+ *  @class CameraAdjuster CameraAdjuster.h
+ *  "CameraAutoBalance/CameraAdjuster.h"
+ *  @brief Abstract base class for setting camera exposure and gain.
+ *
+ *  This class provides an interface for changing exposure (shutter)
+ *  and gain parameters. It can be implemented for multiple camera 
+ *  interface libraries (FlyCapture2 and Spinnaker at time of writing)
+ */
 class CameraAdjuster {
   public:
+    /**
+     *  One-time setup for adjusting exposure and gain. Grab references
+     *  to camera objects, etc.
+     */
     virtual void Connect() = 0;
+
+    /**
+     *  Set the value of the exposure or shutter speed. The units are
+     *  not standardized across implementations.
+     *  @param x Exposure/shutter value to set
+     */
     virtual void SetShutter(double x) = 0;
+
+    /**
+     *  Set the value of the sensor gain. The units are not standardized 
+     *  across implementations.
+     *  @param x Gain value to set
+     */
     virtual void SetGain(double x) = 0;
 
-
+    /**
+     *  Store the serial number of the camera, for use in the other methods.
+     */
     void SetSerial(int serial_number) {
         camera_serial_number_ = serial_number;
     }

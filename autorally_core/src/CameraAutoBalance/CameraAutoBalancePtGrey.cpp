@@ -31,6 +31,9 @@
 
 namespace autorally_core {
 
+/**
+ *  Builds CameraAutoBalance for PointGrey/FlyCapture2
+ */
 class CameraAutoBalancePtGrey : public CameraAutoBalance {
 public:
     CameraAutoBalancePtGrey() : CameraAutoBalance(new FlycaptureAdjuster)

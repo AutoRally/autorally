@@ -31,6 +31,9 @@
 
 namespace autorally_core {
 
+/**
+ *  Builds CameraAutoBalance for FLIR/Spinnaker
+ */
 class CameraAutoBalanceFLIR : public CameraAutoBalance {
 public:
     CameraAutoBalanceFLIR() : CameraAutoBalance(new SpinnakerAdjuster)

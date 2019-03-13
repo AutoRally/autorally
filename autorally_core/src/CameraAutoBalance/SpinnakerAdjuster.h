@@ -33,8 +33,16 @@
 namespace autorally_core
 {
 
+/**
+ *  @class SpinnakerAdjuster SpinnakerAdjuster.h
+ *  "CameraAutoBalance/SpinnakerAdjuster.h"
+ *  @brief Implementation of CameraAdjuster for Spinnaker
+ */
 class SpinnakerAdjuster : public CameraAdjuster {
   public:
+    /**
+     *  Initialize the system and camera pointers
+     */
     SpinnakerAdjuster();
 
     void Connect() override;
@@ -42,8 +50,8 @@ class SpinnakerAdjuster : public CameraAdjuster {
     void SetGain(double x) override;
 
   protected:
-    Spinnaker::SystemPtr system_;
-    Spinnaker::CameraPtr cam_;
+    Spinnaker::SystemPtr system_;  // System handle provides access to camera list
+    Spinnaker::CameraPtr cam_;  // Handle to camera resources
 };
 
 }  // namespace autorally_core

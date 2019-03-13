@@ -68,8 +68,9 @@ namespace autorally_core
  *  gray histogram. A dynamic reconfigure server is created for
  *  changing these parameters.
  *
- *  The constructor is templated on the CameraAdjuster implementation so that it
- *  can be built once and used with either FlyCapture2 or Spinnaker
+ *  Edit (ebretl): The constructor is templated on the CameraAdjuster 
+ *  implementation so that it can be built once and used with either 
+ *  FlyCapture2 or Spinnaker
  */
 class CameraAutoBalance : public nodelet::Nodelet {
 public:
