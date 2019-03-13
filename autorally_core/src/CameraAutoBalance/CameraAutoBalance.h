@@ -33,8 +33,8 @@
  * @details This file contains the CameraAutoBalance class
  ***********************************************/
 
-#ifndef PROJECT_CAMERAAUTOBALANCE_H
-#define PROJECT_CAMERAAUTOBALANCE_H
+#ifndef AUTORALLY_CAMERAAUTOBALANCE_H
+#define AUTORALLY_CAMERAAUTOBALANCE_H
 
 #include <nodelet/nodelet.h>
 #include <ros/ros.h>
@@ -187,4 +187,4 @@ protected:
 
 }  // namespace autorally_core
 
-#endif //PROJECT_CAMERAAUTOBALANCE_H
+#endif //AUTORALLY_CAMERAAUTOBALANCE_H
