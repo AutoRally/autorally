@@ -30,7 +30,7 @@ dictitems:
 
   auto_white_balance: Continuous  # 'Off' does not seem to be supported by Spinnaker and/or FLIR ROS driver
 
-  enable_trigger: 'Off'
+  enable_trigger: 'On'
   line_mode: Input
   line_selector: Line0
   line_source: 'Off'

@@ -1,6 +1,6 @@
 /*
 * Software License Agreement (BSD License)
-* Copyright (c) 2013, Georgia Institute of Technology
+* Copyright (c) 2019, Georgia Institute of Technology
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
