@@ -81,7 +81,7 @@ inline void MPPIPCCosts::updateParams_dcfg(autorally_control::PathIntegralParams
 inline void MPPIPCCosts::updateParams(ros::NodeHandle mppi_node)
 {
   //Read parameters from the ROS parameter server
-  double obstacle_coeff, boundary_threshold, obs_boundary_threshold, obstacle_decay, obstacle_buffer;
+  double obstacle_coeff, boundary_threshold, obs_boundary_threshold, obstacle_decay, obstacle_buffer, filter_length;
   int obstacle_pad;
   mppi_node.getParam("boundary_threshold", boundary_threshold);
   mppi_node.getParam("obs_boundary_threshold", obs_boundary_threshold);
@@ -89,6 +89,7 @@ inline void MPPIPCCosts::updateParams(ros::NodeHandle mppi_node)
   mppi_node.getParam("obstacle_pad", obstacle_pad);
   mppi_node.getParam("obstacle_decay", obstacle_decay);
   mppi_node.getParam("obstacle_buffer", obstacle_buffer);
+  mppi_node.getParam("filter_length", filter_length);
 
   //Transfer to the cost params struct
   obs_params_.boundary_threshold = (float) boundary_threshold;
@@ -97,6 +98,7 @@ inline void MPPIPCCosts::updateParams(ros::NodeHandle mppi_node)
   obs_params_.obstacle_decay = (float) obstacle_decay;
   obs_params_.obstacle_pad = (int) obstacle_pad;
   obs_params_.obstacle_buffer = (float) obstacle_buffer;
+  obs_params_.filter_length = (float) filter_length;
 
   obsParamsToDevice();
   MPPICosts::updateParams(mppi_node);
@@ -137,13 +139,13 @@ inline void MPPIPCCosts::updateObstacleMap(sensor_msgs::PointCloud2Ptr points)
   int x_delta_sq, y_delta, y_delta_sq;
   int obstacle_pad_sq = pow(obs_params_.obstacle_pad, 2);
   float inv_obstacle_pad = (float) 1/obs_params_.obstacle_pad;
-  float factor = 1.0/min(obstacle_costs_hist_.size()+1., (float) FILTER_LENGTH);
+  float factor = 1.0/min(obstacle_costs_hist_.size()+1., (float) obs_params_.filter_length);
   std::vector<float> inst_costs = std::vector<float>(width_*height_, 0.);
   int hist_size = (int) obstacle_costs_hist_.size();
   float scale;
   //std::vector<float> obstacle_costs_(width_*height_, 0.);
 
-  if (hist_size > 0 && hist_size < FILTER_LENGTH) {
+  if (hist_size > 0 && hist_size < obs_params_.filter_length) {
     for (int idx=0; idx < width_*height_; idx++) {
       //obstacle_costs_[idx] *= obs_params_.obstacle_decay;
       obstacle_costs_[idx] *= hist_size*factor;
@@ -154,6 +156,9 @@ inline void MPPIPCCosts::updateObstacleMap(sensor_msgs::PointCloud2Ptr points)
   for (; points_iter_x != points_iter_x.end(); ++points_iter_x, ++points_iter_y) {
     x = int(round(*points_iter_x * ppm_ - x_min_));
     y = int(round(*points_iter_y * ppm_ - y_min_));
+
+    //x = 3*ppm_ -x_min_;
+    //y = -3*ppm_ - y_min_;
 
     x_range_min = min(max(x-obs_params_.obstacle_pad, 0), width_-1);
     x_range_max = min(max(x+obs_params_.obstacle_pad, 0), width_-1);
@@ -185,7 +190,7 @@ inline void MPPIPCCosts::updateObstacleMap(sensor_msgs::PointCloud2Ptr points)
     }
   }
 
-  if (hist_size >= FILTER_LENGTH) {
+  if (hist_size >= obs_params_.filter_length) {
     for (int idx=0; idx < width_*height_; idx++) {
       obstacle_costs_[idx] -= obstacle_costs_hist_.front()[idx]*factor;
     }

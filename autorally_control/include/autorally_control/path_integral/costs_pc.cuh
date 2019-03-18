@@ -62,6 +62,7 @@ public:
     float obstacle_decay;
     int obstacle_pad;
     int obstacle_buffer;
+    float filter_length;
   } ObsParams;
 
   ObsParams obs_params_; ///< Struct for obstacle parameters.
@@ -130,7 +131,7 @@ public:
 
 protected:
   //Constant variables
-  const int FILTER_LENGTH = 100; ///< Filter length for point cloud moving average
+  const int FILTER_LENGTH = 10; ///< Filter length for point cloud moving average
   const float LEFT_D = -0.25; ///< Distance from GPS receiver to left side of car.
   const float RIGHT_D = 0.25; ///< Distance from GPS receiver to right side of car.
 
