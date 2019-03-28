@@ -10,6 +10,7 @@
     <!--Pose topic configuration parameters -->
     <param name="pose_estimate" value="/pose_estimate" />
     <param name="path_topic" value="/mppi_controller/nominal_path" />
+    <param name="pc_topic" value="/collision_map/occupied_cells_as_points2" />
 
     <!--Debug/Sim mode parameter -->
     <param name="debug_mode" value="true" />
@@ -59,27 +60,27 @@
      <param name="min_steering" value="-0.99" />
 
      <!-- Cost Parameters -->
-     <param name="l1_cost" value="false" />
-     <param name="desired_speed" value="5.0" />
-     <param name="speed_coefficient" value="15" />
-     <param name="track_coefficient" value="100.0" />
-     <param name="max_slip_angle" value="1.25" />
-     <param name="slip_penalty" value="10.0" />
-     <param name="track_slop" value="0.33" />
-     <param name="crash_coeff" value="10000.0" />
-     <param name="steering_coeff" value ="0.0" />
-     <param name="throttle_coeff" value ="0.0" />
-     <param name="boundary_threshold" value="0.8" />
-     <param name="discount" value = "0.1" />
+    <param name="l1_cost" value="false" />
+    <param name="desired_speed" value="6.0" />
+    <param name="speed_coefficient" value="10.0" />
+    <param name="track_coefficient" value="50.0" />
+    <param name="max_slip_angle" value="0.275" />
+    <param name="slip_penalty" value="10.0" />
+    <param name="track_slop" value="0.0" />
+    <param name="crash_coeff" value="10000.0" />
+    <param name="steering_coeff" value ="0.0" />
+    <param name="throttle_coeff" value ="0.0" />
+    <param name="boundary_threshold" value="25.0" />
+    <param name="discount" value = "0.1" />
      <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/ccrf_costmap_09_29_2017.npz" />
 
      <!-- Obstacle Parameters -->
-     <param name="obstacle_coefficient" value="250.0" />
-     <param name="obs_boundary_threshold" value="0.5" />
-     <param name="obstacle_pad" value = "20" />
+     <param name="obstacle_coefficient" value="2000.0" />
+     <param name="obs_boundary_threshold" value="10000.0" /> <!-- No collision -->
+     <param name="obstacle_pad" value = "15" />
      <param name="obstacle_buffer" value = "2" />
      <param name="obstacle_decay" value = "1.0" />
-     <param name="filter_length" value = "2" />
+     <param name="filter_length" value = "1" />
   </node>
 
   <node
