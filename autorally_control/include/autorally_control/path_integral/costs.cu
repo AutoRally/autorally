@@ -57,6 +57,13 @@ inline MPPICosts::MPPICosts(ros::NodeHandle nh)
   HANDLE_ERROR( cudaMalloc((void**)&params_d_, sizeof(CostParams)) ); //Initialize memory for device cost param struct
   //Get the map path
 
+  debug_img_width_ = getRosParam<int>("debug_display_width", nh);
+  debug_img_height_ = getRosParam<int>("debug_display_height", nh);
+  debug_img_ppm_ = getRosParam<int>("debug_display_ppm", nh);
+  costmap_width_ = getRosParam<int>("costmap_width", nh);
+  costmap_height_ = getRosParam<int>("costmap_height", nh);
+  costmap_ppm_ = getRosParam<int>("costmap_ppm", nh);
+
   std::string map_path = getRosParam<std::string>("map_path", nh);
   track_costs_ = loadTrackData(map_path, R, trs); //R and trs passed by reference
   updateTransform(R, trs);
@@ -258,7 +265,7 @@ inline void MPPICosts::setDesiredSpeed(float desired_speed)
 
 inline void MPPICosts::debugDisplayInit()
 {
-  debugDisplayInit(10, 10, 50);
+  debugDisplayInit(debug_img_width_, debug_img_height_, debug_img_ppm_);
 }
 
 inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
@@ -270,6 +277,10 @@ inline void MPPICosts::debugDisplayInit(int width_m, int height_m, int ppm)
   debug_data_ = new float[debug_img_size_];
   debugging_ = true;
   HANDLE_ERROR( cudaMalloc((void**)&debug_data_d_, debug_img_size_*sizeof(float)) );
+
+  costmap_size_ = (costmap_width_*costmap_ppm_)*(costmap_height_*costmap_ppm_);
+  costmap_data_ = new int[costmap_size_];
+  HANDLE_ERROR( cudaMalloc((void**)&costmap_data_d_, costmap_size_*sizeof(int)) );
 }
 
 inline cv::Mat MPPICosts::getDebugDisplay(float x, float y, float heading)
@@ -285,6 +296,22 @@ inline cv::Mat MPPICosts::getDebugDisplay(float x, float y, float heading)
   cudaStreamSynchronize(stream_);
   debug_img = cv::Mat(debug_img_width_*debug_img_ppm_, debug_img_height_*debug_img_ppm_, CV_32F, debug_data_);
   return debug_img;
+}
+
+
+inline cv::Mat MPPICosts::getCostmapDisplay(float x, float y, float heading)
+{
+  cv::Mat costmap_img; ///< OpenCV matrix for display debug info.
+  if (!debugging_){
+    debugDisplayInit();
+  }
+  launchDebugCostKernelInt(x, y, heading, costmap_width_, costmap_height_, costmap_ppm_,
+                        costmap_tex_, costmap_data_d_, params_.r_c1, params_.r_c2, params_.trs, stream_);
+  //Now we just have to display debug_data_d_
+  HANDLE_ERROR( cudaMemcpy(costmap_data_, costmap_data_d_, costmap_size_*sizeof(float), cudaMemcpyDeviceToHost) );
+  cudaStreamSynchronize(stream_);
+  costmap_img = cv::Mat(costmap_width_*costmap_ppm_, costmap_height_*costmap_ppm_, CV_8U, costmap_data_);
+  return costmap_img;
 }
 
 inline void MPPICosts::freeCudaMem()

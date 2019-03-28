@@ -10,6 +10,7 @@
     <!--Pose topic configuration parameters -->
     <param name="pose_estimate" value="/ground_truth/state" />
     <param name="path_topic" value="/mppi_controller/nominal_path" />
+    <param name="pc_topic" value="/collision_map/occupied_cells_as_points2" />
 
     <!--Debug/Sim mode parameter -->
     <param name="debug_mode" value="true" />
@@ -39,7 +40,8 @@
     <param name="nesterov" value="false" />
 
     <!--Model parameters-->
-    <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
+    <!--<param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />-->
+    <param name="model_path" value="/home/jake/catkin_ws/src/autorally_gtrll/models/dynamics_model_100_steps_02_27_2019/multi_step_model_100.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />

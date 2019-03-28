@@ -51,6 +51,10 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+#include <cv_bridge/cv_bridge.h>
+
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Point.h>
@@ -59,6 +63,7 @@
 #include <opencv2/core/core.hpp>
 
 #include <eigen3/Eigen/Dense>
+#include <opencv2/core/core.hpp>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -121,15 +126,19 @@ public:
 
   bool new_model_available_;
   cv::Mat debugImg_;
+  cv::Mat costmapImg_;
+
 
   bool solutionReceived_ = false;
   bool is_nodelet_;
   std::vector<float> controlSequence_;
   std::vector<float> stateSequence_;
+  std::vector<geometry_msgs::PoseStamped> stateTraj_;
   util::EigenAlignedVector<float, 2, 7> feedback_gains_;
   ros::Time solutionTs_;
 
   int numTimesteps_;
+  int numTraj_;
   double deltaT_;
 
   double optimizationLoopTime_;
@@ -140,9 +149,9 @@ public:
   * @param mppi_node A ros node handle.
   */
 	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
-                 bool debug_mode, int hz, bool nodelet);
+                 bool debug_mode, int hz, bool nodelet, int num_traj);
 
-	AutorallyPlant(ros::NodeHandle global_node, bool debug_mode, int hz):AutorallyPlant(global_node, global_node, debug_mode, hz, false){};
+	AutorallyPlant(ros::NodeHandle global_node, bool debug_mode, int hz, int num_traj):AutorallyPlant(global_node, global_node, debug_mode, hz, false, num_traj){};
 
   /**
   * @brief Callback for /pose_estimate subscriber.
@@ -163,6 +172,7 @@ public:
   * @brief Publishes the controller's nominal path.
   */
 	void pubPath(const ros::TimerEvent&);
+  void pubStateTraj(const ros::TimerEvent&);
 
   void setSolution(std::vector<float> traj, std::vector<float> controls, 
                    util::EigenAlignedVector<float, 2, 7> gains,
@@ -172,7 +182,15 @@ public:
 
   void setTimingInfo(double poseDiff, double tickTime, double sleepTime);
 
+  /**
+   * @brief Set the sampled state trajectories from the controller
+   */
+  void setStateTrajectories(std::vector<float> traj);
+
   void pubTimingData(const ros::TimerEvent&);
+
+  void pubCostmapImage(const ros::TimerEvent&);
+  void setCostmapImage(cv::Mat);
 
   /**
   * @brief Publishes a control input. 
@@ -232,6 +250,7 @@ protected:
   int poseCount_ = 0;
   bool useFeedbackGains_ = false;
   std::atomic<bool> receivedDebugImg_;
+  std::atomic<bool> receivedCostmapImg_;
   std::atomic<bool> debugShutdownSignal_;
   std::atomic<bool> debugShutdownSignalAcknowledged_;
   autorally_control::PathIntegralParamsConfig costParams_;
@@ -256,15 +275,23 @@ protected:
   ros::Publisher status_pub_; ///< Publishes the status (0 good, 1 neutral, 2 bad) of the controller
   ros::Publisher subscribed_pose_pub_; ///< Publisher of the subscribed pose
   ros::Publisher path_pub_; ///< Publisher of nav_mags::Path on topic nominalPath.
+  ros::Publisher state_traj_pub_;
   ros::Publisher timing_data_pub_;
+  ros::Publisher costmap_image_pub_;
   ros::Subscriber pose_sub_; ///< Subscriber to /pose_estimate.
   ros::Subscriber servo_sub_;
   ros::Timer pathTimer_;
+  ros::Timer stateTrajTimer_;
   ros::Timer statusTimer_;
   ros::Timer debugImgTimer_;
   ros::Timer timingInfoTimer_;
+  ros::Timer costmapImageTimer_;
+
+  sensor_msgs::Image costmap_msg_;
+  cv_bridge::CvImage costmap_bridge_;
 
   nav_msgs::Path path_msg_; ///< Path message for publishing the planned path.
+  nav_msgs::Path state_traj_msg_;
   geometry_msgs::Point time_delay_msg_; ///< Point message for publishing the observed delay.
   autorally_msgs::pathIntegralStatus status_msg_; ///<pathIntegralStatus message for publishing mppi status
   autorally_msgs::pathIntegralTiming timingData_; ///<pathIntegralStatus message for publishing mppi status

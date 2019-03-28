@@ -50,6 +50,7 @@ limitations under the License.
   <!-- Create the world. -->
   <include file="$(find autorally_gazebo)/launch/autoRallyTrackWorld.launch">
     <arg name="world_name" value="$(arg world_name)"/>
+
   </include>
 
   <param name="robot_description" command="$(find xacro)/xacro $(find autorally_description)/urdf/autoRallyPlatform.urdf.xacro prefix:=/"/>

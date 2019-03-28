@@ -569,3 +569,8 @@ std::vector<float> MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>
 {
   return state_solution_;
 }
+
+template<class DYNAMICS_T, class COSTS_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+std::vector<float> MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>::getStateTrajectories() {
+  return std::vector<float>(NUM_ROLLOUTS*numTimesteps_*STATE_DIM, 0);
+};

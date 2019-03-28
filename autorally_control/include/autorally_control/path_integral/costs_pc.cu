@@ -259,6 +259,21 @@ inline __device__ float MPPIPCCosts::getObstacleCost(float *s, int *crash)
   return obstacle_cost;
 }
 
+inline cv::Mat MPPIPCCosts::getCostmapDisplay(float x, float y, float heading)
+{
+  cv::Mat costmap_img; ///< OpenCV matrix for display debug info.
+  if (!debugging_){
+    debugDisplayInit();
+  }
+  launchDebugCostKernelInt(x, y, heading, costmap_width_, costmap_height_, costmap_ppm_,
+                           costmap_tex_, obstaclemap_tex_, costmap_data_d_, params_.r_c1, params_.r_c2, params_.trs, stream_);
+  //Now we just have to display debug_data_d_
+  HANDLE_ERROR( cudaMemcpy(costmap_data_, costmap_data_d_, costmap_size_*sizeof(float), cudaMemcpyDeviceToHost) );
+  cudaStreamSynchronize(stream_);
+  costmap_img = cv::Mat(costmap_width_*costmap_ppm_, costmap_height_*costmap_ppm_, CV_8U, costmap_data_);
+  return costmap_img;
+}
+
 inline cv::Mat MPPIPCCosts::getDebugDisplay(float x, float y, float heading)
 {
   cv::Mat debug_img; ///< OpenCV matrix for display debug info.

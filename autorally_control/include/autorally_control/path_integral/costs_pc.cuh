@@ -122,6 +122,7 @@ public:
   * @param y float representing the current y-coordinate
   */
   cv::Mat getDebugDisplay(float x, float y, float heading);
+  cv::Mat getCostmapDisplay(float x, float y, float heading);
 
   /*
   * @brief Compute all of the individual cost terms and adds them together.

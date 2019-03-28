@@ -138,6 +138,8 @@ public:
   */
   void computeControl(Eigen::Matrix<float, STATE_DIM, 1> state);
 
+  std::vector<float> getStateTrajectories();
+
   std::vector<float> getControlSeq();
 
   std::vector<float> getStateSeq();

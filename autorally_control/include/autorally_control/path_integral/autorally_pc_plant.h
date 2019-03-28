@@ -62,7 +62,7 @@ public:
   * @param mppi_node A ros node handle.
   */
   AutorallyPCPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node,
-                   bool debug_mode, int hz, bool nodelet);
+                   bool debug_mode, int hz, bool nodelet, int num_traj);
 
   /**
   * @brief Destructor for AutorallyPlant.

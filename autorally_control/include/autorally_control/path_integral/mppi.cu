@@ -42,7 +42,7 @@ void MPPI<CONTROLLER_T, DYNAMICS_T, COSTS_T, PLANT_T>::onInit()
     mppi = new CONTROLLER_T(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std, 
                           init_u, params.num_iters, optimization_stride);
 
-    robot = new PLANT_T(global_node, mppi_node, params.debug_mode, params.hz, is_nodelet);
+    robot = new PLANT_T(global_node, mppi_node, params.debug_mode, params.hz, is_nodelet, 0);
     callback_f = boost::bind(&PLANT_T::dynRcfgCall, robot, _1, _2);
     server.setCallback(callback_f);
     optimizer = boost::thread(&runControlLoop<CONTROLLER_T, PLANT_T>, mppi, robot, &params, &mppi_node, &is_alive_);

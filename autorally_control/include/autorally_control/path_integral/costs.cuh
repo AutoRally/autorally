@@ -196,6 +196,7 @@ public:
   * @param y float representing the current y-coordinate 
   */
   cv::Mat getDebugDisplay(float x, float y, float heading);
+  cv::Mat getCostmapDisplay(float x, float y, float heading);
 
   void updateCostmap(std::vector<int> description, std::vector<float> data);
 
@@ -274,6 +275,13 @@ protected:
   int debug_img_ppm_; ///< Pixels per meter for resolution of debug view.
   int debug_img_size_; ///< Number of pixels in the debug image.
   bool debugging_; ///< Indicator for if we're in debugging mode
+
+  int costmap_width_;
+  int costmap_height_;
+  int costmap_ppm_;
+  int costmap_size_;
+  int* costmap_data_;
+  int* costmap_data_d_;
 };
 
 }

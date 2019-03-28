@@ -38,26 +38,30 @@
 namespace autorally_control {
 
 AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
-                               bool debug_mode, int hz, bool nodelet)
+                               bool debug_mode, int hz, bool nodelet, int num_traj)
 {
   nodeNamespace_ = mppi_node.getNamespace(); 
   std::string pose_estimate_name = getRosParam<std::string>("pose_estimate", mppi_node);
   debug_mode_ = getRosParam<bool>("debug_mode", mppi_node);
   numTimesteps_ = getRosParam<int>("num_timesteps", mppi_node);
+  numTraj_ = num_traj;
   useFeedbackGains_ = getRosParam<bool>("use_feedback_gains", mppi_node);
   throttleMax_ = getRosParam<float>("max_throttle", mppi_node);
   deltaT_ = 1.0/hz;
 
   controlSequence_.resize(AUTORALLY_CONTROL_DIM*numTimesteps_);
   stateSequence_.resize(AUTORALLY_STATE_DIM*numTimesteps_);
+  stateTraj_.assign(numTraj_*numTimesteps_, geometry_msgs::PoseStamped());
 
   //Initialize the publishers.
   control_pub_ = mppi_node.advertise<autorally_msgs::chassisCommand>("chassisCommand", 1);
   path_pub_ = mppi_node.advertise<nav_msgs::Path>("nominalPath", 1);
+  state_traj_pub_ = mppi_node.advertise<nav_msgs::Path>("sampledTraj", 1);
   subscribed_pose_pub_ = mppi_node.advertise<nav_msgs::Odometry>("subscribedPose", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   timing_data_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralTiming>("timingInfo", 1);
-  
+  costmap_image_pub_ = mppi_node.advertise<sensor_msgs::Image>("costmapImage", 1);
+
   //Initialize the subscribers.
   pose_sub_ = global_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this,
                                   ros::TransportHints().tcpNoDelay());
@@ -65,9 +69,11 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
  
   //Timer callback for path publisher
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
+  stateTrajTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStateTraj, this);
   statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
   debugImgTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::displayDebugImage, this);
   timingInfoTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubTimingData, this);
+  costmapImageTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubCostmapImage, this);
 
   //Initialize auxiliary variables.
   safe_speed_zero_ = false;
@@ -91,6 +97,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
 
   //Debug image display signaller
   receivedDebugImg_ = false;
+  receivedCostmapImg_ = false;
   is_nodelet_ = nodelet;
 
   if (!debug_mode_){
@@ -128,6 +135,38 @@ void AutorallyPlant::setTimingInfo(double poseDiff, double tickTime, double slee
   timingData_.averageSleepTime = sleepTime;
 }
 
+void AutorallyPlant::setStateTrajectories(std::vector<float> traj)
+{
+  boost::mutex::scoped_lock lock(access_guard_);
+  int msg_idx, traj_idx;
+  float phi,theta,psi,q0,q1,q2,q3;
+  ros::Time begin = solutionTs_;
+
+  for (int r = 0; r < numTraj_; r++) {
+    for (int t = 0; t < numTimesteps_; t++) {
+      msg_idx = r*numTimesteps_ + t;
+      traj_idx = r*numTimesteps_*AUTORALLY_STATE_DIM + t*AUTORALLY_STATE_DIM;
+
+      stateTraj_[msg_idx].pose.position.x = traj[traj_idx];
+      stateTraj_[msg_idx].pose.position.y = traj[traj_idx+1];
+      stateTraj_[msg_idx].pose.position.z = 0;
+      psi = traj[traj_idx + 2];
+      phi = traj[traj_idx + 3];
+      theta = 0;
+      q0 = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2);
+      q1 = -cos(phi/2)*sin(theta/2)*sin(psi/2) + cos(theta/2)*cos(psi/2)*sin(phi/2);
+      q2 = cos(phi/2)*cos(psi/2)*sin(theta/2) + sin(phi/2)*cos(theta/2)*sin(psi/2);
+      q3 = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*cos(psi/2)*sin(theta/2);
+      stateTraj_[msg_idx].pose.orientation.w = q0;
+      stateTraj_[msg_idx].pose.orientation.x = q1;
+      stateTraj_[msg_idx].pose.orientation.y = q2;
+      stateTraj_[msg_idx].pose.orientation.z = q3;
+      stateTraj_[msg_idx].header.stamp = begin + ros::Duration(t*deltaT_);
+      stateTraj_[msg_idx].header.frame_id = "odom";
+    }
+  }
+}
+
 void AutorallyPlant::pubTimingData(const ros::TimerEvent&)
 {
   boost::mutex::scoped_lock lock(access_guard_);
@@ -140,6 +179,22 @@ void AutorallyPlant::setDebugImage(cv::Mat img)
   receivedDebugImg_ = true;
   boost::mutex::scoped_lock lock(access_guard_);
   debugImg_ = img;
+}
+
+void AutorallyPlant::setCostmapImage(cv::Mat img)
+{
+  receivedCostmapImg_ = true;
+  boost::mutex::scoped_lock lock(access_guard_);
+  costmapImg_ = img;
+}
+
+void AutorallyPlant::pubCostmapImage(const ros::TimerEvent&)
+{
+  std_msgs::Header header;
+  header.stamp = ros::Time::now();
+  costmap_bridge_ = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO8, costmapImg_);
+  costmap_bridge_.toImageMsg(costmap_msg_);
+  costmap_image_pub_.publish(costmap_msg_);
 }
 
 void AutorallyPlant::displayDebugImage(const ros::TimerEvent&)
@@ -262,6 +317,17 @@ void AutorallyPlant::runstopCall(autorally_msgs::runstop safe_msg)
   }
 }
 
+void AutorallyPlant::pubStateTraj(const ros::TimerEvent&) {
+  state_traj_msg_.poses.clear();
+  ros::Time begin = solutionTs_;
+  for (std::vector<geometry_msgs::PoseStamped>::iterator it = stateTraj_.begin(); it != stateTraj_.end(); it++) {
+    state_traj_msg_.poses.push_back(*it);
+  }
+  state_traj_msg_.header.stamp = begin;
+  state_traj_msg_.header.frame_id = "odom";
+  state_traj_pub_.publish(state_traj_msg_);
+}
+
 void AutorallyPlant::pubPath(const ros::TimerEvent&)
 {
   boost::mutex::scoped_lock lock(access_guard_);
@@ -287,7 +353,7 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
     pose.pose.orientation.y = q2;
     pose.pose.orientation.z = q3;
     pose.header.stamp = begin + ros::Duration(i*deltaT_);
-    pose.header.frame_id = "base_link";
+    pose.header.frame_id = "odom";
     path_msg_.poses.push_back(pose);
     if (i == 0){
       subscribed_state.pose.pose = pose.pose;
@@ -297,9 +363,9 @@ void AutorallyPlant::pubPath(const ros::TimerEvent&)
     }
   }
   subscribed_state.header.stamp = begin;
-  subscribed_state.header.frame_id = "base_link";
+  subscribed_state.header.frame_id = "odom";
   path_msg_.header.stamp = begin;
-  path_msg_.header.frame_id = "base_link";
+  path_msg_.header.frame_id = "odom";
   path_pub_.publish(path_msg_);
   subscribed_pose_pub_.publish(subscribed_state);
 }

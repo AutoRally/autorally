@@ -31,10 +31,125 @@
  * @brief Implementation of the MPPI_ADAPTIVE_CONTROLLER class.
  ***********************************************/
 
+#define BLOCKSIZE_X MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::BLOCKSIZE_X
+#define BLOCKSIZE_Y MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::BLOCKSIZE_Y
 #define BLOCKSIZE_WRX MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::BLOCKSIZE_WRX
 #define STATE_DIM DYNAMICS_T::STATE_DIM
 #define CONTROL_DIM DYNAMICS_T::CONTROL_DIM
+#define SHARED_MEM_REQUEST_GRD DYNAMICS_T::SHARED_MEM_REQUEST_GRD
+#define SHARED_MEM_REQUEST_BLK DYNAMICS_T::SHARED_MEM_REQUEST_BLK
 #define NUM_ROLLOUTS MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::NUM_ROLLOUTS
+
+template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+__global__ void rolloutKernelWithState(int num_timesteps, float* state_d, float* state_traj_d, float* U_d, float* du_d,
+                                       float* nu_d, float* costs_d, DYNAMICS_T dynamics_model, COSTS_T mppi_costs,
+                                       int opt_delay)
+{
+  int i,j;
+  int tdx = threadIdx.x;
+  int tdy = threadIdx.y;
+  int bdx = blockIdx.x;
+
+  //Initialize the local state, controls, and noise
+  float* s;
+  float* s_der;
+  float* u;
+  float* nu;
+  float* du;
+  int* crash;
+
+  //Create shared arrays for holding state and control data.
+  __shared__ float state_shared[BLOCKSIZE_X*STATE_DIM];
+  __shared__ float state_der_shared[BLOCKSIZE_X*STATE_DIM];
+  __shared__ float control_shared[BLOCKSIZE_X*CONTROL_DIM];
+  __shared__ float control_var_shared[BLOCKSIZE_X*CONTROL_DIM];
+  __shared__ float exploration_variance[BLOCKSIZE_X*CONTROL_DIM];
+  __shared__ int crash_status[BLOCKSIZE_X];
+  //Create a shared array for the dynamics model to use
+  __shared__ float theta[SHARED_MEM_REQUEST_GRD + SHARED_MEM_REQUEST_BLK*BLOCKSIZE_X];
+
+  //Initialize trajectory cost
+  float running_cost = 0;
+
+  //Initialize the dynamics model.
+  dynamics_model.cudaInit(theta);
+
+  int global_idx = BLOCKSIZE_X*bdx + tdx;
+  if (global_idx < NUM_ROLLOUTS) {
+    //Portion of the shared array belonging to each x-thread index.
+    s = &state_shared[tdx*STATE_DIM];
+    s_der = &state_der_shared[tdx*STATE_DIM];
+    u = &control_shared[tdx*CONTROL_DIM];
+    du = &control_var_shared[tdx*CONTROL_DIM];
+    nu = &exploration_variance[tdx*CONTROL_DIM];
+    crash = &crash_status[tdx];
+    //Load the initial state, nu, and zero the noise
+    for (i = tdy; i < STATE_DIM; i+= blockDim.y) {
+      s[i] = state_d[i];
+      s_der[i] = 0;
+    }
+    //Load nu
+    for (i = tdy; i < CONTROL_DIM; i+= blockDim.y) {
+      u[i] = 0;
+      du[i] = 0;
+      nu[i] = nu_d[i];
+    }
+    crash[0] = 0;
+  }
+  __syncthreads();
+  /*<----Start of simulation loop-----> */
+  for (i = 0; i < num_timesteps; i++) {
+    if (global_idx < NUM_ROLLOUTS) {
+      for (j = tdy; j < CONTROL_DIM; j+= blockDim.y) {
+        //Noise free rollout
+        if (global_idx == 0 || i < opt_delay) { //Don't optimize variables that are already being executed
+          du[j] = 0.0;
+          u[j] = U_d[i*CONTROL_DIM + j];
+        }
+        else if (global_idx >= .99*NUM_ROLLOUTS) {
+          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j];//*nu[j];
+          u[j] = du[j];
+        }
+        else {
+          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j];//*nu[j];
+          u[j] = U_d[i*CONTROL_DIM + j] + du[j];
+        }
+        du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j] = u[j];
+      }
+      //Save current state
+      for (j = tdy; j < STATE_DIM; j += blockDim.y) {
+        state_traj_d[STATE_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*STATE_DIM +j] = s[j];
+      }
+    }
+    __syncthreads();
+    if (tdy == 0 && global_idx < NUM_ROLLOUTS){
+      dynamics_model.enforceConstraints(s, u);
+    }
+    __syncthreads();
+    //Compute the cost of the being in the current state
+    if (tdy == 0 && global_idx < NUM_ROLLOUTS && i > 0 && crash[0] > -1) {
+      //Running average formula
+      running_cost += (mppi_costs.computeCost(s, u, du, nu, crash, i) - running_cost)/(1.0*i);
+    }
+    //Compute the dynamics
+    if (global_idx < NUM_ROLLOUTS){
+      dynamics_model.computeStateDeriv(s, u, s_der, theta);
+    }
+    __syncthreads();
+    //Update the state
+    if (global_idx < NUM_ROLLOUTS){
+      dynamics_model.incrementState(s, s_der);
+    }
+    //Check to see if the rollout will result in a (physical) crash.
+    if (tdy == 0 && global_idx < NUM_ROLLOUTS) {
+      mppi_costs.getCrash(s, crash);
+    }
+  }
+  /* <------- End of the simulation loop ----------> */
+  if (global_idx < NUM_ROLLOUTS && tdy == 0) {   //Write cost results back to global memory.
+    costs_d[(BLOCKSIZE_X)*bdx + tdx] = running_cost + mppi_costs.terminalCost(s);
+  }
+}
 
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 __global__ void weightedReductionNormalKernel(float* states_d, float* U_d, float* du_d, float* nu_d,
@@ -194,6 +309,19 @@ __global__ void weightedReductionCauchyKernel(float* states_d, float* U_d, float
   }
 }
 
+
+template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+void launchRolloutKernelWithState(int num_timesteps, float* state_d, float* state_traj_d, float* U_d, float* du_d,
+                                  float* nu_d, float* costs_d, DYNAMICS_T *dynamics_model, COSTS_T *mppi_costs,
+                                  int opt_delay, cudaStream_t stream)
+{
+  const int GRIDSIZE_X = (NUM_ROLLOUTS-1)/BLOCKSIZE_X + 1;
+  dim3 dimBlock(BLOCKSIZE_X, BLOCKSIZE_Y, 1);
+  dim3 dimGrid(GRIDSIZE_X, 1, 1);
+  rolloutKernelWithState<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y><<<dimGrid, dimBlock, 0, stream>>>(num_timesteps, state_d, state_traj_d,
+    U_d, du_d, nu_d, costs_d, *dynamics_model, *mppi_costs, opt_delay);
+}
+
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
 void launchWeightedReductionNormalKernel(float* state_costs_d, float* U_d, float* du_d, float* nu_d,
                                    float normalizer, int num_timesteps, cudaStream_t stream)
@@ -224,9 +352,13 @@ void launchWeightedReductionCauchyKernel(float* state_costs_d, float* U_d, float
     (state_costs_d, U_d, du_d, nu_d, normalizer, num_timesteps);
 }
 
+#undef BLOCKSIZE_X
+#undef BLOCKSIZE_Y
 #undef BLOCKSIZE_WRX
 #undef STATE_DIM
 #undef CONTROL_DIM
+#undef SHARED_MEM_REQUEST_GRD
+#undef SHARED_MEM_REQUEST_BLK
 #undef NUM_ROLLOUTS
 
 /******************************************************************************************************************
@@ -266,6 +398,9 @@ MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_
       cauchy_dist_.push_back(std::cauchy_distribution<float>(0., exploration_var[i]));
     }
   }
+
+  state_traj_.assign(NUM_ROLLOUTS*Base::numTimesteps_*STATE_DIM, 0);
+  HANDLE_ERROR( cudaMalloc((void**)&state_traj_d_, NUM_ROLLOUTS*Base::numTimesteps_*STATE_DIM*sizeof(float)));
 }
 
 template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
@@ -313,10 +448,11 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
     //curandGenerateNormal(Base::gen_, Base::du_d_, NUM_ROLLOUTS*Base::numTimesteps_*CONTROL_DIM, 0.0, 1.0);
 
     //Launch the rollout kernel
-    launchRolloutKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(Base::numTimesteps_, Base::state_d_, Base::U_d_,
+    launchRolloutKernelWithState<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>(Base::numTimesteps_, Base::state_d_, state_traj_d_, Base::U_d_,
                                                                        Base::du_d_, Base::nu_d_, Base::traj_costs_d_, Base::model_,
                                                                        Base::costs_, Base::optimizationStride_, Base::stream_);
 
+    HANDLE_ERROR(cudaMemcpyAsync(state_traj_.data(), state_traj_d_, NUM_ROLLOUTS*Base::numTimesteps_*STATE_DIM*sizeof(float), cudaMemcpyDeviceToHost, Base::stream_));
     HANDLE_ERROR(cudaMemcpyAsync(Base::traj_costs_.data(), Base::traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost, Base::stream_));
     //NOTE: The calls to cudaMemcpyAsync are only asynchronous with regards to (1) CPU operations AND (2) GPU operations
     //that are potentially occuring on other streams. Since all the previous kernel/memcpy operations use the same
@@ -370,3 +506,8 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
   //Compute the planned trajectory
   Base::computeNominalTraj(state);
 }
+
+template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int BDIM_X, int BDIM_Y>
+std::vector<float> MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::getStateTrajectories() {
+  return state_traj_;
+};

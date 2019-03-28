@@ -39,11 +39,12 @@
 namespace autorally_control {
 
 AutorallyPCPlant::AutorallyPCPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node,
-                                   bool debug_mode, int hz, bool nodelet) : AutorallyPlant(
-                                   global_node, mppi_node, debug_mode, hz, nodelet)
+                                   bool debug_mode, int hz, bool nodelet, int num_traj) : AutorallyPlant(
+                                   global_node, mppi_node, debug_mode, hz, nodelet, num_traj)
 {
+  std::string pc_topic_name = getRosParam<std::string>("pc_topic", mppi_node);
   //Initialize the subscribers.
-  points_sub_ = global_node.subscribe("/stereo/filtered_points2", 1, &AutorallyPCPlant::pointsCall, this);
+  points_sub_ = global_node.subscribe(pc_topic_name, 1, &AutorallyPCPlant::pointsCall, this);
   track_points_sub_ = global_node.subscribe("/stereo/track_points2", 1, &AutorallyPCPlant::trackPointsCall, this);
   obs_reset_sub_ = global_node.subscribe("obstacle_reset", 1, &AutorallyPCPlant::obsResetCall, this);
 }

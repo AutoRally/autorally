@@ -36,6 +36,86 @@
 
 namespace autorally_control {
 
+__global__ void debugCostKernelInt(float x, float y, float heading, int width_m ,int height_m, int ppm,
+                                   cudaTextureObject_t cost_tex,
+                                   int* debug_data_d, float3 c1, float3 c2, float3 trs)
+{
+  //Get the thread indices
+  int x_idx = blockIdx.x*blockDim.x + threadIdx.x;
+  int y_idx = blockIdx.y*blockDim.y + threadIdx.y;
+  //Convert these into meters
+  float x_pos = x_idx/(1.0*ppm);
+  float y_pos = y_idx/(1.0*ppm);
+  x_pos -= width_m/2.0;
+  y_pos -= height_m/2.0;
+  x_pos += x; //x position in world coordinates
+  y_pos += y; //y position in world coordinates
+  float u,v,w;
+  //Compute a projective transform of (x, y, 0, 1)
+  u = c1.x*x_pos + c2.x*y_pos + trs.x;
+  v = c1.y*x_pos + c2.y*y_pos + trs.y;
+  w = c1.z*x_pos + c2.z*y_pos + trs.z;
+  //Compute the cost for the current position
+  float cost = 0.25*tex2D<float4>(cost_tex, u/w, v/w).x;
+  //Write the cost to the debug data array
+  if (x_idx < width_m*ppm && (height_m*ppm - y_idx) < height_m*ppm) {
+    float x_transformed = cosf(heading)*(x_pos - x) + sinf(heading)*(y_pos - y);
+    float y_transformed = -sinf(heading)*(x_pos - x) + cosf(heading)*(y_pos - y);
+    float dist = 0.25*fabs(x_transformed) + fabs(y_transformed);
+    if ( dist < .15 && x_transformed > 0){
+      if ( dist < .1 && x_transformed > 0.05){
+        cost = 1;
+      } else{
+        cost = 0;
+      }
+    }
+    int idx = (height_m*ppm - (y_idx+1))*(width_m*ppm) + x_idx;
+    if ((idx > 0) && (idx < (width_m*ppm)*(height_m*ppm)) ){
+      debug_data_d[idx] = int(cost*255);
+    }
+  }
+}
+
+__global__ void debugCostKernelInt(float x, float y, float heading, int width_m ,int height_m, int ppm,
+                                cudaTextureObject_t cost_tex, cudaTextureObject_t obstacle_tex,
+                                int* debug_data_d, float3 c1, float3 c2, float3 trs)
+{
+  //Get the thread indices
+  int x_idx = blockIdx.x*blockDim.x + threadIdx.x;
+  int y_idx = blockIdx.y*blockDim.y + threadIdx.y;
+  //Convert these into meters
+  float x_pos = x_idx/(1.0*ppm);
+  float y_pos = y_idx/(1.0*ppm);
+  x_pos -= width_m/2.0;
+  y_pos -= height_m/2.0;
+  x_pos += x; //x position in world coordinates
+  y_pos += y; //y position in world coordinates
+  float u,v,w;
+  //Compute a projective transform of (x, y, 0, 1)
+  u = c1.x*x_pos + c2.x*y_pos + trs.x;
+  v = c1.y*x_pos + c2.y*y_pos + trs.y;
+  w = c1.z*x_pos + c2.z*y_pos + trs.z;
+  //Compute the cost for the current position
+  float cost = 0.25*tex2D<float4>(cost_tex, u/w, v/w).x + tex2D<float>(obstacle_tex, u/w, v/w);
+  //Write the cost to the debug data array
+  if (x_idx < width_m*ppm && (height_m*ppm - y_idx) < height_m*ppm) {
+    float x_transformed = cosf(heading)*(x_pos - x) + sinf(heading)*(y_pos - y);
+    float y_transformed = -sinf(heading)*(x_pos - x) + cosf(heading)*(y_pos - y);
+    float dist = 0.25*fabs(x_transformed) + fabs(y_transformed);
+    if ( dist < .15 && x_transformed > 0){
+      if ( dist < .1 && x_transformed > 0.05){
+        cost = 1;
+      } else{
+        cost = 0;
+      }
+    }
+    int idx = (height_m*ppm - (y_idx+1))*(width_m*ppm) + x_idx;
+    if ((idx > 0) && (idx < (width_m*ppm)*(height_m*ppm)) ){
+      debug_data_d[idx] = int(cost*255);
+    }
+  }
+}
+
 __global__ void debugCostKernel(float x, float y, float heading, int width_m ,int height_m, int ppm,
                                 cudaTextureObject_t cost_tex, cudaTextureObject_t obstacle_tex,
                                 float* debug_data_d, float3 c1, float3 c2, float3 trs)
@@ -134,6 +214,28 @@ void launchDebugCostKernel(float x, float y, float heading, int width_m, int hei
   dim3 dimGrid((width_m*ppm - 1)/16 + 1, (height_m*ppm - 1)/16 + 1, 1);
   debugCostKernel<<<dimGrid, dimBlock, 0, stream>>>(x, y, heading, width_m, height_m, ppm, cost_tex,
                                                     obstacle_tex, debug_data_d, c1, c2, trs);
+  HANDLE_ERROR( cudaStreamSynchronize(stream) );
+}
+
+void launchDebugCostKernelInt(float x, float y, float heading, int width_m, int height_m, int ppm,
+                           cudaTextureObject_t cost_tex, cudaTextureObject_t obstacle_tex, int* debug_data_d,
+                           float3 c1, float3 c2, float3 trs, cudaStream_t stream)
+{
+  dim3 dimBlock(16, 16, 1);
+  dim3 dimGrid((width_m*ppm - 1)/16 + 1, (height_m*ppm - 1)/16 + 1, 1);
+  debugCostKernelInt<<<dimGrid, dimBlock, 0, stream>>>(x, y, heading, width_m, height_m, ppm, cost_tex,
+  obstacle_tex, debug_data_d, c1, c2, trs);
+  HANDLE_ERROR( cudaStreamSynchronize(stream) );
+}
+
+void launchDebugCostKernelInt(float x, float y, float heading, int width_m, int height_m, int ppm,
+                              cudaTextureObject_t cost_tex, int* debug_data_d,
+                              float3 c1, float3 c2, float3 trs, cudaStream_t stream)
+{
+  dim3 dimBlock(16, 16, 1);
+  dim3 dimGrid((width_m*ppm - 1)/16 + 1, (height_m*ppm - 1)/16 + 1, 1);
+  debugCostKernelInt<<<dimGrid, dimBlock, 0, stream>>>(x, y, heading, width_m, height_m, ppm, cost_tex,
+  debug_data_d, c1, c2, trs);
   HANDLE_ERROR( cudaStreamSynchronize(stream) );
 }
 

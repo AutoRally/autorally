@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
                                       init_u, params.num_iters, optimization_stride, 0);
   #endif
 
-  ControllerPlant* robot = new ControllerPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false);
+  ControllerPlant* robot = new ControllerPlant(mppi_node, mppi_node, params.debug_mode, params.hz, false, MPPI_NUM_ROLLOUTS__);
 
   //Setup dynamic reconfigure callback
   dynamic_reconfigure::Server<PathIntegralParamsConfig> server;

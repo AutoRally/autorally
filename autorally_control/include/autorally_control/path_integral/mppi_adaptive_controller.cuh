@@ -67,6 +67,9 @@ public:
   std::vector<float> std_;
   std::vector<float> noise_;
 
+  std::vector<float> state_traj_;
+  float* state_traj_d_;
+
   //Optimizer settings
   /**
   * @brief Constructor for mppi controller class.
@@ -93,6 +96,7 @@ public:
   */
   void computeControl(Eigen::Matrix<float, STATE_DIM, 1> state);
 
+  std::vector<float> getStateTrajectories();
 };
 
 #include "mppi_adaptive_controller.cu"
