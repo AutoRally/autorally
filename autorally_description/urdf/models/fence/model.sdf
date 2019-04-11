@@ -6,7 +6,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/fence.dae</uri>
+            <uri>model://urdf/cad/fence.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -23,7 +23,7 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/fence.dae</uri>
+            <uri>model://urdf/cad/fence.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

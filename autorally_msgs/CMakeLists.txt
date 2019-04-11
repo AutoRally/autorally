@@ -26,6 +26,9 @@ add_message_files(
   lapStats.msg
   pathIntegralStats.msg
   pathIntegralStatus.msg
+  pathIntegralTiming.msg
+  neuralNetLayer.msg
+  neuralNetModel.msg
 )
 
 generate_messages(DEPENDENCIES

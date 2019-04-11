@@ -34,38 +34,36 @@
 #define MPPI_COSTS_CUH_
 
 #include "managed.cuh"
+#include "param_getter.h"
+#include "cnpy.h"
 #include <autorally_control/PathIntegralParamsConfig.h>
-
-#include <ros/ros.h>
-#include <dynamic_reconfigure/server.h>
-
-#include <cuda_runtime.h>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <ros/ros.h>
+#include <cuda_runtime.h>
 
 namespace autorally_control {
 
 /**
-* @class MPPICosts mppi_costs.h
-* @brief Maintaints cost parameters for the model predictive path integral
-* control algorithm. 
+* @class MPPICosts mppi_costs.cuh
+* @brief Standard cost funtion implementation for the MPPIController 
 *  
 * Maintains a collection of variables and functions which are needed for
 * computing costs in the mppi framework. These include host side functions
-* which initialize/update variables, and host side functions which handle the
-* transfer of memory from the CPU to the GPU. Additionally the class contains
-* device functions which are required by the main parallel loop of the mppi
-* algorithm for computing the instantaneous state costs. Note that this type
-* of C++/CUDA code design requires SM version >= sm_20 and CUDA >= 5.0.
-*  
+* which initialize/update variables, host side functions which handle the
+* transfer of memory from the CPU to the GPU, and device functions which perform
+* the actual cost computations. This class can be inherited by more specialized
+* cost function implementations.
 */
 class MPPICosts: public Managed
 {
 public:
  
-  //Struct for holding various cost parameters.
+  /**
+  * @struct CostParams mppi_costs.cuh
+  * @brief Collection of variables that are needed for cost functions computation.
+  */
   typedef struct
   {
     float desired_speed;
@@ -96,28 +94,46 @@ public:
   MPPICosts(int width, int height);
 
   /**
-  * @brief Constructor for when loading cost grid and transform from a file.
-  * @param map_path C-string to costmap data file.
-  * @param mppi_node Node handle to the controller ROS node. 
+  * @brief Constructor for when loading cost grid and transform from a file specified at launch time.
+  * @param nh The nodehandle currently being used.
   */
-  MPPICosts(ros::NodeHandle mppi_node);
+  MPPICosts(ros::NodeHandle nh);
 
   /**
-  * @brief Free cuda memory.
-  */
-  ~MPPICosts();
-
-  /**
-  * @brief Allocate memory to cuda array which is bound to a texture.
+  * @brief Allocates memory to cuda array which is bound to a texture. 
+  *
+  * Allocates an array using the special cudaMallocArray function.
+  * The size of the array allocated by this function is determined based on 
+  * the width and height of the costmap. This function is called by both constructors.
   */
   void allocateTexMem();
 
   /**
-  * @brief Takes a pointer to CPU memory and binds it to a CUDA texture.
-  * @param costmap Pointer to and array of floats of size width*height. 
+  * @brief Updates the cost parameters used by MPPI
+  * @param config Dynamic reconfigure variables 
+  *
+  * It is assumed that dynamic reconfigure variables are received somewhere else in the system.
+  * This function allows the dynamics reconfigure variables to be passed through directly to
+  * the cost function. 
   */
-  void costmapToTexture(float* costmap);
+  void updateParams_dcfg(autorally_control::PathIntegralParamsConfig config);
 
+  /**
+  * @brief Initializes the host side costmap to all zeros.
+  *
+  * Initializes a float4 vector to the correct width and height and sets every value to zero.
+  * This function is called by both constructors.
+  */
+  void initCostmap();
+
+  void costmapToTexture(float* costmap, int channel = 0);
+
+  /**
+  * @brief Binds the member variable costmap to a CUDA texture.
+  * 
+  */
+  void costmapToTexture();
+  
   /*
   * @brief Updates cost parameters by reading from the rosparam server
   * @params mppi_node Node handle to the controller ROS node. 
@@ -125,7 +141,7 @@ public:
   void updateParams(ros::NodeHandle mppi_node);
 
 
-  void updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl);
+  //void updateParams_dcfg(autorally_control::PathIntegralParamsConfig &config, int lvl);
   /*
   * @brief Updates the current costmap coordinate transform.
   * @param h Matrix representing a transform from world to (offset) costmap coordinates.
@@ -139,7 +155,9 @@ public:
   * @param h Matrix representing a transform from world to (offset) costmap coordinates.
   * @param trs Array representing the offset.
   */
-  std::vector<float> loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
+  std::vector<float4> loadTrackData(std::string map_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
+
+  //std::vector<float4> loadTrackData(const char* costmap_path, Eigen::Matrix3f &R, Eigen::Array3f &trs);
 
   /*
   * @brief Copy the params_ struct to the gpu.
@@ -177,7 +195,11 @@ public:
   * @param x float representing the current x-coordinate
   * @param y float representing the current y-coordinate 
   */
-  void debugDisplay(float x, float y);
+  cv::Mat getDebugDisplay(float x, float y, float heading);
+
+  void updateCostmap(std::vector<int> description, std::vector<float> data);
+
+  void updateObstacles(std::vector<int> description, std::vector<float> data);
 
   /*
   * @brief Free cuda variables/memory.
@@ -227,13 +249,13 @@ public:
   __device__ float terminalCost(float* s);
 
 protected:
-  dynamic_reconfigure::Server<PathIntegralParamsConfig> server_;
-  dynamic_reconfigure::Server<PathIntegralParamsConfig>::CallbackType callback_f_;
 
   //Constant variables
   const float FRONT_D = 0.5; ///< Distance from GPS receiver to front of car.
   const float BACK_D = -0.5; ///< Distance from GPS receiver to back of car.
   const float DISCOUNT = 0.9; ///< Discount on the crashing cost coefficient
+
+  bool l1_cost_; //Whether to use L1 speed cost (if false it is L2)
 
   //Primary variables
   int width_, height_; ///< Width and height of costmap.
@@ -241,11 +263,12 @@ protected:
   cudaArray *costmapArray_d_; ///< Cuda array for texture binding.
   cudaChannelFormatDesc channelDesc_; ///< Cuda texture channel description.
   cudaTextureObject_t costmap_tex_; ///< Cuda texture object.
-  
+  //float4* costmap_;
+  std::vector<float4> track_costs_;
+
   //Debugging variables
   float* debug_data_; ///< Host array for holding debug info.
   float* debug_data_d_; ///< Device array for holding debug info.
-  cv::Mat debug_img_; ///< OpenCV matrix for display debug info.
   int debug_img_width_; ///Width (in meters) of area imaged by debug view.
   int debug_img_height_; ///< Height (in meters) of area imaged by debug view.
   int debug_img_ppm_; ///< Pixels per meter for resolution of debug view.

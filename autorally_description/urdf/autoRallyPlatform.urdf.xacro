@@ -111,6 +111,8 @@ limitations under the License.
 
   <!-- arg to specify namespace -->
   <xacro:arg name="prefix" default=""/>
+  <!-- arg to specify the track-->
+  <xacro:arg name="track" default="marietta"/>
 
   <material name="chassis_mat">
     <color rgba="0.5 0.5 0.5 1"/>
@@ -165,12 +167,12 @@ limitations under the License.
     <transmission name="${lr_prefix}_${fr_prefix}_shock_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${lr_prefix}_${fr_prefix}_shock">
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
       </joint>
       <actuator name="${lr_prefix}_${fr_prefix}_shock_act">
         <!-- This hardwareInterface element exists for compatibility
              with ROS Hydro. -->
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
@@ -194,12 +196,12 @@ limitations under the License.
     <transmission name="${lr_prefix}_${fr_prefix}_shock_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${lr_prefix}_${fr_prefix}_shock">
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
       </joint>
       <actuator name="${lr_prefix}_${fr_prefix}_shock_act">
         <!-- This hardwareInterface element exists for compatibility
              with ROS Hydro. -->
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
@@ -231,12 +233,12 @@ limitations under the License.
     <transmission name="${lr_prefix}_${fr_prefix}_axle_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${lr_prefix}_${fr_prefix}_axle">
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
       </joint>
       <actuator name="${lr_prefix}_${fr_prefix}_axle_act">
         <!-- This hardwareInterface element exists for compatibility
              with ROS Hydro. -->
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
@@ -313,13 +315,13 @@ limitations under the License.
     <transmission name="${lr_prefix}_steering_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${lr_prefix}_steering_joint">
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
       </joint>
       <actuator name="${lr_prefix}_steering_act">
 
         <!-- This hardwareInterface element exists for compatibility
              with ROS Hydro. -->
-        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
@@ -328,7 +330,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformFrontWheelTextured.dae"
+                 wheel_model="package://autorally_description/urdf/cad/autoRallyPlatformFrontWheelTextured.dae"
                  cant="0.05"/>
   </xacro:macro>
 
@@ -343,7 +345,7 @@ limitations under the License.
                  lr_reflect="${lr_reflect}" tire_width="${tire_width}"
                  wheel_mass="${wheel_mass}"
                  axle_eff_limit="${axle_eff_limit}"
-                 wheel_model="package://autorally_description/urdf/autoRallyPlatformRearWheelTextured.dae"
+                 wheel_model="package://autorally_description/urdf/cad/autoRallyPlatformRearWheelTextured.dae"
                  cant="-0.03"/>
   </xacro:macro>
 
@@ -369,7 +371,7 @@ limitations under the License.
               rpy="0 0 0"/>
 
       <geometry>
-        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
+        <mesh filename="package://autorally_description/urdf/cad/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
     </visual>
 
@@ -378,7 +380,7 @@ limitations under the License.
               rpy="0 0 0"/>
 
       <geometry>
-        <mesh filename="package://autorally_description/urdf/Vehicle_Texture.dae" scale="1 1 1" />
+        <mesh filename="package://autorally_description/urdf/cad/Vehicle_Texture.dae" scale="1 1 1" />
       </geometry>
     </collision>
 
@@ -448,6 +450,49 @@ limitations under the License.
     <origin xyz="0.127 0 0.2159" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="camera_link"/>
+  </joint>
+
+ <!-- <link name="odom">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+  <joint name="odom_joint" type="fixed">
+    <axis xyz="0 0 0" />
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="odom"/>
+    <child link="base_link"/>
+  </joint>
+-->
+
+
+ <link name="odom_ground_truth">
+    <collision>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+
+  <joint name="odom_ground_truth_joint" type="fixed">
+    <axis xyz="0 0 0" />
+    <origin xyz="-0.039 0 0.0859" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="odom_ground_truth"/>
   </joint>
 
   <!-- Camera -->
@@ -588,14 +633,34 @@ limitations under the License.
       <frameId>gps_link</frameId>
       <topicName>gpsRoverStatus</topicName>
       <velocityTopicName>fix_velocity</velocityTopicName>
-      <referenceLatitude>33.774497</referenceLatitude>
-      <referenceLongitude>-84.405001</referenceLongitude>
-      <referenceAltitude>309.0</referenceAltitude>
+      <xacro:if value="${ '$(arg track)' == 'marietta'}" >
+        <referenceLatitude>33.774497</referenceLatitude>
+        <referenceLongitude>-84.405001</referenceLongitude>
+        <referenceAltitude>309.0</referenceAltitude>
+      </xacro:if >
+      <xacro:if value="${ '$(arg track)' == 'ccrf'}" >
+        <referenceLatitude>33.911071</referenceLatitude>
+        <referenceLongitude>-84.530018</referenceLongitude>
+        <referenceAltitude>297.607097</referenceAltitude>
+      </xacro:if >
       <drift>0.001 0.001 0.001</drift>
       <gaussianNoise>0.0001 0.0001 0.0001</gaussianNoise>
       <velocityDrift>0 0 0</velocityDrift>
       <velocityGaussianNoise>0.005 0.005 0.05</velocityGaussianNoise>
     </plugin>
+
+    <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>200.0</updateRate>
+      <bodyName>odom_ground_truth</bodyName>
+      <topicName>ground_truth/state_raw</topicName>
+      <gaussianNoise>0.00</gaussianNoise>
+      <frameName>world</frameName>
+      <!-- origin is at spawn location -->
+      <xyzOffset>0 8.5 0</xyzOffset>
+      <rpyOffset>0 0 0</rpyOffset>
+    </plugin>
+
     <!--<plugin name="tire_friction" filename="libTireFrictionPlugin.so">
       <link_name>left_rear_wheel</link_name>
       <collision_name>collision</collision_name>

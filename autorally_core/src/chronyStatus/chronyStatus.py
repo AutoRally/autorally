@@ -110,7 +110,7 @@ if __name__ == '__main__':
   rospy.init_node('chronyStatus_'+hostname)
   pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1, latch=True)
   array = DiagnosticArray()
-  status = DiagnosticStatus(name='ChronyStatus',\
+  status = DiagnosticStatus(name='chronyStatus',\
                             level=0,\
                             hardware_id=hostname)
 

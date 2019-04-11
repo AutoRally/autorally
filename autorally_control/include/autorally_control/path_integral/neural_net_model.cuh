@@ -37,11 +37,11 @@
 
 #include "managed.cuh"
 #include "meta_math.h"
+#include "param_getter.h"
 #include "gpu_err_chk.h"
 #include "cnpy.h"
 
-#include <eigen3/Eigen/Dense>
-
+#include <Eigen/Dense>
 
 namespace autorally_control {
 
@@ -97,6 +97,8 @@ public:
 
   void computeGrad(Eigen::MatrixXf &state, Eigen::MatrixXf &control);
 
+  void updateModel(std::vector<int> description, std::vector<float> data);
+
   __device__ void computeKinematics(float* state, float* state_der);
 
   __device__ void cudaInit(float* theta_s);
@@ -151,7 +153,7 @@ const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::SHARED_MEM_REQUEST
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::SHARED_MEM_REQUEST_BLK;
 
-#include "neural_net_model.cut"
+#include "neural_net_model.cu"
 
 }
 

@@ -30,7 +30,7 @@ limitations under the License.
   <env name="GAZEBO_MODEL_PATH" value="$(find autorally_description)"/>
   <env name="GAZEBO_RESOURCE_PATH" value="$(find autorally_description)"/>
   <arg name="namespace" default=""/>
-  <arg name="world_name" default="model://urdf/populated_AR.world"/>
+  <arg name="world_name" default="model://urdf/worlds/populated_marietta.world"/>
   <arg name="cmd_timeout" default="0.5"/>
 
   <!-- Create the world. -->
