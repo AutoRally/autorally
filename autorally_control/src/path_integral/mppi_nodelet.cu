@@ -34,4 +34,5 @@ namespace autorally_control{
   typedef MPPI<Controller, DynamicsModel, MPPICosts> MPPINodelet;
 }
 
-PLUGINLIB_DECLARE_CLASS(autorally_control, MPPINodelet, autorally_control::MPPINodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(autorally_control::MPPINodelet, nodelet::Nodelet)
+

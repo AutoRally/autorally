@@ -10,7 +10,7 @@ include_directories(include ${EIGEN_INCLUDE_DIRS})
 #First make the helper libraries
 ################################################################################
 add_library(autorally_plant autorally_plant.cpp)
-target_link_libraries(autorally_plant ${catkin_LIBRARIES})
+target_link_libraries(autorally_plant ${catkin_LIBRARIES} Eigen3::Eigen)
 
 add_library(param_getter param_getter.cpp)
 target_link_libraries(param_getter ${catkin_LIBRARIES})
@@ -48,7 +48,7 @@ cuda_add_executable(path_integral_bf
 target_compile_definitions(path_integral_bf PRIVATE PRIVATE USE_BASIS_FUNC_MODEL__)
 add_dependencies(path_integral_bf autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Eigen3::Eigen)
 
 ###################################################################################
 #Executable for the neural network model
@@ -58,8 +58,11 @@ cuda_add_library(mppi_nodelet
                  mppi_nodelet.cu
                  autorally_plant
                  param_getter)
+target_compile_definitions(mppi_nodelet PRIVATE
+		USE_NEURAL_NETWORK_MODEL__;
+		MPPI_NNET_USING_CONSTANT_MEM__)
 add_dependencies(mppi_nodelet autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
-target_link_libraries(mppi_nodelet /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(mppi_nodelet /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Eigen3::Eigen)
 
 cuda_add_executable(path_integral_nn
                    	path_integral_main.cu
@@ -71,7 +74,7 @@ target_compile_definitions(path_integral_nn PRIVATE
 		MPPI_NNET_USING_CONSTANT_MEM__)
 add_dependencies(path_integral_nn autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Eigen3::Eigen)
 
 ####################################################################################
 #Executable for monitoring the status of mppi
