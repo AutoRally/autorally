@@ -14,10 +14,17 @@
 
     <!--Debug/Sim mode parameter -->
     <param name="debug_mode" value="false" />
+    <param name="debug_display_width" value="20" />
+    <param name="debug_display_height" value="20" />
+    <param name="debug_display_ppm" value="25" />
+    <param name="costmap_width" value="20" />
+    <param name="costmap_height" value="20" />
+    <param name="costmap_ppm" value="50" />
+
 
     <!--Setup parameters-->
-    <param name="hz" value="50" />
-    <param name="num_timesteps" value="100" />
+    <param name="hz" value="40" />
+    <param name="num_timesteps" value="125" />
     <param name="x_pos" value="0.0" />
     <param name="y_pos" value="0.0" />
     <param name="heading" value="2.35" />
@@ -75,7 +82,7 @@
      <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/marietta_costmap_09_08_2018.npz" />
 
      <!-- Obstacle Parameters -->
-     <param name="obstacle_coefficient" value="2000.0" />
+     <param name="obstacle_coefficient" value="2500.0" />
      <param name="obs_boundary_threshold" value="10000.0" /> <!-- No collision -->
      <param name="obstacle_pad" value = "15" />
      <param name="obstacle_buffer" value = "2" />
