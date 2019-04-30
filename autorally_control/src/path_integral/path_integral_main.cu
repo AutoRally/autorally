@@ -110,6 +110,9 @@ int main(int argc, char** argv) {
 
   int optimization_stride = getRosParam<int>("optimization_stride", mppi_node);
 
+  bool use_cem;
+  mppi_node.param<bool>("use_cem", use_cem, false);
+
   //Define the controller
   float init_u[2] = {(float)params.init_steering, (float)params.init_throttle};
   float exploration_std[2] = {(float)params.steering_std, (float)params.throttle_std};
@@ -138,7 +141,7 @@ int main(int argc, char** argv) {
     typedef MPPIAdaptiveController<DynamicsModel, ControllerCosts, Optimizer, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
     Controller* mppi = new Controller(model, costs, optim, params.num_timesteps, params.hz, params.gamma,
                                   exploration_std, init_u, params.num_iters, optimization_stride, 0,
-                                  params.dist_type);
+                                  params.dist_type, use_cem);
   #else
     typedef MPPIController<DynamicsModel, ControllerCosts, MPPI_NUM_ROLLOUTS__, BLOCKSIZE_X, BLOCKSIZE_Y> Controller;
     Controller* mppi = new Controller(model, costs, params.num_timesteps, params.hz, params.gamma, exploration_std,

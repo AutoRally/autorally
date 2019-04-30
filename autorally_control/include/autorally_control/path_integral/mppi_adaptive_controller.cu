@@ -369,12 +369,14 @@ template<class DYNAMICS_T, class COSTS_T, class OPTIMIZER_T, int ROLLOUTS, int B
 MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_Y>::MPPIAdaptiveController(
   DYNAMICS_T* model, COSTS_T* costs, OPTIMIZER_T* optim, int num_timesteps, int hz, float gamma,
   float* exploration_var, float* init_u, int num_optimization_iters, int opt_stride,
-  cudaStream_t stream, std::string dist_type)
+  cudaStream_t stream, std::string dist_type, bool use_cem)
   : MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(model, costs, num_timesteps, hz, gamma,
        exploration_var, init_u, num_optimization_iters, opt_stride, stream), rng_(rd_())
 {
   //Set the optimizer
   optim_ = optim;
+
+  use_cem_ = use_cem;
 
   //Initialize vectors
   typedef MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y> Base;
@@ -461,17 +463,32 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
     //Synchronize stream here since we want to do computations on the CPU
     HANDLE_ERROR( cudaStreamSynchronize(Base::stream_) );
 
-    //Compute the baseline (minimum) sampled cost
-    float baseline = Base::traj_costs_[0];
-    for (int i = 0; i < NUM_ROLLOUTS; i++) {
-      if (Base::traj_costs_[i] < baseline){
-        baseline = Base::traj_costs_[i];
+    if (use_cem_) {
+      std::vector<float> traj_costs_tmp(Base::traj_costs_);
+      //std::sort(&traj_costs_tmp[0], &traj_costs_tmp[NUM_ROLLOUTS-1]);
+      std::sort(traj_costs_tmp.begin(), traj_costs_tmp.begin() + NUM_ROLLOUTS);
+      int num_elites = static_cast<int>(Base::gamma_*NUM_ROLLOUTS);
+      float cutoff = traj_costs_tmp[num_elites];
+      for (int i = 0; i < NUM_ROLLOUTS; i++) {
+        Base::traj_costs_[i] = (Base::traj_costs_[i] <= cutoff) ? 1.f : 0.f;
       }
+      HANDLE_ERROR(cudaMemcpyAsync(Base::traj_costs_d_, Base::traj_costs_.data(),
+                  NUM_ROLLOUTS*sizeof(float), cudaMemcpyHostToDevice, Base::stream_));
+    } else {
+      //Compute the baseline (minimum) sampled cost
+      float baseline = Base::traj_costs_[0];
+      for (int i = 0; i < NUM_ROLLOUTS; i++) {
+        if (Base::traj_costs_[i] < baseline){
+          baseline = Base::traj_costs_[i];
+        }
+      }
+
+      //Now resume GPU computations
+      launchNormExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(Base::traj_costs_d_, Base::gamma_, baseline, Base::stream_);
+      HANDLE_ERROR(cudaMemcpyAsync(Base::traj_costs_.data(), Base::traj_costs_d_,
+                  NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost, Base::stream_));
     }
 
-    //Now resume GPU computations
-    launchNormExpKernel<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y>(Base::traj_costs_d_, Base::gamma_, baseline, Base::stream_);
-    HANDLE_ERROR(cudaMemcpyAsync(Base::traj_costs_.data(), Base::traj_costs_d_, NUM_ROLLOUTS*sizeof(float), cudaMemcpyDeviceToHost, Base::stream_));
     cudaStreamSynchronize(Base::stream_);
 
     //Compute the normalizing term

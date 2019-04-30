@@ -70,6 +70,8 @@ public:
   std::vector<float> state_traj_;
   float* state_traj_d_;
 
+  bool use_cem_;
+
   //Optimizer settings
   /**
   * @brief Constructor for mppi controller class.
@@ -81,7 +83,8 @@ public:
   */
   MPPIAdaptiveController(DYNAMICS_T* model, COSTS_T* costs, OPTIMIZER_T* optim, int num_timesteps, int hz, float gamma,
                      float* exploration_var, float* init_control, int num_optimization_iters = 1,
-                     int opt_stride = 1, cudaStream_t stream = 0, std::string dist_type = "normal");
+                     int opt_stride = 1, cudaStream_t stream = 0, std::string dist_type = "normal",
+                     bool use_cem = false);
 
   /**
   * @brief Destructor for mppi controller class.
