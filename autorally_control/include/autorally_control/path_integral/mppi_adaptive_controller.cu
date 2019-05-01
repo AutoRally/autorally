@@ -377,6 +377,7 @@ MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, BDIM_
   optim_ = optim;
 
   use_cem_ = use_cem;
+  traj_costs_sorted_.resize(NUM_ROLLOUTS);
 
   //Initialize vectors
   typedef MPPIController<DYNAMICS_T, COSTS_T, ROLLOUTS, BDIM_X, BDIM_Y> Base;
@@ -464,11 +465,10 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
     HANDLE_ERROR( cudaStreamSynchronize(Base::stream_) );
 
     if (use_cem_) {
-      std::vector<float> traj_costs_tmp(Base::traj_costs_);
-      //std::sort(&traj_costs_tmp[0], &traj_costs_tmp[NUM_ROLLOUTS-1]);
-      std::sort(traj_costs_tmp.begin(), traj_costs_tmp.begin() + NUM_ROLLOUTS);
+      std::copy(Base::traj_costs_.begin(), Base::traj_costs_.end(), traj_costs_sorted_.begin());
+      std::sort(traj_costs_sorted_.begin(), traj_costs_sorted_.end());
       int num_elites = static_cast<int>(Base::gamma_*NUM_ROLLOUTS);
-      float cutoff = traj_costs_tmp[num_elites];
+      float cutoff = traj_costs_sorted_[num_elites];
       for (int i = 0; i < NUM_ROLLOUTS; i++) {
         Base::traj_costs_[i] = (Base::traj_costs_[i] <= cutoff) ? 1.f : 0.f;
       }

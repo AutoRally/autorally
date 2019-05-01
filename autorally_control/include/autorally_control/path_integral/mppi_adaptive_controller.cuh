@@ -71,6 +71,7 @@ public:
   float* state_traj_d_;
 
   bool use_cem_;
+  std::vector<float> traj_costs_sorted_;
 
   //Optimizer settings
   /**
