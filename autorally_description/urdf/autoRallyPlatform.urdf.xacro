@@ -619,6 +619,7 @@ limitations under the License.
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>$(arg prefix)</robotNamespace>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      <legacyModeNS>true</legacyModeNS>
     </plugin>
 
     <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
