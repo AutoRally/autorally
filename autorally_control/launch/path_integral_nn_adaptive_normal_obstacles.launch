@@ -22,8 +22,8 @@
     <param name="costmap_ppm" value="50" />
 
     <!--Setup parameters-->
-    <param name="hz" value="50" />
-    <param name="num_timesteps" value="100" />
+    <param name="hz" value="40" />
+    <param name="num_timesteps" value="125" />
     <param name="x_pos" value="0.0" />
     <param name="y_pos" value="0.0" />
     <param name="heading" value="2.35" />
