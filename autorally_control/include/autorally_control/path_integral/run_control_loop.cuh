@@ -131,8 +131,7 @@ void runControlLoop(CONTROLLER_T* controller, PLANT_T* robot, SystemParams* para
     }
     //Update the cost parameters
     if (robot->hasNewDynRcfg()){
-      ROS_INFO("DYNAMIC RECONFIGURE UPDATE");
-      //controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
+      controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
     }
     //Update any obstacles
     if (robot->hasNewObstacles()){
