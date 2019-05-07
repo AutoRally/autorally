@@ -466,9 +466,10 @@ void MPPIAdaptiveController<DYNAMICS_T, COSTS_T, OPTIMIZER_T, ROLLOUTS, BDIM_X, 
 
     if (use_cem_) {
       std::copy(Base::traj_costs_.begin(), Base::traj_costs_.end(), traj_costs_sorted_.begin());
-      std::sort(traj_costs_sorted_.begin(), traj_costs_sorted_.end());
-      int num_elites = static_cast<int>(Base::gamma_*NUM_ROLLOUTS);
-      float cutoff = traj_costs_sorted_[num_elites];
+      int elite_idx = static_cast<int>(Base::gamma_*NUM_ROLLOUTS);
+      std::nth_element(traj_costs_sorted_.begin(), traj_costs_sorted_.begin()+elite_idx,
+              traj_costs_sorted_.end());
+      float cutoff = traj_costs_sorted_[elite_idx];
       for (int i = 0; i < NUM_ROLLOUTS; i++) {
         Base::traj_costs_[i] = (Base::traj_costs_[i] <= cutoff) ? 1.f : 0.f;
       }
