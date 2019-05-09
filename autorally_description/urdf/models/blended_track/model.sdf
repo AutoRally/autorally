@@ -10,7 +10,6 @@
             <size>90 90</size>
           </plane>
         </geometry>
-        <laser_retro>0.0</laser_retro>
         <surface>
           <friction>
             <ode>
@@ -28,7 +27,6 @@
             <size>90 90</size>
           </plane>
         </geometry>
-        <laser_retro>0.0</laser_retro>
         <material>
           <script>
             <uri>model://urdf/gazebo.material</uri>

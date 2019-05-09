@@ -40,8 +40,7 @@
     <param name="nesterov" value="false" />
 
     <!--Model parameters-->
-    <!--<param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />-->
-    <param name="model_path" value="/home/jake/catkin_ws/src/autorally_gtrll/models/dynamics_model_100_steps_02_27_2019/multi_step_model_100.npz" />
+    <param name="model_path" value="$(env AR_MPPI_PARAMS_PATH)/models/autorally_nnet_09_12_2018.npz" />
 
     <!-- Control hyper-parameters-->
     <param name="gamma" value=".15" />

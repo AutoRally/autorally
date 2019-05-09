@@ -64,8 +64,7 @@ limitations under the License.
         args="-param robot_description -urdf -model Alpha
               -gazebo_namespace /gazebo
               -x $(arg x) -y $(arg y) -z $(arg z)
-              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)
-              -track ccrf"/>
+              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
 
   <!-- load controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
