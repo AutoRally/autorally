@@ -119,8 +119,6 @@ void runControlLoop(CONTROLLER_T* controller, PLANT_T* robot, SystemParams* para
     if (params->debug_mode){ //Display the debug window.
      cv::Mat debug_img = controller->costs_->getDebugDisplay(state(0), state(1), state(2));
      robot->setDebugImage(debug_img);
-     cv::Mat costmap_img = controller->costs_->getCostmapDisplay(state(0), state(1), state(2));
-     robot->setCostmapImage(debug_img);
     }
     //Update the state estimate
     if (last_pose_update != robot->getLastPoseTime()){
@@ -180,10 +178,6 @@ void runControlLoop(CONTROLLER_T* controller, PLANT_T* robot, SystemParams* para
 
     //Set the updated solution for execution
     robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
-
-    //Set the sampled trajectories
-    stateTrajSolution = controller->getStateTrajectories();
-    robot->setStateTrajectories(stateTrajSolution);
 
     //Check the robots status
     status = robot->checkStatus();
