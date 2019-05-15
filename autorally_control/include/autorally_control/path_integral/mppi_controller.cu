@@ -105,8 +105,14 @@ __global__ void rolloutKernel(int num_timesteps, float* state_d, float* U_d, flo
   for (i = 0; i < num_timesteps; i++) {
     if (global_idx < NUM_ROLLOUTS) {
       for (j = tdy; j < CONTROL_DIM; j+= blockDim.y) {
-        du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j];//*nu[j];
-        u[j] = U_d[i*CONTROL_DIM + j] + du[j];
+        if (i < opt_delay) { // Don't optimize variables that are already being executed
+          du[j] = 0.0;
+          u[j] = U_d[i*CONTROL_DIM + j];
+        }
+        else {
+          du[j] = du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j];//*nu[j];
+          u[j] = U_d[i*CONTROL_DIM + j] + du[j];
+        }
         du_d[CONTROL_DIM*num_timesteps*(BLOCKSIZE_X*bdx + tdx) + i*CONTROL_DIM + j] = u[j];
       }
     }
