@@ -31,14 +31,20 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 7. [Autonomous Driving in Simulation](#7-autonomous-driving-in-simulation)
 
 ### 1. Install Prerequisites
-1. __Install [Ubuntu 16.04 64-bit](http://www.ubuntu.com)__
+1. __Install [Ubuntu 18.04 64-bit](http://www.ubuntu.com)__
 2. __Install required packages__
 
    ```sudo apt-get install git doxygen openssh-server libusb-dev texinfo```
 
-   _Recommended Tools_
+   ROS Melodic does not support Python 3 yet. Before installing Python packages, you may need to set up e.g. a Python 2.7 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands):
 
-   The following tools are useful, but not required for this project.
+   ```
+   conda create -n my_ros_env python=2.7
+   source activate my_ros_env
+   conda install rospkg defusedxml
+   ```
+
+   The following tools are recommended, but not required for this project.
    * cutecom
    * cmake-curses-gui
    * synaptic
@@ -46,7 +52,7 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 
    ```sudo apt-get install cutecom cmake-curses-gui synaptic python-termcolor```
 
-3. __[Install](http://www.ros.org/install/) ros-kinetic-desktop-full__
+3. __[Install](http://www.ros.org/install/) ros-melodic-desktop-full__
 
 4. __Install MPPI Dependencies (if you have a GPU and will run MPPI)__
 
@@ -84,7 +90,11 @@ Within the catkin workspace folder, run this command to install the packages thi
 
 ### 4. Compilation & Running
 
-To compile and install run `catkin_make` from the catkin workspace folder.
+First, check your Eigen version with `pkg-config --modversion eigen3`. If you don't have at least version 3.3.5, [upgrade Eigen](https://github.com/eigenteam/eigen-git-mirror).
+
+Then, to compile and install, run `catkin_make` from the catkin workspace folder. If your version of CUDA does not support `gcc-7`, you may need to use
+
+`catkin_make -DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6`
 
 Due to the additional requirement of ROS's distributed launch system, you must run
 
