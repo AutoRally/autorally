@@ -581,7 +581,7 @@ void AutoRallyChassis::loadChassisCommandPriorities()
   //read in chassisCommandPriorities from the parameter server that were loaded by the launch file
   ros::NodeHandle nhPvt = getPrivateNodeHandle();
   XmlRpc::XmlRpcValue v;
-  nhPvt.param("chassisCommandProirities", v, v);
+  nhPvt.param("chassisCommandPriorities", v, v);
   std::map<std::string, XmlRpc::XmlRpcValue>::iterator mapIt;
   for(mapIt = v.begin(); mapIt != v.end(); mapIt++)
   {

@@ -10,7 +10,7 @@
 
     <rosparam param="actuators" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
 
-    <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
+    <rosparam param="chassisCommandPriorities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
 
     <!--configure settings for 115200 baud, 8N1 -->
     <param name="port" value="/dev/arChassis" />

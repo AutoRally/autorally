@@ -255,7 +255,7 @@ class AutoRallyCtrlr(object):
       self.chassisCmdLock = threading.Lock()
 
       #load chassis commander priorities
-      self.commandPriorities = rospy.get_param("~chassisCommandProirities", [])
+      self.commandPriorities = rospy.get_param("~chassisCommandPriorities", [])
       self.commandPriorities = sorted(self.commandPriorities.items(), key=operator.itemgetter(1))
       rospy.loginfo("AutoRallyGazeboController: Loaded %d chassis commanders", len(self.commandPriorities))
 

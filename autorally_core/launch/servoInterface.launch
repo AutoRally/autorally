@@ -11,7 +11,7 @@
     <rosparam param="servos" command="load" file="$(env AR_CONFIG_PATH)/arChassisConfig_$(env AR_CHASSIS).yaml" />
     <!-- <rosparam param="throttleCalibration" command="load" file="$(env AR_CONFIG_PATH)/throttlePositionCalibration.yaml" /> -->
 
-    <rosparam param="servoCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
+    <rosparam param="servoCommandPriorities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml" />
     <!--configure settings for 57600 baud, 8N1 -->
     <param name="port" value="/dev/arServoController" />
     <param name="serialBaud" value="57600" />

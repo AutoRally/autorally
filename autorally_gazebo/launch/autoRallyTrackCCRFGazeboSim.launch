@@ -76,7 +76,7 @@ limitations under the License.
     <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
     <param name="vehicle_prefix" value="$(arg namespace)"/>
     <rosparam file="$(find autorally_gazebo)/config/autoRallyPlatformCtrlrParams.yaml" command="load"/>
-    <rosparam param="chassisCommandProirities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
+    <rosparam param="chassisCommandPriorities" command="load" file="$(env AR_CONFIG_PATH)/chassisCommandPriorities.yaml"/>
   </node>
 
   <!-- Run ground truth pose script, published on /ground_truth/state-->
