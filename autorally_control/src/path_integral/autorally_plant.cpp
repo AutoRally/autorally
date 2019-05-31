@@ -69,7 +69,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi
  
   //Timer callback for path publisher
   pathTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubPath, this);
-  stateTrajTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStateTraj, this);
+  //stateTrajTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStateTraj, this);
   statusTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubStatus, this);
   debugImgTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::displayDebugImage, this);
   timingInfoTimer_ = mppi_node.createTimer(ros::Duration(0.033), &AutorallyPlant::pubTimingData, this);
