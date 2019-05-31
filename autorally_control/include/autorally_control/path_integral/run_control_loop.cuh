@@ -131,8 +131,7 @@ void runControlLoop(CONTROLLER_T* controller, PLANT_T* robot, SystemParams* para
     }
     //Update the cost parameters
     if (robot->hasNewDynRcfg()){
-      ROS_INFO("DYNAMIC RECONFIGURE UPDATE");
-      //controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
+      controller->costs_->updateParams_dcfg(robot->getDynRcfgParams());
     }
     //Update any obstacles
     if (robot->hasNewObstacles()){
@@ -183,8 +182,8 @@ void runControlLoop(CONTROLLER_T* controller, PLANT_T* robot, SystemParams* para
     robot->setSolution(stateSolution, controlSolution, result.feedback_gain, last_pose_update, avgOptimizationLoopTime);
 
     //Set the sampled trajectories
-    stateTrajSolution = controller->getStateTrajectories();
-    robot->setStateTrajectories(stateTrajSolution);
+    //stateTrajSolution = controller->getStateTrajectories();
+    //robot->setStateTrajectories(stateTrajSolution);
 
     //Check the robots status
     status = robot->checkStatus();
