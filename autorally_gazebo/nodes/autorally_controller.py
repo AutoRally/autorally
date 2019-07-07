@@ -390,9 +390,6 @@ class AutoRallyCtrlr(object):
                 chassisSt.frontBrakeCommander = self.chassisCmds[cmd].sender
                 foundFrontBrake = True
 
-              else:
-                frontBrake = 0
-
           steer_ang_changed, center_y = self._ctrl_steering(steer_ang, steer_ang_vel, delta_t)
           self._ctrl_axles(speed, accel, delta_t, steer_ang_changed, center_y)
 
