@@ -393,25 +393,25 @@ class AutoRallyCtrlr(object):
           steer_ang_changed, center_y = self._ctrl_steering(steer_ang, steer_ang_vel, delta_t)
           self._ctrl_axles(speed, accel, delta_t, steer_ang_changed, center_y)
 
-        # Publish the steering and axle joint commands.
-        chassisSt.header.stamp = rospy.Time.now()
-        self.chassisStatePub.publish(chassisSt)
+      # Publish the steering and axle joint commands.
+      chassisSt.header.stamp = rospy.Time.now()
+      self.chassisStatePub.publish(chassisSt)
 
-        self._left_steer_cmd_pub.publish(self._theta_left)
-        self._right_steer_cmd_pub.publish(self._theta_right)
-        if self._left_front_axle_cmd_pub:
-          self._left_front_axle_cmd_pub.publish(frontBrake)
-        if self._right_front_axle_cmd_pub:
-          self._right_front_axle_cmd_pub.publish(frontBrake)
-        if self._left_rear_axle_cmd_pub:
-          self._left_rear_axle_cmd_pub.publish(speed)
-        if self._right_rear_axle_cmd_pub:
-          self._right_rear_axle_cmd_pub.publish(speed)
+      self._left_steer_cmd_pub.publish(self._theta_left)
+      self._right_steer_cmd_pub.publish(self._theta_right)
+      if self._left_front_axle_cmd_pub:
+        self._left_front_axle_cmd_pub.publish(frontBrake)
+      if self._right_front_axle_cmd_pub:
+        self._right_front_axle_cmd_pub.publish(frontBrake)
+      if self._left_rear_axle_cmd_pub:
+        self._left_rear_axle_cmd_pub.publish(speed)
+      if self._right_rear_axle_cmd_pub:
+        self._right_rear_axle_cmd_pub.publish(speed)
 
-        try:
-          self._sleep_timer.sleep()
-        except rospy.exceptions.ROSTimeMovedBackwardsException:
-          continue #rospy.loginfo()
+      try:
+        self._sleep_timer.sleep()
+      except rospy.exceptions.ROSTimeMovedBackwardsException:
+        continue #rospy.loginfo()
 
   def chassisCmdCb(self, chassisCommand):
     """Chassis command callback
