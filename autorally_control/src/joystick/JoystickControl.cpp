@@ -55,7 +55,6 @@ JoystickControl::JoystickControl():
   runstop_.sender = "joystick";
   runstop_.motionEnabled = false;
 
-
   if(!nh_.getParam("joystickController/throttleDamping", throttleDamping_) ||
      !nh_.getParam("joystickController/steeringDamping", steeringDamping_) ||
      !nh_.getParam("joystickController/throttleAxis", throttleAxis_) ||
@@ -124,14 +123,8 @@ void JoystickControl::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   {
 
     chassis_command_.throttle = throttleDamping_*joy->axes[throttleAxis_];
+    chassis_command_.frontBrake = throttleDamping_*fabs(joy->axes[brakeAxis_]);
 
-    if(chassis_command_.throttle < 0.0)
-    {
-      chassis_command_.frontBrake = fabs(chassis_command_.throttle);
-    } else
-    {
-      chassis_command_.frontBrake = 0.0;
-    }
   } else
   {
     chassis_command_.throttle = -10.0;

@@ -11,8 +11,8 @@
   <node name="joystickController" pkg="autorally_control" type="joystickController" output="screen" machine="autorally-ocs">
     <param name="throttleDamping" value="1.0" />
     <param name="steeringDamping" value="1.0" />
-    <param name="throttleAxis" value="1" />
-    <param name="steeringAxis" value="3" />
+    <param name="throttleAxis" value="3" />
+    <param name="steeringAxis" value="0" />
     <rosparam param="runstopToggleButtons">[0, 1, 2, 3]</rosparam>
     <param name="safeSpeedIncButton" value="0" />
     <param name="safeSpeedDecButton" value="3" />
