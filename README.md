@@ -92,7 +92,7 @@ Within the catkin workspace folder, run this command to install the packages thi
 
 ### 4. Compilation & Running
 
-First, check your Eigen version with `pkg-config --modversion eigen3`. If you don't have at least version 3.3.5, [upgrade Eigen](https://github.com/eigenteam/eigen-git-mirror).
+First, check your Eigen version with `pkg-config --modversion eigen3`. If you don't have at least version 3.3.5, [upgrade Eigen](https://github.com/eigenteam/eigen-git-mirror) by following "Method 2" within the included `INSTALL` file.
 
 Then, to compile and install, run `catkin_make` from the catkin workspace folder. If your version of CUDA does not support `gcc-7`, you may need to use
 
