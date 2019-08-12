@@ -17,7 +17,7 @@ Research Pages AutoRally is associated with:
 
 We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!
 
-Please submit pull requests to the [kinetic-devel branch](https://github.com/AutoRally/autorally/pull/new/kinetic-devel) that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
+Please submit pull requests to the [melodic-devel branch](https://github.com/AutoRally/autorally/pull/new/kinetic-devel) that conform to the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). We use Gitflow, so master branch is reserved for releases.
 
 ## Setup Instructions
 
