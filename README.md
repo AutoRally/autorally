@@ -83,14 +83,20 @@ Also clone the IMU code and Pointgrey camera drivers into the same catkin worksp
     git clone https://github.com/AutoRally/imu_3dm_gx4.git
     git clone https://github.com/ros-drivers/pointgrey_camera_driver.git
     
+### 3. Build Pointgrey Camera Driver
 
-### 3. Install AutoRally ROS Dependencies
+Since there are no pre-built drivers for Melodic, follow [these instructions](https://github.com/ros-drivers/pointgrey_camera_driver/issues/183#issuecomment-487143728) to build the driver yourself.
+
+- The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_bionic.tgz`.
+- You may need to run `sudo apt --fix-broken install` after installing the suggested packages.
+
+### 4. Install AutoRally ROS Dependencies
 
 Within the catkin workspace folder, run this command to install the packages this project depends on.
 
 ```rosdep install --from-path src --ignore-src -y```
 
-### 4. Compilation & Running
+### 5. Compilation & Running
 
 First, check your Eigen version with `pkg-config --modversion eigen3`. If you don't have at least version 3.3.5, [upgrade Eigen](https://github.com/eigenteam/eigen-git-mirror) by following "Method 2" within the included `INSTALL` file.
 
@@ -106,13 +112,13 @@ before using any AutoRally components. See the [wiki](https://github.com/AutoRal
 
 _Note:_ If you are unfamiliar with catkin, please know that you must run `source catkin_ws/devel/setup.sh` before ROS will be able to locate the autorally packages (and thus you must run this before sourcing `setupEnvLocal.sh`). This line can be added to your ~/.bashrc file so that it is automatically run on opening a terminal.
 
-### 5. Generate Documentation
+### 6. Generate Documentation
 
 You can generate or update code documentation by running `doxygen` in `autorally/`.
 
 To view code documentation open `autorally/doc/html/index.html` in a web browser.
 
-### 6. Start the AutoRally Simulation to Test Configuration
+### 7. Start the AutoRally Simulation to Test Configuration
 
 ```roslaunch autorally_gazebo autoRallyTrackGazeboSim.launch```
 
@@ -130,7 +136,7 @@ and configure rqt_publisher to publish a message to topic `/runstop` of type `au
 
 - Verify that `runstopMotionEnabled` is **true** in `/chassisState` topic.
 
-### 7. Autonomous Driving in Simulation
+### 8. Autonomous Driving in Simulation
 
 At the end of this section the robot will be driving autonomously in simulation using controllers available in `autorally_control`.
 
