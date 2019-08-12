@@ -34,9 +34,9 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
 1. __Install [Ubuntu 18.04 64-bit](http://www.ubuntu.com)__
 2. __Install required packages__
 
-   ```sudo apt-get install git doxygen openssh-server libusb-dev texinfo```
+   ```sudo apt install git doxygen openssh-server libusb-dev texinfo```
 
-   ROS Melodic does not support Python 3 yet. Before installing Python packages, you may need to set up e.g. a Python 2.7 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands):
+   ROS Melodic only supports Python 2.7. Before installing Python packages, you need to ensure that `python` points to Python 2.7, e.g., by setting up a Python 2.7 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands):
 
    ```
    conda create -n my_ros_env python=2.7
@@ -50,7 +50,7 @@ Please submit pull requests to the [kinetic-devel branch](https://github.com/Aut
    * synaptic
    * python-termcolor
 
-   ```sudo apt-get install cutecom cmake-curses-gui synaptic python-termcolor```
+   ```sudo apt install cutecom cmake-curses-gui synaptic python-termcolor```
 
 3. __[Install](http://www.ros.org/install/) ros-melodic-desktop-full__
 
