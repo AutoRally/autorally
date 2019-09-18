@@ -38,13 +38,13 @@
 #ifndef Q_MOC_RUN
 #include <ros/ros.h>
 #include <ros/time.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
 #endif
-
 #include <string>
 
 #include <QtGui/QStandardItem>
 #include <QtCore/QList>
-#include <diagnostic_msgs/DiagnosticArray.h>
+
 
 /**
  *  @class DiagnosticsEntry DiagnosticsEntry.hpp "ocs/DiagnosticsEntry.hpp"

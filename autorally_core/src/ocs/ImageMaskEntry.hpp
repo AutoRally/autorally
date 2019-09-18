@@ -38,13 +38,13 @@
 #ifndef Q_MOC_RUN
 #include <ros/ros.h>
 #include <ros/time.h>
+#include <autorally_msgs/imageMask.h>
 #endif
- 
 #include <string>
 
 #include <QtGui/QStandardItem>
 #include <QtCore/QList>
-#include <autorally_msgs/imageMask.h>
+
 
 /**
  *  @class ImageMaskEntry ImageMaskEntry.hpp "ocs/ImageMaskEntry.hpp"
