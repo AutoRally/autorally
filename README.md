@@ -60,6 +60,8 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
     The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
 
     * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
+    See these instructions to verify CUDA installation
+    https://xcat-docs.readthedocs.io/en/stable/advanced/gpu/nvidia/verify_cuda_install.html
     * [Install CNPY](https://github.com/rogersce/cnpy)
 
 5. __Install gtsam__
