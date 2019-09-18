@@ -56,7 +56,7 @@
     <param name="throttle_coeff" value ="0.0" />
     <param name="boundary_threshold" value="0.65" />
     <param name="discount" value = "0.1" />
-    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/marietta_costmap_09_08_2018.npz" />
+    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)/maps/gazebo_costmap_05_22_2016.npz" />
 
   </node>
 
