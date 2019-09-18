@@ -93,3 +93,9 @@ control/include/control/gpsWaypoint_paramsConfig.h
 # Qt user-specific files #
 ##########################
 *.user
+
+#############
+# IDE Files #
+#############
+.vscode/
+.idea/
