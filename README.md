@@ -36,7 +36,8 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
 
    ```sudo apt install git doxygen openssh-server libusb-dev texinfo```
 
-   ROS Melodic only supports Python 2.7. Before installing Python packages, you need to ensure that `python` points to Python 2.7, e.g., by setting up a Python 2.7 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands):
+   ROS Melodic only supports Python 2.7. Before installing Python packages, you need to ensure that `python` points to Python 2.7, e.g., by setting up a Python 2.7 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands)
+   Note: You will need to add conda-forge to your channels:
 
    ```
    conda create -n my_ros_env python=2.7
