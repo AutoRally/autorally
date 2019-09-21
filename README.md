@@ -42,7 +42,7 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
    ```
    conda create -n my_ros_env python=2.7
    source activate my_ros_env
-   conda install rospkg defusedxml
+   conda install rospkg defusedxml numpy empy
    ```
 
    The following tools are recommended, but not required for this project.
@@ -60,8 +60,9 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
     The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
 
     * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
-    See these instructions to verify CUDA installation
-    https://xcat-docs.readthedocs.io/en/stable/advanced/gpu/nvidia/verify_cuda_install.html
+       
+        See these instructions to verify CUDA installation
+        https://xcat-docs.readthedocs.io/en/stable/advanced/gpu/nvidia/verify_cuda_install.html
     * [Install CNPY](https://github.com/rogersce/cnpy)
 
 5. __Install gtsam__
@@ -92,6 +93,7 @@ Since there are no pre-built drivers for Melodic, follow [these instructions](ht
 
 - The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_bionic.tgz`.
 - You may need to run `sudo apt --fix-broken install` after installing the suggested packages.
+- To build the pointgrey ros package you will need to ```conda install empy```
 
 ### 4. Install AutoRally ROS Dependencies
 
@@ -144,6 +146,13 @@ and configure rqt_publisher to publish a message to topic `/runstop` of type `au
 At the end of this section the robot will be driving autonomously in simulation using controllers available in `autorally_control`.
 
 Position the robot in the same spot as when the simulation starts and make sure runstop motion should is enabled (set to **true**).
+
+#### Start state estimator:
+
+State estimator needs to be running for waypoint follower to work.
+But maybe we should just refer to the below sequence of tutorials 
+rather than duplicating an abbreviated version of the information
+here.
 
 #### Start waypoint follower:
 
