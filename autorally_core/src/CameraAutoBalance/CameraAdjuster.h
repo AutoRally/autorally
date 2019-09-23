@@ -24,8 +24,8 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef AUTORALLY_ADJUSTABLE_CAM_HPP
-#define AUTORALLY_ADJUSTABLE_CAM_HPP
+#ifndef AUTORALLY_ADJUSTABLE_CAM_H
+#define AUTORALLY_ADJUSTABLE_CAM_H
 
 namespace autorally_core
 {
@@ -39,37 +39,40 @@ namespace autorally_core
  *  and gain parameters. It can be implemented for multiple camera 
  *  interface libraries (FlyCapture2 and Spinnaker at time of writing)
  */
-class CameraAdjuster {
+class CameraAdjuster
+{
   public:
     /**
      *  One-time setup for adjusting exposure and gain. Grab references
      *  to camera objects, etc.
      */
-    virtual void Connect() = 0;
+    virtual void connect() = 0;
 
     /**
      *  Set the value of the exposure or shutter speed. The units are
      *  not standardized across implementations.
      *  @param x Exposure/shutter value to set
      */
-    virtual void SetShutter(double x) = 0;
+    virtual void setShutter(double x) = 0;
 
     /**
      *  Set the value of the sensor gain. The units are not standardized 
      *  across implementations.
      *  @param x Gain value to set
      */
-    virtual void SetGain(double x) = 0;
+    virtual void setGain(double x) = 0;
 
     /**
      *  Store the serial number of the camera, for use in the other methods.
      */
-    void SetSerial(int serial_number) {
-        camera_serial_number_ = serial_number;
+    void setSerial(int serial_number)
+    {
+      camera_serial_number_ = serial_number;
     }
 
-    int GetSerial() {
-        return camera_serial_number_;
+    int getSerial()
+    {
+      return camera_serial_number_;
     }
 
   protected:
@@ -78,4 +81,4 @@ class CameraAdjuster {
 
 }  // namespace autorally_core
 
-#endif  // AUTORALLY_ADJUSTABLE_CAM_HPP
+#endif  // AUTORALLY_ADJUSTABLE_CAM_H

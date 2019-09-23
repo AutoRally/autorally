@@ -29,15 +29,18 @@
 
 #include "FlycaptureAdjuster.h"
 
-namespace autorally_core {
+namespace autorally_core
+{
 
 /**
  *  Builds CameraAutoBalance for PointGrey/FlyCapture2
  */
-class CameraAutoBalancePtGrey : public CameraAutoBalance {
+class CameraAutoBalancePtGrey : public CameraAutoBalance
+{
 public:
-    CameraAutoBalancePtGrey() : CameraAutoBalance(new FlycaptureAdjuster)
-    {}
+  CameraAutoBalancePtGrey() : CameraAutoBalance(new FlycaptureAdjuster)
+  {
+  }
 };
 
 }

@@ -27,7 +27,7 @@
 #ifndef AUTORALLY_BALANCE_FLYCAP_AUTOBALANCE_H
 #define AUTORALLY_BALANCE_FLYCAP_AUTOBALANCE_H
 
-#include "CameraAdjuster.hpp"
+#include "CameraAdjuster.h"
 #include <flycapture/FlyCapture2.h>
 
 namespace autorally_core
@@ -38,13 +38,14 @@ namespace autorally_core
  *  "CameraAutoBalance/FlycaptureAdjuster.h"
  *  @brief Implementation of CameraAdjuster for FlyCapture2
  */
-class FlycaptureAdjuster : public CameraAdjuster {
+class FlycaptureAdjuster : public CameraAdjuster
+{
   public:
     FlycaptureAdjuster() = default;
 
-    void Connect() override;
-    void SetShutter(double x) override;
-    void SetGain(double x) override;
+    virtual void connect() override;
+    virtual void setShutter(double x) override;
+    virtual void setGain(double x) override;
 
   protected:
     FlyCapture2::Camera cam_;    // PointGrey camera handle

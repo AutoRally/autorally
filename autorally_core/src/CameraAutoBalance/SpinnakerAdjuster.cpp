@@ -29,32 +29,32 @@
 #include <chrono>
 #include <thread>
 
-
 namespace autorally_core
 {
 
 SpinnakerAdjuster::SpinnakerAdjuster() 
 : system_(Spinnaker::System::GetInstance()),
   cam_(0)
-{}
-
-void SpinnakerAdjuster::Connect() {
-    // get camera by serial number from the camera list
-    cam_ = system_->GetCameras().GetBySerial(std::to_string(GetSerial()));
+{
 }
 
-void SpinnakerAdjuster::SetShutter(double x) {
-    // flir_camera_driver handles initializing and de-initing the cameras.
-    // Attempting to do it here sometimes causes errors and/or race conditions.
-    if (cam_->IsInitialized()) {
-        cam_->ExposureTime.SetValue(x);
-    }
+void SpinnakerAdjuster::connect()
+{
+  // get camera by serial number from the camera list
+  cam_ = system_->GetCameras().GetBySerial(std::to_string(getSerial()));
 }
 
-void SpinnakerAdjuster::SetGain(double x) {
-    if (cam_->IsInitialized()) {
-        cam_->Gain.SetValue(x);
-    }
+void SpinnakerAdjuster::setShutter(double x)
+{
+  // flir_camera_driver handles initializing and de-initing the cameras.
+  // Attempting to do it here sometimes causes errors and/or race conditions.
+  if (cam_->IsInitialized())
+    cam_->ExposureTime.SetValue(x);
+}
+
+void SpinnakerAdjuster::setGain(double x) {
+  if (cam_->IsInitialized())
+    cam_->Gain.SetValue(x);
 }
 
 }  // namespace autorally_core

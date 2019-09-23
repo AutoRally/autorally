@@ -29,15 +29,18 @@
 
 #include "SpinnakerAdjuster.h"
 
-namespace autorally_core {
+namespace autorally_core
+{
 
 /**
  *  Builds CameraAutoBalance for FLIR/Spinnaker
  */
-class CameraAutoBalanceFLIR : public CameraAutoBalance {
+class CameraAutoBalanceFLIR : public CameraAutoBalance
+{
 public:
-    CameraAutoBalanceFLIR() : CameraAutoBalance(new SpinnakerAdjuster)
-    {}
+  CameraAutoBalanceFLIR() : CameraAutoBalance(new SpinnakerAdjuster)
+  {
+  }
 };
 
 }

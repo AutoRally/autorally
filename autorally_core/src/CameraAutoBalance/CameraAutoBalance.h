@@ -47,7 +47,7 @@
 #include <dynamic_reconfigure/Config.h>
 #include <dynamic_reconfigure/IntParameter.h>
 #include <autorally_core/camera_auto_balance_paramsConfig.h>
-#include "CameraAdjuster.hpp"
+#include "CameraAdjuster.h"
 
 namespace autorally_core
 {
@@ -183,7 +183,7 @@ protected:
     bool show_roi_and_hist_;    ///<Enables/disables the publishing of ROI and histogram images.
     cv::Rect roi_;  ///<Defines the region of interest (ROI) used to calibrate the camera.
     std::vector<int> hist_; ///<Stores the histogram values.
-    dynamic_reconfigure::Server<camera_auto_balance_paramsConfig    >* dynamic_reconfigure_server_;   ///<Dynamic reconfigure server handle
+    dynamic_reconfigure::Server<camera_auto_balance_paramsConfig>* dynamic_reconfigure_server_;   ///<Dynamic reconfigure server handle
 };
 
 }  // namespace autorally_core
