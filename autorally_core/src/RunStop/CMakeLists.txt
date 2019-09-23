@@ -1,5 +1,5 @@
 add_executable(runStop RunStop.cpp)
-target_link_libraries(runStop ${catkin_LIBRARIES} ${Boost_LIBRARIES} SerialSensorInterface Diagnostics)
+target_link_libraries(runStop ${catkin_LIBRARIES} ${Boost_LIBRARIES} SerialSensorInterface ar_diagnostics)
 add_dependencies(runStop autorally_msgs_gencpp)
 
 install(TARGETS

@@ -1,5 +1,5 @@
 add_library(CameraTrigger CameraTrigger.cpp)
-target_link_libraries(CameraTrigger ${catkin_LIBRARIES} SerialSensorInterface Diagnostics)
+target_link_libraries(CameraTrigger ${catkin_LIBRARIES} SerialSensorInterface ar_diagnostics)
 add_dependencies(CameraTrigger autorally_msgs_gencpp  ${PROJECT_NAME}_gencfg)
 
 install(TARGETS
