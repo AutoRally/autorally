@@ -88,7 +88,7 @@ Also clone the IMU code and Pointgrey camera drivers into the same catkin worksp
 
 Since there are no pre-built drivers for Melodic, follow [these instructions](https://github.com/ros-drivers/pointgrey_camera_driver/issues/183#issuecomment-487143728) to build the driver yourself.
 
-- The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_bionic.tgz`.
+- The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_Ubuntu18.04.tgz`.
 - You may need to run `sudo apt --fix-broken install` after installing the suggested packages.
 
 ### 4. Install AutoRally ROS Dependencies
