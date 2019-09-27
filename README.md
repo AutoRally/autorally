@@ -41,7 +41,8 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
    ```
    conda create -n my_ros_env python=2.7
    source activate my_ros_env
-   conda install rospkg defusedxml
+   conda install defusedxml
+   conda install -c jdh88 rospkg
    ```
 
    The following tools are recommended, but not required for this project.
