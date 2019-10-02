@@ -8,11 +8,21 @@ Software for the AutoRally research platform.
 
 [AutoRally Youtube Channel](https://www.youtube.com/channel/UCSt0P1uqi4zU5RX2DZC_Qvg)
 
-Research Pages AutoRally is associated with:
-  * http://rehg.org/autorally
-  * http://dcsl.gatech.edu/research-muri-nascar.html
-  * http://acds-lab.gatech.edu/Research.html
+[Platform Paper](https://ieeexplore.ieee.org/abstract/document/8616931)
 
+BibTex:
+```
+@article{goldfain2019autorally,
+  title={AutoRally: An Open Platform for Aggressive Autonomous Driving},
+  author={Goldfain, Brian and Drews, Paul and You, Changxi and Barulic, Matthew and Velev, Orlin and Tsiotras, Panagiotis and Rehg, James M},
+  journal={IEEE Control Systems Magazine},
+  volume={39},
+  number={1},
+  pages={26--55},
+  year={2019},
+  publisher={IEEE}
+}
+```
 ## Contributing
 
 We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!

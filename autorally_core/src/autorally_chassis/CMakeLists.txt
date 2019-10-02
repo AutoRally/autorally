@@ -1,6 +1,6 @@
 add_library(AutoRallyChassis AutoRallyChassis.cpp)
 add_dependencies(AutoRallyChassis autorally_msgs_gencpp)
-target_link_libraries(AutoRallyChassis ${catkin_LIBRARIES} ${Boost_LIBRARIES} SerialSensorInterface Diagnostics)
+target_link_libraries(AutoRallyChassis ${catkin_LIBRARIES} ${Boost_LIBRARIES} SerialSensorInterface ar_diagnostics)
 
 install(TARGETS
   AutoRallyChassis

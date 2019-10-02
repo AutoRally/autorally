@@ -33,23 +33,21 @@
  * @details This file contains the CameraAutoBalance class
  ***********************************************/
 
-#ifndef PROJECT_CAMERAAUTOBALANCE_H
-#define PROJECT_CAMERAAUTOBALANCE_H
+#ifndef AUTORALLY_CAMERAAUTOBALANCE_H
+#define AUTORALLY_CAMERAAUTOBALANCE_H
 
 #include <nodelet/nodelet.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 #include <opencv2/opencv.hpp>
-#include <flycapture/FlyCapture2.h>
 #include <cv_bridge/cv_bridge.h>
 #include <dynamic_reconfigure/server.h>
 #include <dynamic_reconfigure/Reconfigure.h>
 #include <dynamic_reconfigure/Config.h>
 #include <dynamic_reconfigure/IntParameter.h>
 #include <autorally_core/camera_auto_balance_paramsConfig.h>
-
-using namespace FlyCapture2;
+#include "CameraAdjuster.h"
 
 namespace autorally_core
 {
@@ -69,15 +67,22 @@ namespace autorally_core
  *  setpoint. There is also an option to plot the ROI and the
  *  gray histogram. A dynamic reconfigure server is created for
  *  changing these parameters.
+ *
+ *  Edit (ebretl): The constructor is templated on the CameraAdjuster 
+ *  implementation so that it can be built once and used with either 
+ *  FlyCapture2 or Spinnaker
  */
 class CameraAutoBalance : public nodelet::Nodelet {
 public:
     /**
-     * Constructor that initializes image transport.
-     * All othter initializations are done in method
-     * onInit().
+     * Constructor that initializes the camera adjuster. All other initialization is done
+     * in onInit().
      */
-    CameraAutoBalance();
+    template <typename CameraAdjusterType>
+    CameraAutoBalance(CameraAdjusterType* ca)
+    {
+        cam_adjuster_.reset(ca);
+    }
 
     /**
      * Initializes variables, gets parameters from ROS server,
@@ -91,15 +96,6 @@ protected:
      * @param msg ROS image message
      */
     void imageCallback(const sensor_msgs::Image::ConstPtr &msg);
-
-    /**
-     * Imposes x to be in range (min, max), ie,
-     * min <= x <= max.
-     * @param x Value to be saturated
-     * @param min Minimum value possible for x
-     * @param max Maximum value possible for x
-     */
-    double saturate(double x, double min, double max);
 
     /**
      * Calculates the MSV of a image. The image is converted
@@ -160,9 +156,7 @@ protected:
     ros::Subscriber sub_;   ///<Subscriber for image data
     image_transport::Publisher roi_pub_;    ///<Publisher for ROI image
     image_transport::Publisher hist_pub_;   ///<Publisher for histogram image
-    Camera cam_;    ///<PointGrey camera handle
-    Property prop_; ///<PointGrey property handle
-    Error err_;     ///<PointGrey error handle
+    std::unique_ptr<CameraAdjuster> cam_adjuster_;   ///Handle for adjusting camera properties
     unsigned long int frame_counter_; ///<Counts number of received frames
     int calibration_step_; ///<Determines how often auto exposure control is called.
     int camera_serial_number_;  ///<Camera serial number in decimal
@@ -189,10 +183,9 @@ protected:
     bool show_roi_and_hist_;    ///<Enables/disables the publishing of ROI and histogram images.
     cv::Rect roi_;  ///<Defines the region of interest (ROI) used to calibrate the camera.
     std::vector<int> hist_; ///<Stores the histogram values.
-    dynamic_reconfigure::Server<camera_auto_balance_paramsConfig    >* dynamic_reconfigure_server_;   ///<Dynamic reconfigure server handle
+    dynamic_reconfigure::Server<camera_auto_balance_paramsConfig>* dynamic_reconfigure_server_;   ///<Dynamic reconfigure server handle
 };
 
-}
+}  // namespace autorally_core
 
-
-#endif //PROJECT_CAMERAAUTOBALANCE_H
+#endif //AUTORALLY_CAMERAAUTOBALANCE_H
