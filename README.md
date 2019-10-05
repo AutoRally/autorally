@@ -75,7 +75,7 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
 5. __Install gtsam__
 
 
-   Follow the gtsam [Quick Start](https://github.com/borglab/gtsam) guide to clone and install the _develop_ branch of gtsam.
+   Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam.
 
    Instead of `cmake ..`, use:
 
