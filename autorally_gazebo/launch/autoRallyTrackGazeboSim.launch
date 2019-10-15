@@ -68,7 +68,7 @@ limitations under the License.
 
   <!-- load controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
+          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml --timeout 120"/>
 
   <!-- Control the steering, axle, and shock absorber joints. -->
   <node name="autorally_controller" pkg="autorally_gazebo"
