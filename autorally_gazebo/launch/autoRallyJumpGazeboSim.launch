@@ -80,7 +80,7 @@ rosservice call autorally_platform/gazebo/delete_model '{model_name: autoRallyPl
     <!-- Load the joint controllers. One of these publishes the joint states
          to joint_states. -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
+          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml --timeout 120"/>
 
     <!-- Control the steering, axle, and shock absorber joints. -->
     <node name="autorally_controller" pkg="autorally_gazebo"

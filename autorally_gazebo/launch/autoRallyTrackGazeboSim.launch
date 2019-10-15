@@ -68,7 +68,7 @@ limitations under the License.
 
   <!-- load controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml"/>
+          args="$(find autorally_gazebo)/config/autoRallyPlatformJointCtrlrParams.yaml --timeout 120"/>
 
   <!-- Control the steering, axle, and shock absorber joints. -->
   <node name="autorally_controller" pkg="autorally_gazebo"
@@ -83,6 +83,15 @@ limitations under the License.
   <node name="ground_truth_republisher" pkg="autorally_gazebo"
         type="ground_truth_republisher.py" output="screen">
   </node>
+
+
+  <!-- Run state estimator -->
+  <include file="$(find autorally_core)/launch/stateEstimator.launch">
+    <arg name="sim" value="true"/>
+    <arg name="InvertY" value="false"/>
+    <arg name="InvertZ" value="false"/>
+    <arg name="FixedInitialPose" value="true"/>
+  </include>
 
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
   <include file="$(find autorally_control)/launch/joystickController.launch" />
