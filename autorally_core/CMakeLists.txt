@@ -32,7 +32,7 @@ catkin_package(
     DEPENDS
     CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs sensor_msgs nav_msgs image_transport autorally_msgs
     INCLUDE_DIRS include
-    LIBRARIES SerialSensorInterface Diagnostics RingBuffer
+    LIBRARIES SerialSensorInterface ar_diagnostics RingBuffer
 )
 
 set(BUILD_FLAGS "-std=c++11 -Wuninitialized -Wall -Wextra")
@@ -58,12 +58,6 @@ add_subdirectory(src/camera_trigger)
 add_subdirectory(src/CameraAutoBalance)
 add_subdirectory(src/WheelOdometry)
 
-#install(TARGETS
-# 
-#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
 
 install(PROGRAMS
   src/systemStatus/systemStatus.py

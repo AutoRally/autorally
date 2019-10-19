@@ -1,0 +1,56 @@
+<launch>
+  <arg name="nodelet_manager_launched" default="0" />
+  <arg name="serial" default="0" />
+  <arg name="side" default="left" />
+  <arg name="enable_trigger" default="true"/>
+  
+  <!-- nodelet manager process -->
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" unless="$(arg nodelet_manager_launched)" />
+  
+  <param name="/camera/image_raw/compressed/jpeg_quality" type="int" value="10"/>
+
+
+  <group ns="$(arg side)_camera">
+    <!-- camera driver nodelet -->
+    <node pkg="nodelet" type="nodelet" name="camera_nodelet" machine="autorally-master" output="screen" 
+          args="load spinnaker_camera_driver/SpinnakerCameraNodelet /camera_nodelet_manager" >
+
+      <param name="frame_id" value="camera"/>
+      <param name="serial" value="$(arg serial)"/>
+      <param name="camera_info_url" value="file://$(env AR_CONFIG_PATH)/camera_calibration_$(arg serial).yaml" />
+
+      <remap from="image" to="image_diagnostic"/>
+    </node>
+
+    <!-- load parameters for camera nodelet -->
+    <node pkg="dynamic_reconfigure" type="dynparam" name="dynamic_configurator"
+          args="load camera_nodelet $(find autorally_core)/launch/flir_default_dynconfig.yaml">
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="image_proc_debayer" args="load image_proc/debayer /camera_nodelet_manager">
+      <param name="debayer" value="0"/>
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="image_proc_rect_mono" args="load image_proc/rectify /camera_nodelet_manager">
+      <remap from="image_rect" to="image_mono_rect" />
+    </node>
+    <node pkg="nodelet" type="nodelet" name="image_proc_rect_color" args="load image_proc/rectify /camera_nodelet_manager">
+      <remap from="image_mono" to="image_color" />
+      <remap from="image_rect" to="image_color_rect" />
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="ImageRepublisher" args="load autorally_core/ImageRepublisher /camera_nodelet_manager" output="screen" machine="autorally-master" >
+      <param name="fps" value="10" />
+      <param name="resizeHeight" value="480" />
+      <remap from="camera/image_raw" to="image_color" />
+      <remap from="camera/image_display" to="image_display" />
+    </node>
+
+  </group>
+  
+  <include file="$(find autorally_core)/launch/camera_auto_balance_flir.launch">
+    <arg name="serial" value="$(arg serial)" />
+    <arg name="side" value="$(arg side)" />
+  </include>
+
+</launch>

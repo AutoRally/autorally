@@ -3,24 +3,26 @@
 
   <arg name="enable_trigger" default="true"/>
 
-  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" />
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager" machine="autorally-master" output="screen" args="manager" required="false" respawn="false"/>
 
   <group if="$(optenv AR_CHASSIS_NEW true)">
-    <include file="$(find autorally_core)/launch/camera_trigger.launch"/>
+    <group if="$(arg enable_trigger)">
+      <include file="$(find autorally_core)/launch/camera_trigger.launch"/>
+    </group>
   </group>
 
-  <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_LEFTCAM_CONNECTED)">
+  <include file="$(find autorally_core)/launch/camera_$(env AR_LEFTCAM_TYPE).launch" if="$(env AR_LEFTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
     <arg name="serial" value="$(optenv AR_LEFTCAM 'none')" />
     <arg name="side" value="left" />
     <arg name="enable_trigger" value="$(arg enable_trigger)" />
   </include>
   
-  <include file="$(find autorally_core)/launch/camera.launch" if="$(env AR_RIGHTCAM_CONNECTED)">
+  <include file="$(find autorally_core)/launch/camera_$(env AR_RIGHTCAM_TYPE).launch" if="$(env AR_RIGHTCAM_CONNECTED)">
     <arg name="nodelet_manager_launched" value="1" />
     <arg name="serial" value="$(optenv AR_RIGHTCAM 'none')" />
     <arg name="side" value="right" />
     <arg name="enable_trigger" value="$(arg enable_trigger)" />
   </include>
-
+  
 </launch>
