@@ -8,11 +8,21 @@ Software for the AutoRally research platform.
 
 [AutoRally Youtube Channel](https://www.youtube.com/channel/UCSt0P1uqi4zU5RX2DZC_Qvg)
 
-Research Pages AutoRally is associated with:
-  * http://rehg.org/autorally
-  * http://dcsl.gatech.edu/research-muri-nascar.html
-  * http://acds-lab.gatech.edu/Research.html
+[Platform Paper](https://ieeexplore.ieee.org/abstract/document/8616931)
 
+BibTex:
+```
+@article{goldfain2019autorally,
+  title={AutoRally: An Open Platform for Aggressive Autonomous Driving},
+  author={Goldfain, Brian and Drews, Paul and You, Changxi and Barulic, Matthew and Velev, Orlin and Tsiotras, Panagiotis and Rehg, James M},
+  journal={IEEE Control Systems Magazine},
+  volume={39},
+  number={1},
+  pages={26--55},
+  year={2019},
+  publisher={IEEE}
+}
+```
 ## Contributing
 
 We welcome bug fixes, ehancements, new features, and [feedback](https://github.com/AutoRally/autorally/issues)!
@@ -42,7 +52,8 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
    ```
    conda create -n my_ros_env python=2.7
    source activate my_ros_env
-   conda install rospkg defusedxml numpy empy
+   conda install defusedxml numpy empy
+   conda install -c jdh88 rospkg
    ```
 
    The following tools are recommended, but not required for this project.
@@ -60,21 +71,23 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
     The core idea behind MPPI is to sample thousands of trajectories really fast. This is accomplished by implementing the sampling step on a GPU, for which you will need CUDA. We also use an external library to load python's numpy zip archives (.npz files) into C++.
 
     * [Install CUDA](https://developer.nvidia.com/cuda-downloads)
-       
-        See these instructions to verify CUDA installation
-        https://xcat-docs.readthedocs.io/en/stable/advanced/gpu/nvidia/verify_cuda_install.html
+    See these instructions to verify CUDA installation
+    https://xcat-docs.readthedocs.io/en/stable/advanced/gpu/nvidia/verify_cuda_install.html
     * [Install CNPY](https://github.com/rogersce/cnpy)
 
 5. __Install gtsam__
 
 
-   Follow the gtsam [Quick Start](https://github.com/borglab/gtsam) guide to clone and install the _develop_ branch of gtsam.
+   Follow the gtsam [Quick Start](https://bitbucket.org/gtborg/gtsam/) guide to clone and install the _develop_ branch of gtsam.
 
    Instead of `cmake ..`, use:
 
    ```cmake -DGTSAM_INSTALL_GEOGRAPHICLIB=ON -DGTSAM_WITH_EIGEN_MKL=OFF ..```
 
    Once install is complete, make sure linux can see the shared library:
+
+
+./hello_tf
 
    ```sudo ldconfig```
 
@@ -91,9 +104,8 @@ Also clone the IMU code and Pointgrey camera drivers into the same catkin worksp
 
 Since there are no pre-built drivers for Melodic, follow [these instructions](https://github.com/ros-drivers/pointgrey_camera_driver/issues/183#issuecomment-487143728) to build the driver yourself.
 
-- The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_bionic.tgz`.
-- You may need to run `sudo apt --fix-broken install` after installing the suggested packages.
-- To build the pointgrey ros package you will need to ```conda install empy```
+- The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_Ubuntu18.04.tgz`.
+- You may need to run `sudo apt --fix-broken install` after installing the suggested packages and before running `sudo sh install_flycapture.sh`.
 
 ### 4. Install AutoRally ROS Dependencies
 
