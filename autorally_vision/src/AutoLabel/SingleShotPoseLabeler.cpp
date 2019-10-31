@@ -41,6 +41,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
   // TODO load all valid params
   nh.getParam("half_width", car_width_);
   nh.getParam("half_length", car_length_);
+  nh.getParam("half_height", car_height_);
 
 
   // load in what compute box we want, camera matricies of each chassis
@@ -67,12 +68,18 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     cameraParameters.translation = (cv::Mat_<double>(3, 1) <<
             cam_translation[0], cam_translation[1], cam_translation[2]);
     cameraParamMap_.insert(std::make_pair(compute_box_name, cameraParameters));
+    ROS_INFO_STREAM("K: \n" << cameraParameters.K);
   }
   if(mode == "test") {
     // if we are testing then set up subscribers
   } else if("label") {
     std::string output_dir;
     nh.getParam("output_dir", output_dir);
+
+    double start_time = 0;
+    nh.getParam("start_time", start_time);
+    nh.getParam("my_z", my_z_);
+    nh.getParam("their_z", their_z_);
 
     // if we are labeling read in bag files and output labels
     rosbag::Bag my_bag;
@@ -83,7 +90,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     ROS_INFO_STREAM("Opening bag file for camera images: " << my_bag_file);
     my_bag.open(my_bag_file, rosbag::bagmode::Read);
     std::vector<std::string> my_topics = {"/pose_estimate", "/left_camera/image_color/compressed"};
-    rosbag::View my_bag_view(my_bag, rosbag::TopicQuery(my_topics));
+    rosbag::View my_bag_view(my_bag, rosbag::TopicQuery(my_topics), ros::Time(start_time));
     rosbag::View::iterator my_it = my_bag_view.begin();
 
     // load the other bag files
@@ -106,14 +113,14 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
               bag_file_name.find("_", first+1) - (chassis_name.size()+1));
       ROS_INFO_STREAM("found bag file with compute_box_name: " << compute_box_name);
       bags[compute_box_name] = std::make_shared<rosbag::Bag>(filepath, rosbag::bagmode::Read);
-      other_bags.insert(std::make_pair(compute_box_name, ros::Time(0)));
+      other_bags.insert(std::make_pair(compute_box_name, ros::Time(start_time)));
     }
 
     // what image number we are on to correlate txt with image
     int counter = 0;
     // while there is more to search through my bag file
     while(my_it != my_bag_view.end() && ros::ok()) {
-      ROS_INFO_STREAM("main loop");
+      ROS_INFO_STREAM("\n\nmain loop counter = " << counter);
       // find the next image, <image, time>
       auto image_result = findNextImage(my_it, my_bag_view.end());
       if(image_result.time.toSec() == 0) {
@@ -139,12 +146,15 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
           // ignore that image
           continue;
         }
+        ROS_INFO_STREAM("my interpolated pose " << image_result.interp_pose.pose.pose);
+        ROS_INFO_STREAM("their interpolated pose " << odom_msg.pose.pose);
         // get the 2D projection of the 3D bounding box
         FlattenedBoundingBox3D bbox_2D = getBoundingBoxBody(image_result.interp_pose, odom_msg);
         // write out line to text file
         writeOutData(bbox_2D, outfile);
         // write out debug image, modifies the input image
         writeOutDebug(bbox_2D, image_result.mat);
+        ros::spinOnce();
       }
       cv::imwrite(output_dir+"/test_debug_"+std::to_string(counter)+".png", image_result.mat);
       outfile.close();
@@ -160,7 +170,8 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     double x = their_pose.pose.pose.position.x;
     double y = their_pose.pose.pose.position.y;
     // used to be fixed
-    double z = their_pose.pose.pose.orientation.z;     //Z position fluctuates a lot
+    //double z = their_pose.pose.pose.orientation.z;     //Z position fluctuates a lot
+    double z = their_z_;
     double qw = their_pose.pose.pose.orientation.w;
     double qx = their_pose.pose.pose.orientation.x;
     double qy = their_pose.pose.pose.orientation.y;
@@ -174,14 +185,14 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     double car_back_x = x - car_length_ * cos(yaw);  // Center point of back of vehicle in world frame
     double car_back_y = y - car_length_ * sin(yaw);
     result.centroid = (cv::Mat_<double>(4,1) << x, y, z, 1);
-    result.bounding_box[0] = (cv::Mat_<double>(4,1) << car_front_x - car_width_ * sin(yaw), car_front_y + car_width_ * cos(yaw), z, 1); //Front top left
-    result.bounding_box[1] = (cv::Mat_<double>(4,1) << car_front_x - car_width_ * sin(yaw), car_front_y + car_width_ * cos(yaw), 0, 1); //Front bottom left
-    result.bounding_box[2] = (cv::Mat_<double>(4,1) << car_front_x + car_width_ * sin(yaw), car_front_y - car_width_ * cos(yaw), z, 1); //Front top right
-    result.bounding_box[3] = (cv::Mat_<double>(4,1) << car_front_x + car_width_ * sin(yaw), car_front_y - car_width_ * cos(yaw), 0, 1); //Front bottom right
-    result.bounding_box[4] = (cv::Mat_<double>(4,1) << car_back_x - car_width_ * sin(yaw), car_back_y + car_width_ * cos(yaw), z, 1); //Back top left
-    result.bounding_box[5] = (cv::Mat_<double>(4,1) << car_back_x - car_width_ * sin(yaw), car_back_y + car_width_ * cos(yaw), 0, 1); //Back bottom left
-    result.bounding_box[6] = (cv::Mat_<double>(4,1) << car_back_x + car_width_ * sin(yaw), car_back_y - car_width_ * cos(yaw), z, 1); //Back top right
-    result.bounding_box[7] = (cv::Mat_<double>(4,1) << car_back_x + car_width_ * sin(yaw), car_back_y - car_width_ * cos(yaw), 0, 1); //Back bottom right
+    result.bounding_box[0] = (cv::Mat_<double>(4,1) << car_front_x - car_width_ * sin(yaw), car_front_y + car_width_ * cos(yaw), z + car_height_, 1); //Front top left
+    result.bounding_box[1] = (cv::Mat_<double>(4,1) << car_front_x - car_width_ * sin(yaw), car_front_y + car_width_ * cos(yaw), z - car_height_, 1); //Front bottom left
+    result.bounding_box[2] = (cv::Mat_<double>(4,1) << car_front_x + car_width_ * sin(yaw), car_front_y - car_width_ * cos(yaw), z + car_height_, 1); //Front top right
+    result.bounding_box[3] = (cv::Mat_<double>(4,1) << car_front_x + car_width_ * sin(yaw), car_front_y - car_width_ * cos(yaw), z - car_height_, 1); //Front bottom right
+    result.bounding_box[4] = (cv::Mat_<double>(4,1) << car_back_x - car_width_ * sin(yaw), car_back_y + car_width_ * cos(yaw), z + car_height_, 1); //Back top left
+    result.bounding_box[5] = (cv::Mat_<double>(4,1) << car_back_x - car_width_ * sin(yaw), car_back_y + car_width_ * cos(yaw), z - car_height_, 1); //Back bottom left
+    result.bounding_box[6] = (cv::Mat_<double>(4,1) << car_back_x + car_width_ * sin(yaw), car_back_y - car_width_ * cos(yaw), z + car_height_, 1); //Back top right
+    result.bounding_box[7] = (cv::Mat_<double>(4,1) << car_back_x + car_width_ * sin(yaw), car_back_y - car_width_ * cos(yaw), z - car_height_, 1); //Back bottom right
     return result;
   }
 
@@ -189,6 +200,8 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     FlattenedBoundingBox3D result;
     // get 3D bounding box in world frame
     BoundingBox3D bbox_3D_world = getBoundingBoxWorld(their_pose);
+
+    ROS_INFO_STREAM("centoriod: " << bbox_3D_world.centroid);
 
     cv::Mat world_to_cat; // Transformation matrix from world frame to Cat's frame
     double qw = my_pose.pose.pose.orientation.w;
@@ -201,13 +214,13 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     //cv::Mat R = (cv::Mat_<double>(3,3) << 0, -1, 0, 0, 0, -1, 1, 0, 0);                               // Ideal rotation matrix
     cv::Mat T = (cv::Mat_<double>(3,1) << my_pose.pose.pose.position.x,                            //Get 3x1 translation vector
             my_pose.pose.pose.position.y,
-            my_pose.pose.pose.position.z);   //Z fluctuates a lot
+            my_z_);   //Z fluctuates a lot
     hconcat(R.t(), -1 * R.t() * T, world_to_cat);   // Create projection matrix from world frame to Cat's frame
     cv::Mat brow = (cv::Mat_<double>(1,4) << 0, 0, 0, 1);   // Homogenize
     vconcat(world_to_cat, brow, world_to_cat);
 
     // TODO make generic
-    CameraParameters cam_param = cameraParamMap_["alpha"];
+    CameraParameters cam_param = cameraParamMap_["autorally3"];
 
     cv::Mat cat_to_im_R = (cv::Mat_<double>(3,3) << -1, 0, 0, 0, -1, 0, 0, 0, 1) *       // Flip axes to match image
                           (cv::Mat_<double>(3,3) <<
@@ -215,11 +228,14 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
                                   cam_param.R.at<double>(1,0), cam_param.R.at<double>(1,1) ,cam_param.R.at<double>(1,2),
                                   cam_param.R.at<double>(2,0), cam_param.R.at<double>(2,1) ,cam_param.R.at<double>(2,2));
     cv::Mat cat_to_im_T = (cv::Mat_<double>(3,1) <<
-            cam_param.R.at<double>(0,0), cam_param.R.at<double>(1,0) ,cam_param.R.at<double>(2,0));
+            cam_param.translation.at<double>(0,0), cam_param.translation.at<double>(1,0) ,cam_param.translation.at<double>(2,0));
     cv::Mat_<double> cat_to_im;
     hconcat(cat_to_im_R, cat_to_im_T, cat_to_im);
     vconcat(cat_to_im, brow, cat_to_im);
 
+    ROS_INFO_STREAM("K: \n" << cam_param.K);
+    ROS_INFO_STREAM("cat_to_im: \n" << cat_to_im);
+    ROS_INFO_STREAM("world to cat: \n" << world_to_cat);
 
     cv::Mat point_to_plot = cam_param.K * cat_to_im * world_to_cat * bbox_3D_world.centroid;
 
@@ -227,6 +243,8 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     double y = point_to_plot.at<double>(1,0) / point_to_plot.at<double>(2,0);
 
     result.centroid = cv::Point2f(x, y);
+
+    ROS_INFO_STREAM("centroid projected: " << result.centroid);
 
     for(int i = 0; i < bbox_3D_world.bounding_box.size(); i++) {
       point_to_plot = cam_param.K * cat_to_im * world_to_cat * bbox_3D_world.bounding_box[i];
@@ -245,6 +263,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
   }
 
   void SingleShotPoseLabeler::writeOutData(const FlattenedBoundingBox3D& bbox, std::ofstream& stream) {
+  // TODO write something else out if there is no vehicle in image
     stream << "0," << bbox.centroid.x <<  ", "
             << bbox.centroid.y << ", "
             << bbox.bounding_box[0].x << ", "

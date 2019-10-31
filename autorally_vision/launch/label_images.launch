@@ -21,10 +21,16 @@
         </group>
     </group>
 
-    <node name="auto_label" pkg="autorally_vision" type="auto_label" output="screen" launch-prefix="gdb --args">
+    <node name="auto_label" pkg="autorally_vision" type="auto_label" output="screen">
         <param name="mode" value="label"/>
+        <!-- how far into the self bag file to start labeling -->
+        <param name="start_time" value="1493237995.0"/>
         <param name="half_width" value="0.235"/>
         <param name="half_length" value="0.4699"/>
+        <param name="half_height" value="0.2"/>
+        <!-- the z values flucuates in the state estimator a lot -->
+        <param name="my_z" value="0.07"/>
+        <param name="other_z" value="0.22"/>
         <rosparam param="compute_box_names">[autorally, autorally3]</rosparam>
         <!-- label only -->
         <param name="output_dir" value="/tmp/vehicle_detection"/>

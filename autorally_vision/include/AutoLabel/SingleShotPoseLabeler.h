@@ -73,6 +73,9 @@ namespace autorally_vision {
     std::map<std::string, CameraParameters> cameraParamMap_;
     double car_length_ = 0.5;
     double car_width_ = 0.5;
+    double car_height_ = 0.2;
+    double my_z_ = 0.22;
+    double their_z_ = 0.07;
 
     BoundingBox3D getBoundingBoxWorld(const nav_msgs::Odometry& their_pose);
     FlattenedBoundingBox3D getBoundingBoxBody(const nav_msgs::Odometry& my_pose, const nav_msgs::Odometry& their_pose);
