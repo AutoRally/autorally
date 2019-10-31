@@ -65,15 +65,19 @@ namespace autorally_vision {
       while(cur != end) {
         rosbag::MessageInstance msg = *cur;
         nav_msgs::Odometry::Ptr next_pose = msg.instantiate<nav_msgs::Odometry>();
-        if(msg.getTopic() == "pose_estimate") {
+        if(msg.getTopic() == "/pose_estimate") {
           // if past image message interpolate
-          if(next_pose->header.stamp.toSec() > time.toSec()) {
+          //ROS_INFO_STREAM("right topic with time " << next_pose->header.stamp.toSec());
+          if(next_pose->header.stamp.toSec() > time.toSec() && last_pose != nullptr) {
+            //ROS_INFO("found other interpolated pose");
             return interpolatePoses(*last_pose, *next_pose, time);
           }
           last_pose = next_pose;
         }
         cur++;
       }
+      ROS_ERROR("cannot find pose that matches timestamp");
+      return nav_msgs::Odometry();
     }
 
     nav_msgs::Odometry interpolatePoses(const nav_msgs::Odometry prev_odom, const nav_msgs::Odometry next_odom,
@@ -104,26 +108,31 @@ namespace autorally_vision {
     ImageResult findNextImage(rosbag::View::iterator& cur, const rosbag::View::iterator& end) {
       // search through images until you find the next image
       ImageResult result;
-      result.time = ros::Time(-1);
+      result.time = ros::Time(0);
       bool found_image = false;
       nav_msgs::Odometry::Ptr last_pose;
       while(cur != end) {
         rosbag::MessageInstance msg = *cur;
         if(msg.getTopic() == "/left_camera/image_color/compressed") {
-          found_image = true;
-          sensor_msgs::Image::ConstPtr img = msg.instantiate<sensor_msgs::Image>();
-          cv_bridge::CvImagePtr cv_ptr;
+          sensor_msgs::CompressedImage::ConstPtr img = msg.instantiate<sensor_msgs::CompressedImage>();
+          if(img == nullptr) {
+            ROS_INFO("nullptr on image");
+            cur++;
+            continue;
+          }
           try
           {
-            cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
+            result.mat = cv::imdecode(cv::Mat(img->data), 1);
           } catch (cv_bridge::Exception& e) {
             ROS_ERROR("cv_bridge exception: %s", e.what());
+            cur++;
             continue;
           }
           result.time = img->header.stamp;
-          result.mat = cv_ptr->image;
-          return result;
+          ROS_INFO_STREAM("found valid image");
+          found_image = true;
         } else if(found_image && msg.getTopic() == "/pose_estimate") {
+          ROS_INFO_STREAM("returning interpolated pose with image");
           nav_msgs::Odometry::Ptr forward_pose = msg.instantiate<nav_msgs::Odometry>();
           result.interp_pose = interpolatePoses(*last_pose, *forward_pose, result.time);
           return result;
@@ -132,6 +141,7 @@ namespace autorally_vision {
         }
         cur++;
       }
+      ROS_INFO_STREAM("unable to find image");
       return result;
     }
   };

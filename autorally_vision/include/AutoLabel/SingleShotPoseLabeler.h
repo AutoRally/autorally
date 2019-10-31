@@ -48,40 +48,21 @@ namespace autorally_vision {
     cv::Mat translation = cv::Mat(3, 1, CV_64F);
   };
 
-  struct Point2D {
-    double x = 0;
-    double y = 0;
-  };
-
-  struct Point3D {
-    double x = 0;
-    double y = 0;
-    double z = 0;
-
-    Point3D() = default;
-
-    Point3D(double x, double y, double z) {
-      this->x = x;
-      this->y = y;
-      this->z = z;
-    }
-  };
-
   struct BoundingBox3D {
-    Point3D centroid;
-    std::array<Point3D, 8> bounding_box;
+    cv::Mat centroid;
+    std::array<cv::Mat, 8> bounding_box;
   };
 
   struct FlattenedBoundingBox3D {
-    Point2D centroid;
-    std::array<Point2D, 8> bounding_box;
+    cv::Point2f centroid;
+    std::array<cv::Point2f, 8> bounding_box;
     double x_range = 0;
     double y_range = 0;
   };
 
   class SingleShotPoseLabeler : AutoLabellerGeneric {
   public:
-    SingleShotPoseLabeler(ros::NodeHandle pNh);
+    SingleShotPoseLabeler(ros::NodeHandle pNh, std::string mode);
   private:
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> vehicleOdomSubs_;
@@ -94,7 +75,7 @@ namespace autorally_vision {
     double car_width_ = 0.5;
 
     BoundingBox3D getBoundingBoxWorld(const nav_msgs::Odometry& their_pose);
-    BoundingBox3D getBoundingBoxBody(const nav_msgs::Odometry& my_pose, const nav_msgs::Odometry& their_pose);
+    FlattenedBoundingBox3D getBoundingBoxBody(const nav_msgs::Odometry& my_pose, const nav_msgs::Odometry& their_pose);
     FlattenedBoundingBox3D get2DProjection(const BoundingBox3D& bbox, const std::string& compute_box_name);
     void writeOutData(const FlattenedBoundingBox3D& bbox, std::ofstream& stream);
     void writeOutDebug(const FlattenedBoundingBox3D& bbox, cv::Mat& img);
