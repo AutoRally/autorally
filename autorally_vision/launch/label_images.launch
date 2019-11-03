@@ -25,17 +25,17 @@
         <param name="mode" value="label"/>
         <!-- how far into the self bag file to start labeling -->
         <param name="start_time" value="1493237995.0"/>
-        <param name="half_width" value="0.235"/>
-        <param name="half_length" value="0.4699"/>
-        <param name="half_height" value="0.2"/>
+        <param name="half_width" value="0.15"/>
+        <param name="half_length" value="0.3"/>
+        <param name="half_height" value="0.1"/>
         <!-- the z values flucuates in the state estimator a lot -->
         <param name="my_z" value="0.07"/>
         <param name="other_z" value="0.22"/>
         <rosparam param="compute_box_names">[autorally, autorally3]</rosparam>
         <!-- label only -->
-        <param name="output_dir" value="/tmp/vehicle_detection"/>
-        <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-16-19/gamma_autorally3_2017-04-26-16-19-28.bag"/>
-        <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-16-19/beta_autorally_2017-04-26-16-19-37.bag]</rosparam>
+        <param name="output_dir" value="/home/jason/Documents/singleShotCV/04-26-17-37/vehicle_detection"/>
+        <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-17-37/gamma_autorally3_2017-04-26-17-37-16.bag"/>
+        <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-17-37/beta_autorally_2017-04-26-17-37-11.bag]</rosparam>
     </node>
 
 </launch>

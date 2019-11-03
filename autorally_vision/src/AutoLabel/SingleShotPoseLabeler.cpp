@@ -120,7 +120,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     int counter = 0;
     // while there is more to search through my bag file
     while(my_it != my_bag_view.end() && ros::ok()) {
-      ROS_INFO_STREAM("\n\nmain loop counter = " << counter);
+      ROS_INFO_STREAM("main loop counter = " << counter << "\n=============================");
       // find the next image, <image, time>
       auto image_result = findNextImage(my_it, my_bag_view.end());
       if(image_result.time.toSec() == 0) {
@@ -233,9 +233,9 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     hconcat(cat_to_im_R, cat_to_im_T, cat_to_im);
     vconcat(cat_to_im, brow, cat_to_im);
 
-    ROS_INFO_STREAM("K: \n" << cam_param.K);
-    ROS_INFO_STREAM("cat_to_im: \n" << cat_to_im);
-    ROS_INFO_STREAM("world to cat: \n" << world_to_cat);
+    //ROS_INFO_STREAM("K: \n" << cam_param.K);
+    //ROS_INFO_STREAM("cat_to_im: \n" << cat_to_im);
+    //ROS_INFO_STREAM("world to cat: \n" << world_to_cat);
 
     cv::Mat point_to_plot = cam_param.K * cat_to_im * world_to_cat * bbox_3D_world.centroid;
 
@@ -244,7 +244,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
 
     result.centroid = cv::Point2f(x, y);
 
-    ROS_INFO_STREAM("centroid projected: " << result.centroid);
+    //ROS_INFO_STREAM("centroid projected: " << result.centroid);
 
     for(int i = 0; i < bbox_3D_world.bounding_box.size(); i++) {
       point_to_plot = cam_param.K * cat_to_im * world_to_cat * bbox_3D_world.bounding_box[i];
