@@ -563,7 +563,7 @@ limitations under the License.
         <alwaysOn>true</alwaysOn>
         <updateRate>60.0</updateRate>
         <cameraName>camera</cameraName>
-        <imageTopicName>image_raw</imageTopicName>
+        <imageTopicName>image_color</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>left_camera_optical_frame</frameName>
         <!--<rightFrameName>right_camera_optical_frame</rightFrameName>-->
