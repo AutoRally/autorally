@@ -19,8 +19,8 @@ class GroundTruthRepublisher(object):
   def __init__(self, namespace='ground_truth_republisher'):
     """Initialize this _ground_truth_republisher"""
     rospy.init_node("ground_truth_republisher", anonymous = True)
-    self.pub = rospy.Publisher("/ground_truth/state", Odometry, queue_size = 1)
-    self.sub = rospy.Subscriber("/ground_truth/state_raw", Odometry, self.handle_pose)
+    self.pub = rospy.Publisher("ground_truth/state", Odometry, queue_size = 1)
+    self.sub = rospy.Subscriber("ground_truth/state_raw", Odometry, self.handle_pose)
   
   def handle_pose(self, msg):
     #set frame to be the same as state estimator output

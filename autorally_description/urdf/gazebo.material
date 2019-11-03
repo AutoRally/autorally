@@ -1077,7 +1077,7 @@ material Gazebo/Texture_blend
   {
     pass
     {
-      ambient 0.1 0.1 0.1 0.1
+      ambient 0.4 0.4 0.4 0.1
       diffuse 0.8 0.8 0.8 1.0
       specular 0.01 0.01 0.01 1.0 2.0
 
@@ -1109,7 +1109,7 @@ material Gazebo/Texture_blend_ccrf
   {
     pass
     {
-      ambient 0.1 0.1 0.1 0.1
+      ambient 0.4 0.4 0.4 0.1
       diffuse 0.8 0.8 0.8 1.0
       specular 0.01 0.01 0.01 1.0 2.0
 
@@ -1129,26 +1129,6 @@ material Gazebo/Texture_blend_ccrf
         texture textures/ground_grass_texture.jpg
         colour_op_ex blend_current_alpha src_texture src_current
         alpha_op_ex source1 src_manual src_current 1.0
-        scale .01 .01
-      }
-    }
-  }
-}
-
-material Gazebo/Dirt
-{
-  technique
-  {
-    pass
-    {
-      ambient 0.1 0.1 0.1 1.0
-      diffuse 0.8 0.8 0.8 1.0
-      specular 0.01 0.01 0.01 1.0 2.0
-
-      texture_unit
-      {
-        texture textures/bamboo.jpg
-        filtering trilinear
         scale .01 .01
       }
     }
