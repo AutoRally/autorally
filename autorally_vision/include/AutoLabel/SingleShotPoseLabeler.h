@@ -77,8 +77,9 @@ namespace autorally_vision {
     double my_z_ = 0.22;
     double their_z_ = 0.07;
 
-    BoundingBox3D getBoundingBoxWorld(const nav_msgs::Odometry& their_pose);
-    FlattenedBoundingBox3D getBoundingBoxBody(const nav_msgs::Odometry& my_pose, const nav_msgs::Odometry& their_pose);
+    BoundingBox3D getBoundingBoxWorld(const nav_msgs::Odometry& their_pose, bool overwrite_z);
+    FlattenedBoundingBox3D getBoundingBoxBody(const nav_msgs::Odometry& my_pose,
+            const nav_msgs::Odometry& their_pose, bool overwrite_z);
     FlattenedBoundingBox3D get2DProjection(const BoundingBox3D& bbox, const std::string& compute_box_name);
     void writeOutData(const FlattenedBoundingBox3D& bbox, std::ofstream& stream);
     void writeOutDebug(const FlattenedBoundingBox3D& bbox, cv::Mat& img);
