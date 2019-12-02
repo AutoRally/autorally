@@ -58,18 +58,21 @@ namespace autorally_vision {
 
   class AutoLabellerGeneric {
   public:
+   /**
+    * Finds the interpolated pose at the given timestamp
+    */
     nav_msgs::Odometry findNextInterpolatedPose(rosbag::View::iterator& cur, const rosbag::View::iterator& end,
             const ros::Time time, const std::string& pose_topic) {
       // search for the two pose messages that straddle the given time, then interpolate
-      ROS_INFO_STREAM("looking for pose with topic " << pose_topic);
+      //ROS_INFO_STREAM("looking for pose with topic " << pose_topic);
       nav_msgs::Odometry::Ptr last_pose;
       while(cur != end) {
         rosbag::MessageInstance msg = *cur;
         nav_msgs::Odometry::Ptr next_pose = msg.instantiate<nav_msgs::Odometry>();
-        ROS_INFO_STREAM("looking for next pose other: " << msg.getTopic());
+        //ROS_INFO_STREAM("looking for next pose other: " << msg.getTopic());
         if(msg.getTopic() == pose_topic) {
           // if past image message interpolate
-          ROS_INFO_STREAM("right topic with time " << next_pose->header.stamp.toSec());
+          //ROS_INFO_STREAM("right topic with time " << next_pose->header.stamp.toSec());
           if(next_pose->header.stamp.toSec() > time.toSec() && last_pose != nullptr) {
             return interpolatePoses(*last_pose, *next_pose, time);
           }
@@ -81,16 +84,19 @@ namespace autorally_vision {
       return nav_msgs::Odometry();
     }
 
+    /**
+     * interpolates between two poses
+     */
     nav_msgs::Odometry interpolatePoses(const nav_msgs::Odometry& prev_odom, const nav_msgs::Odometry& next_odom,
             const ros::Time time) {
       // linearly interpolate between the previous two poses, based off of time
       double ratio = (time.toSec() - prev_odom.header.stamp.toSec()) /
               (next_odom.header.stamp.toSec() - prev_odom.header.stamp.toSec());
       nav_msgs::Odometry result;
-      result.header.stamp = time;
       ROS_INFO_STREAM("ratio: " << ratio);
       assert(ratio >= 0 && ratio <= 1);
       result = prev_odom;
+      result.header.stamp = ros::Time(result.header.stamp.toSec() + (next_odom.header.stamp.toSec() - prev_odom.header.stamp.toSec()) * ratio);
       result.pose.pose.position.x += (next_odom.pose.pose.position.x - prev_odom.pose.pose.position.x) * ratio;
       result.pose.pose.position.y += (next_odom.pose.pose.position.y - prev_odom.pose.pose.position.y) * ratio;
       result.pose.pose.position.z += (next_odom.pose.pose.position.z - prev_odom.pose.pose.position.z) * ratio;
@@ -107,6 +113,9 @@ namespace autorally_vision {
       return result;
     }
 
+    /**
+     * finds the next image past a given time
+     */
     ImageResult findNextImage(rosbag::View::iterator& cur, const rosbag::View::iterator& end, std::string camera_topic, ros::Time min_time) {
       // search through images until you find the next image
       ImageResult result;
@@ -115,7 +124,7 @@ namespace autorally_vision {
       nav_msgs::Odometry::Ptr last_pose;
       while(cur != end) {
         rosbag::MessageInstance msg = *cur;
-        ROS_INFO_STREAM("topic name: " << msg.getTopic());
+        //ROS_INFO_STREAM("topic name: " << msg.getTopic());
         if(msg.getTopic() == camera_topic) {
           sensor_msgs::CompressedImage::ConstPtr img = msg.instantiate<sensor_msgs::CompressedImage>();
           std::cout << "camera time " << std::setprecision(20) << img->header.stamp.toSec() << std::endl;

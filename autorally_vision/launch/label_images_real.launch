@@ -1,6 +1,4 @@
 <launch>
-    <!-- name space the parameters -->
-    <!-- hardware
     <group ns="auto_label">
         <group ns="autorally">
             <rosparam param="cam_mat">[852.0367654236857, 852.0736515102927, 626.9338016782257, 500.2665457442116]</rosparam>
@@ -21,38 +19,12 @@
             <rosparam param="cam_translation">[ 0.06418514, 0.15496709, -0.13159533]</rosparam>
         </group>
     </group>
-    -->
-
-    <!-- sim -->
-    <group ns="auto_label">
-        <group ns="autorally">
-            <rosparam param="cam_mat">[852.0367654236857, 852.0736515102927, 626.9338016782257, 500.2665457442116]</rosparam>
-            <rosparam param="cam_R">[
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0,
-                1.0, 0.0, 0.0
-                ]</rosparam>
-            <!--<rosparam param="cam_translation">[0.127, 0.07, 0.2159]</rosparam>-->
-            <!--<rosparam param="cam_translation">[0.06418514, 0.15496709, -0.13159533]</rosparam>-->
-            <rosparam param="cam_translation">[0.088, 0.07, 0.3018]</rosparam>
-        </group>
-        <group ns="autorally3">
-            <rosparam param="cam_mat">[858.1572184991888, 856.0929924651027, 649.6505015547086, 529.135158176981]</rosparam>
-            <rosparam param="cam_R">[
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0,
-                1.0, 0.0, 0.0
-                ]</rosparam>
-            <rosparam param="cam_translation">[0.088, 0.07, 0.3018]</rosparam>
-        </group>
-    </group>
 
     <node name="auto_label" pkg="autorally_vision" type="auto_label" output="screen">
         <!-- label_sim, label_real, run -->
-        <param name="mode" value="label_sim"/>
+        <param name="mode" value="label_real"/>
         <!-- how far into the self bag file to start labeling -->
-        <!--<param name="start_time" value="1493237995.0"/> hardware -->
-        <param name="start_time" value="0.0"/> <!-- sim -->
+        <param name="start_time" value="1493237995.0"/>
         <param name="half_width" value="0.15"/>
         <param name="half_length" value="0.3"/>
         <param name="half_height" value="0.1"/>
@@ -66,14 +38,10 @@
         <!-- used to load the configuration -->
         <rosparam param="compute_box_names">[autorally, autorally3]</rosparam>
         <!-- label only -->
-        <!-- hardware
+        <!-- hardware -->
         <param name="output_dir" value="/home/jason/Documents/singleShotCV/04-26-17-37/vehicle_detection"/>
         <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-17-37/gamma_autorally3_2017-04-26-17-37-16.bag"/>
         <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-17-37/beta_autorally_2017-04-26-17-37-11.bag]</rosparam>
-        -->
-        <param name="output_dir" value="/home/jason/Documents/singleShotCV/sim/vehicle_detection"/>
-        <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/sim/SIM_localhost_2019-11-03-15-03-25_0.bag"/>
-        <rosparam param="other_bag_files">[beta]</rosparam>
 
     </node>
 </launch>

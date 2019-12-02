@@ -1,5 +1,5 @@
 add_executable(auto_label SingleShotPoseLabeler.cpp)
-target_link_libraries(auto_label ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(auto_label ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(auto_label autorally_msgs_gencpp)
 
 set(CMAKE_BUILD_TYPE Debug)

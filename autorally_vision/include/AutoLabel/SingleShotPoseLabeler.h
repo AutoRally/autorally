@@ -49,11 +49,13 @@ namespace autorally_vision {
   };
 
   struct BoundingBox3D {
+    int class_var = 0;
     cv::Mat centroid;
     std::array<cv::Mat, 8> bounding_box;
   };
 
   struct FlattenedBoundingBox3D {
+    int class_var = 0;
     cv::Point2f centroid;
     std::array<cv::Point2f, 8> bounding_box;
     double x_range = 0;
@@ -71,6 +73,8 @@ namespace autorally_vision {
     ros::Publisher imagePub_;
     // chassis name to camera calibration
     std::map<std::string, CameraParameters> cameraParamMap_;
+    double image_height_ = 0.0;
+    double image_width_ = 0.0;
     double car_length_ = 0.5;
     double car_width_ = 0.5;
     double car_height_ = 0.2;
@@ -81,7 +85,7 @@ namespace autorally_vision {
     FlattenedBoundingBox3D getBoundingBoxBody(const nav_msgs::Odometry& my_pose,
             const nav_msgs::Odometry& their_pose, bool overwrite_z);
     FlattenedBoundingBox3D get2DProjection(const BoundingBox3D& bbox, const std::string& compute_box_name);
-    void writeOutData(const FlattenedBoundingBox3D& bbox, std::ofstream& stream);
+    void writeOutData(FlattenedBoundingBox3D& bbox, std::ofstream& stream);
     void writeOutDebug(const FlattenedBoundingBox3D& bbox, cv::Mat& img);
 
     void genericPoseCallback(const nav_msgs::Odometry::ConstPtr &position, const std::string name);

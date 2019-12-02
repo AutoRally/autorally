@@ -43,6 +43,9 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
   nh.getParam("half_length", car_length_);
   nh.getParam("half_height", car_height_);
 
+  nh.getParam("image_width", image_width_);
+  nh.getParam("image_height", image_height_);
+
   std::string output_dir;
   nh.getParam("output_dir", output_dir);
 
@@ -78,8 +81,8 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
   if(mode == "test") {
     // if we are testing then set up subscribers
   } else if(mode == "label_real") {
-    /*
     ROS_INFO("labeling real data");
+    // overwrite what z is since it it not estimated well
     nh.getParam("my_z", my_z_);
     nh.getParam("their_z", their_z_);
 
@@ -91,9 +94,10 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     //  load my bag file
     ROS_INFO_STREAM("Opening bag file for camera images: " << my_bag_file);
     my_bag.open(my_bag_file, rosbag::bagmode::Read);
-    std::vector<std::string> my_topics = {"/pose_estimate", "/left_camera/image_color/compressed"};
-    rosbag::View my_bag_view(my_bag, rosbag::TopicQuery(my_topics), ros::Time(start_time));
-    rosbag::View::iterator my_it = my_bag_view.begin();
+    rosbag::View my_bag_view_pose(my_bag, rosbag::TopicQuery("/pose_estimate"), ros::Time(start_time));
+    rosbag::View my_bag_view_img(my_bag, rosbag::TopicQuery("/left_camera/image_color/compressed"), ros::Time(start_time));
+    rosbag::View::iterator my_it_pose = my_bag_view_pose.begin();
+    rosbag::View::iterator my_it_img = my_bag_view_img.begin();
 
     // load the other bag files
     std::map<std::string, ros::Time> other_bags;
@@ -101,6 +105,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     nh.getParam("other_bag_files", other_bag_files);
     std::map<std::string, std::shared_ptr<rosbag::Bag>> bags;
     std::vector<std::string> topics = {"/pose_estimate"};
+    // iterate through all the bags and set up bag objects
     for(const std::string& filepath : other_bag_files) {
       ROS_INFO_STREAM("Opening bag file for other vehicle poses: " << filepath);
       int location = filepath.find_last_of("/", std::string::npos);
@@ -119,17 +124,23 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
 
     // what image number we are on to correlate txt with image
     int counter = 0;
+    ros::Time most_recent_time = ros::Time(0);
     // while there is more to search through my bag file
-    while(my_it != my_bag_view.end() && ros::ok()) {
+    while(my_it_img != my_bag_view_img.end() && my_it_pose != my_bag_view_pose.end() && ros::ok()) {
       ROS_INFO_STREAM("main loop counter = " << counter << "\n=============================");
       // find the next image, <image, time>
-      auto image_result = findNextImage(my_it, my_bag_view.end(), "/left_camera/image_color/compressed", "/pose_estimate");
+      auto image_result = findNextImage(my_it_img, my_bag_view_img.end(),
+              "/left_camera/image_color/compressed", most_recent_time);
+      nav_msgs::Odometry current_pose = findNextInterpolatedPose(my_it_pose, my_bag_view_pose.end(),
+              image_result.time, "/pose_estimate");
+
+      most_recent_time = current_pose.header.stamp + ros::Duration(1e-5);
       if(image_result.time.toSec() == 0) {
         ROS_INFO_STREAM("could not find anymore images");
         break;
       }
       // save out the image
-      cv::imwrite(output_dir+"/test_"+std::to_string(counter)+".png", image_result.mat);
+      cv::imwrite(output_dir+"/test_"+std::to_string(counter)+".jpg", image_result.mat);
       // create text file to write out to
       std::ofstream outfile;
       outfile.open(output_dir+"/test_"+std::to_string(counter)+".txt");
@@ -138,7 +149,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
       std::map<std::string, nav_msgs::Odometry> poses;
       for(auto it = other_bags.begin(); it != other_bags.end(); it++) {
 
-        rosbag::View view(*bags[it->first], rosbag::TopicQuery(topics), it->second);
+        rosbag::View view(*bags[it->first], rosbag::TopicQuery("/pose_estimate"), it->second);
         auto temp_it = view.begin();
         nav_msgs::Odometry odom_msg = findNextInterpolatedPose(temp_it, view.end(), image_result.time, "/pose_estimate");
         it->second = odom_msg.header.stamp;
@@ -147,21 +158,22 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
           // ignore that image
           continue;
         }
-        ROS_INFO_STREAM("my interpolated pose " << image_result.interp_pose.pose.pose);
+        ROS_INFO_STREAM("my interpolated pose time " << current_pose.header.stamp);
+        ROS_INFO_STREAM("my interpolated pose " << current_pose.pose.pose);
+        ROS_INFO_STREAM("their interpolated pose time " << odom_msg.header.stamp);
         ROS_INFO_STREAM("their interpolated pose " << odom_msg.pose.pose);
         // get the 2D projection of the 3D bounding box
-        FlattenedBoundingBox3D bbox_2D = getBoundingBoxBody(image_result.interp_pose, odom_msg, true);
+        FlattenedBoundingBox3D bbox_2D = getBoundingBoxBody(current_pose , odom_msg, true);
         // write out line to text file
         writeOutData(bbox_2D, outfile);
         // write out debug image, modifies the input image
         writeOutDebug(bbox_2D, image_result.mat);
         ros::spinOnce();
       }
-      cv::imwrite(output_dir+"/test_debug_"+std::to_string(counter)+".png", image_result.mat);
+      cv::imwrite(output_dir+"/test_debug_"+std::to_string(counter)+".jpg", image_result.mat);
       outfile.close();
       ++counter;
     }
-     */
   } else if (mode == "label_sim") {
     // if we are labeling read in bag files and output labels
     rosbag::Bag my_bag;
@@ -204,7 +216,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
           min_pose_time = local_min_pose_time;
         }
       }
-      ROS_INFO_STREAM("min_pose_time " << min_pose_time);
+      //ROS_INFO_STREAM("min_pose_time " << min_pose_time);
       auto image_result = findNextImage(my_it_img, my_bag_view_img.end(), "/"+my_name+"/camera/left/image_color/compressed",
               min_pose_time);
       if(image_result.time.toSec() == 0) {
@@ -214,7 +226,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
       nav_msgs::Odometry interp_pose = findNextInterpolatedPose(my_it_pose, my_bag_view_pose.end(),
               image_result.time, "/"+my_name+"/ground_truth/state");
       // save out the image
-      cv::imwrite(output_dir+"/test_"+std::to_string(counter)+".png", image_result.mat);
+      cv::imwrite(output_dir+"/test_"+std::to_string(counter)+".jpg", image_result.mat);
       // create text file to write out to
       std::ofstream outfile;
       outfile.open(output_dir+"/test_"+std::to_string(counter)+".txt");
@@ -237,13 +249,13 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
         ROS_INFO_STREAM("their interpolated pose " << odom_msg.pose.pose);
         // get the 2D projection of the 3D bounding box
         FlattenedBoundingBox3D bbox_2D = getBoundingBoxBody(interp_pose, odom_msg, false);
-        // write out line to text file
-        writeOutData(bbox_2D, outfile);
         // write out debug image, modifies the input image
         writeOutDebug(bbox_2D, image_result.mat);
+        // write out line to text file
+        writeOutData(bbox_2D, outfile);
         ros::spinOnce();
       }
-      cv::imwrite(output_dir+"/test_debug_"+std::to_string(counter)+".png", image_result.mat);
+      cv::imwrite(output_dir+"/test_debug_"+std::to_string(counter)+".jpg", image_result.mat);
       outfile.close();
       ++counter;
     }
@@ -289,7 +301,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     // get 3D bounding box in world frame
     BoundingBox3D bbox_3D_world = getBoundingBoxWorld(their_pose, overwrite_z);
 
-    ROS_INFO_STREAM("centroid: " << bbox_3D_world.centroid);
+    //ROS_INFO_STREAM("centroid: " << bbox_3D_world.centroid);
 
     cv::Mat world_to_cat; // Transformation matrix from world frame to Cat's frame
     double qw = my_pose.pose.pose.orientation.w;
@@ -333,15 +345,39 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     result.centroid = cv::Point2f(x, y);
 
     //ROS_INFO_STREAM("centroid projected: " << result.centroid);
-
+    double min_x = 10000;
+    double max_x = 0;
+    double min_y = 10000;
+    double max_y = 0;
+    bool has_valid_points = false;
     for(int i = 0; i < bbox_3D_world.bounding_box.size(); i++) {
       point_to_plot = cam_param.K * cat_to_im * world_to_cat * bbox_3D_world.bounding_box[i];
 
       x = point_to_plot.at<double>(0,0) / point_to_plot.at<double>(2,0);
       y = point_to_plot.at<double>(1,0) / point_to_plot.at<double>(2,0);
 
+      if(x < image_width_ && x > 0 && y > 0 && y < image_height_) {
+        has_valid_points = true;
+      }
+
       result.bounding_box[i] = cv::Point2f(x, y);
+
+      if(min_x > x) {
+        min_x = x;
+      }
+      if(x > max_x && x < image_width_) {
+        max_x = x;
+      }
+      if(min_y > y) {
+        min_y = y;
+      }
+      if(y > max_y && y < image_height_) {
+        max_y = y;
+      }
     }
+    result.class_var = has_valid_points ? 0 : 1;
+    result.x_range = max_x - min_x;
+    result.y_range = max_y - min_y;
     return result;
   }
 
@@ -350,34 +386,44 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     return result;
   }
 
-  void SingleShotPoseLabeler::writeOutData(const FlattenedBoundingBox3D& bbox, std::ofstream& stream) {
+  void SingleShotPoseLabeler::writeOutData(FlattenedBoundingBox3D& bbox, std::ofstream& stream) {
   // TODO write something else out if there is no vehicle in image
-    stream << "0," << bbox.centroid.x <<  ", "
-            << bbox.centroid.y << ", "
-            << bbox.bounding_box[0].x << ", "
-            << bbox.bounding_box[0].y << ", "
-            << bbox.bounding_box[1].x << ", "
-            << bbox.bounding_box[1].y << ", "
-            << bbox.bounding_box[2].x << ", "
-            << bbox.bounding_box[2].y << ", "
-            << bbox.bounding_box[3].x << ", "
-            << bbox.bounding_box[3].y << ", "
-            << bbox.bounding_box[4].x << ", "
-            << bbox.bounding_box[4].y << ", "
-            << bbox.bounding_box[5].x << ", "
-            << bbox.bounding_box[5].y << ", "
-            << bbox.bounding_box[6].x << ", "
-            << bbox.bounding_box[6].y << ", "
-            << bbox.bounding_box[7].x << ", "
-            << bbox.bounding_box[7].y << ", "
-            << bbox.x_range << ", " << bbox.y_range << "\n";
+  bbox.centroid.x /= image_width_;
+  bbox.centroid.y /= image_height_;
+  bbox.x_range /= image_width_;
+  bbox.y_range /= image_height_;
+  for(int i = 0; i < 8; i++) {
+    bbox.bounding_box[i].x /= image_width_;
+    bbox.bounding_box[i].y /= image_height_;
+  }
+  stream << bbox.class_var << " " << bbox.centroid.x <<  " "
+          << bbox.centroid.y << " "
+          << bbox.bounding_box[0].x << " "
+          << bbox.bounding_box[0].y << " "
+          << bbox.bounding_box[1].x << " "
+          << bbox.bounding_box[1].y << " "
+          << bbox.bounding_box[2].x << " "
+          << bbox.bounding_box[2].y << " "
+          << bbox.bounding_box[3].x << " "
+          << bbox.bounding_box[3].y << " "
+          << bbox.bounding_box[4].x << " "
+          << bbox.bounding_box[4].y << " "
+          << bbox.bounding_box[5].x << " "
+          << bbox.bounding_box[5].y << " "
+          << bbox.bounding_box[6].x << " "
+          << bbox.bounding_box[6].y << " "
+          << bbox.bounding_box[7].x << " "
+          << bbox.bounding_box[7].y << " "
+          << bbox.x_range << " " << bbox.y_range << "\n";
   }
 
   void SingleShotPoseLabeler::writeOutDebug(const FlattenedBoundingBox3D& bbox, cv::Mat& img) {
     cv::circle(img, bbox.centroid, 10, CV_RGB(0,255,0));// Draw a circle at each corner
     ROS_INFO_STREAM("img.rows " << img.rows << " cols " << img.cols);
     for(cv::Point2f point : bbox.bounding_box) {
-      if(point.x > 0 && point.x < img.cols && point.y > 0 && point.y < img.rows) {
+      ROS_INFO_STREAM("got out " << point.x << " " << point.y);
+      if(point.x > 1 && point.x < img.cols && point.y > 1 && point.y < img.rows) {
+        ROS_INFO_STREAM("drawing out " << point.x << " " << point.y);
         cv::circle(img, point, 10, CV_RGB(255,0,0));// Draw a circle at each corner
       }
     }
