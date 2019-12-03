@@ -271,7 +271,7 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
     double y = their_pose.pose.pose.position.y;
     // used to be fixed
     //double z = their_pose.pose.pose.orientation.z;     //Z position fluctuates a lot
-    double z = overwrite_z ? their_z_ : their_pose.pose.pose.position.z;
+    double z = overwrite_z ? their_z_ : their_pose.pose.pose.position.z - 0.1;
     double qw = their_pose.pose.pose.orientation.w;
     double qx = their_pose.pose.pose.orientation.x;
     double qy = their_pose.pose.pose.orientation.y;
