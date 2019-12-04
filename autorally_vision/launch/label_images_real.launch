@@ -39,9 +39,23 @@
         <rosparam param="compute_box_names">[autorally, autorally3]</rosparam>
         <!-- label only -->
         <!-- hardware -->
+        <!--
+        <param name="output_dir" value="/home/jason/Documents/singleShotCV/04-26-14-34/vehicle_detection"/>
+        <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-14-34/gamma_autorally3_2017-04-26-14-34-30.bag"/>
+        <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-14-34/beta_autorally_2017-04-26-14-34-28.bag]</rosparam>
+        -->
+        <!--
+        <param name="output_dir" value="/home/jason/Documents/singleShotCV/04-26-16-19/vehicle_detection"/>
+        <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-16-19/gamma_autorally3_2017-04-26-16-19-28.bag"/>
+        <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-16-19/beta_autorally_2017-04-26-16-19-37.bag]</rosparam>
+        -->
+        <!--
+        <param name="output_dir" value="/home/jason/Documents/singleShotCV/04-26-16-24/vehicle_detection"/>
+        <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-16-24/gamma_autorally3_2017-04-26-16-24-24.bag"/>
+        <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-16-24/beta_autorally_2017-04-26-16-24-21.bag]</rosparam>
+        -->
         <param name="output_dir" value="/home/jason/Documents/singleShotCV/04-26-17-37/vehicle_detection"/>
         <param name="my_bag_file" value="/home/jason/Documents/singleShotCV/04-26-17-37/gamma_autorally3_2017-04-26-17-37-16.bag"/>
         <rosparam param="other_bag_files">[/home/jason/Documents/singleShotCV/04-26-17-37/beta_autorally_2017-04-26-17-37-11.bag]</rosparam>
-
     </node>
 </launch>
