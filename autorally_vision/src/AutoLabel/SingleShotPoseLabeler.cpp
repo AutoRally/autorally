@@ -164,10 +164,10 @@ SingleShotPoseLabeler::SingleShotPoseLabeler(ros::NodeHandle nh, std::string mod
         ROS_INFO_STREAM("their interpolated pose " << odom_msg.pose.pose);
         // get the 2D projection of the 3D bounding box
         FlattenedBoundingBox3D bbox_2D = getBoundingBoxBody(current_pose , odom_msg, true);
-        // write out line to text file
-        writeOutData(bbox_2D, outfile);
         // write out debug image, modifies the input image
         writeOutDebug(bbox_2D, image_result.mat);
+        // write out line to text file
+        writeOutData(bbox_2D, outfile);
         ros::spinOnce();
       }
       cv::imwrite(output_dir+"/test_debug_"+std::to_string(counter)+".jpg", image_result.mat);
