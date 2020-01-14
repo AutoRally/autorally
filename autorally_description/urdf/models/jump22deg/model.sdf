@@ -23,13 +23,13 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/jump22deg.dae</uri>
+            <uri>model://urdf/cad/jump22deg.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
         <material>
           <script>
-            <uri>model://urdf/gazebo.material</uri>
+            <uri>model://urdf/cad/gazebo.material</uri>
             <name>Gazebo/White</name>
           </script>
         </material>

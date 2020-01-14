@@ -52,7 +52,7 @@ AutorallyPlant::AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int h
   delay_pub_ = mppi_node.advertise<geometry_msgs::Point>("mppiTimeDelay", 1);
   status_pub_ = mppi_node.advertise<autorally_msgs::pathIntegralStatus>("mppiStatus", 1);
   //Initialize the pose subscriber.
-  pose_sub_ = mppi_node.subscribe("/pose_estimate", 1, &AutorallyPlant::poseCall, this);
+  pose_sub_ = mppi_node.subscribe(pose_estimate_name, 1, &AutorallyPlant::poseCall, this);
   //Initialize the servo subscriber
   servo_sub_ = mppi_node.subscribe("chassisState", 1, &AutorallyPlant::servoCall, this);
   //Initialize auxiliary variables.
