@@ -48,7 +48,10 @@ def get_launch_params(prefix):
 	param_dict["slip_penalty"] = rospy.get_param(prefix + "/slip_penalty")
 	param_dict["track_slop"] = rospy.get_param(prefix + "/track_slop")
 	param_dict["crash_coeff"] = rospy.get_param(prefix + "/crash_coeff")
-	param_dict["map_path"] = rospy.get_param(prefix + "/map_path")
+	if rospy.has_param(prefix+"/map_path"):
+		param_dict["map_path"] = rospy.get_param(prefix + "/map_path")
+	else:
+		param_dict["map_path"] = rospy.get_param("/stat_tracker/map_path")
 	return param_dict
 
 class Lap:
@@ -166,6 +169,6 @@ if __name__ == "__main__":
 		line = ccrf_line
 	else:
 		rospy.signal_shutdown("No start line for the given map.")
-	current_lap = Lap(line, param_dict, prefix)	
+	current_lap = Lap(line, param_dict, prefix)
 	rospy.spin()
 
