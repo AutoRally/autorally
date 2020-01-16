@@ -189,7 +189,7 @@ public:
   /**
   * @brief Returns the current state of the system.
   */
-	AutorallyPlant::FullState getState();
+	virtual AutorallyPlant::FullState getState();
 
   /**
   * @brief Returns the current value of safe speed.
