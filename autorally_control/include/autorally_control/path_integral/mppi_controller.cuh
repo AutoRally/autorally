@@ -32,7 +32,7 @@
  ***********************************************/
 
 #ifndef MPPI_CONTROLLER_CUH_
-#define MPPI_CONTROLLER_CUH_ 
+#define MPPI_CONTROLLER_CUH_
 
 #include "managed.cuh"
 
@@ -40,7 +40,7 @@
 #include <autorally_control/ddp/ddp_tracking_costs.h>
 #include <autorally_control/ddp/ddp.h>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <cuda_runtime.h>
 #include <curand.h>
 
@@ -68,7 +68,7 @@ public:
   int hz_;
   int optimizationStride_;
 
-  DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
+  DYNAMICS_T *model_; ///< Model of the autorally system dynamics.
   COSTS_T *costs_; ///< Autorally system costs.
 
   //Define DDP optimizer for computing feedback gains around MPPI solution
@@ -105,7 +105,7 @@ public:
 
   /**
   * @brief Allocates cuda memory for all of the controller's device array fields.
-  */ 
+  */
   void allocateCudaMem();
 
   /**
@@ -114,7 +114,7 @@ public:
   void deallocateCudaMem();
 
   void initDDP();
-  
+
   void computeFeedbackGains(Eigen::MatrixXf state);
 
   OptimizerResult<ModelWrapperDDP<DYNAMICS_T>> getFeedbackGains();

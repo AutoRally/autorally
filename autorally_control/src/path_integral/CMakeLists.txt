@@ -4,7 +4,7 @@ find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include ${OpenCV_INCLUDE_DIRS})
-include_directories(include ${EIGEN_INCLUDE_DIRS})
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
 ################################################################################
 #First make the helper libraries
@@ -54,7 +54,7 @@ target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_L
 #Executable for the neural network model
 ###################################################################################
 
-cuda_add_library(mppi_nodelet 
+cuda_add_library(mppi_nodelet
                  mppi_nodelet.cu
                  autorally_plant
                  param_getter)

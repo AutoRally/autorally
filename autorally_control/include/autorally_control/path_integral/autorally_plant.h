@@ -57,7 +57,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -68,7 +68,7 @@ namespace autorally_control {
 /**
 * @class AutorallyPlant autorally_plant.h
 * @brief Publishers and subscribers for the autorally control system.
-* 
+*
 * This class is treated as the plant for the MPPI controller. When the MPPI
 * controller has a control it sends to a function in this class to get
 * send to the actuators. Likewise it calls functions in this class to receive
@@ -76,14 +76,14 @@ namespace autorally_control {
 * and status information for both the controller and the OCS.
 */
 
-class AutorallyPlant //: public Diagnostics  
+class AutorallyPlant //: public Diagnostics
 {
 public:
   static const int AUTORALLY_STATE_DIM = 7;
   static const int AUTORALLY_CONTROL_DIM = 2;
   //Struct for holding the autorally pose.
   typedef struct
-  { 
+  {
     //X-Y-Z position
     float x_pos;
     float y_pos;
@@ -138,7 +138,7 @@ public:
   * publishers and subscribers.
   * @param mppi_node A ros node handle.
   */
-	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node, 
+	AutorallyPlant(ros::NodeHandle global_node, ros::NodeHandle mppi_node,
                  bool debug_mode, int hz, bool nodelet);
 
 	AutorallyPlant(ros::NodeHandle global_node, bool debug_mode, int hz):AutorallyPlant(global_node, global_node, debug_mode, hz, false){};
@@ -167,7 +167,7 @@ public:
   */
 	void pubPath(const ros::TimerEvent&);
 
-  void setSolution(std::vector<float> traj, std::vector<float> controls, 
+  void setSolution(std::vector<float> traj, std::vector<float> controls,
                    util::EigenAlignedVector<float, 2, 7> gains,
                    ros::Time timestamp, double loop_speed);
 
@@ -178,7 +178,7 @@ public:
   void pubTimingData(const ros::TimerEvent&);
 
   /**
-  * @brief Publishes a control input. 
+  * @brief Publishes a control input.
   * @param steering The steering command to publish.
   * @param throttle The throttle command to publish.
   */
@@ -236,7 +236,7 @@ protected:
   autorally_control::PathIntegralParamsConfig costParams_;
   bool hasNewCostParams_ = false;
 
-  const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale. 
+  const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale.
 
   FullState full_state_; ///< Full state of the autorally vehicle.
 

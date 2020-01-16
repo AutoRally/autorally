@@ -32,7 +32,8 @@ catkin_package(
 
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${Eigen3_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
 add_subdirectory(src/ConstantSpeedController)
 add_subdirectory(src/joystick)
