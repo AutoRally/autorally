@@ -38,7 +38,7 @@
 #include <pluginlib/class_list_macros.h>
 #include "servoInterface.h"
 
-PLUGINLIB_DECLARE_CLASS(autorally_core, ServoInterface, autorally_core::ServoInterface, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(autorally_core::ServoInterface, nodelet::Nodelet)
 
 namespace autorally_core
 {

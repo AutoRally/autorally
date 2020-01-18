@@ -3,7 +3,7 @@
 
 using namespace FlyCapture2;
 
-PLUGINLIB_DECLARE_CLASS(autorally_core, CameraAutoBalance, autorally_core::CameraAutoBalance, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(autorally_core::CameraAutoBalance, nodelet::Nodelet)
 
 namespace autorally_core
 {

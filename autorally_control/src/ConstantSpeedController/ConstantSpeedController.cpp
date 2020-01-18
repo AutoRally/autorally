@@ -41,7 +41,7 @@
 #define PI 3.14159265
 #define DEGTORAD (PI/180)
 
-PLUGINLIB_DECLARE_CLASS(autorally_control, ConstantSpeedController, autorally_control::ConstantSpeedController, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(autorally_control::ConstantSpeedController, nodelet::Nodelet)
 
 namespace autorally_control
 {
