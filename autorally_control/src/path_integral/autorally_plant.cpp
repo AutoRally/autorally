@@ -157,11 +157,11 @@ void AutorallyPlant::pubPath(float* nominal_traj, ros::Publisher path_pub_, int 
     pose.pose.orientation.y = q2;
     pose.pose.orientation.z = q3;
     pose.header.stamp = begin;
-    pose.header.frame_id = "base_link";
+    pose.header.frame_id = "odom";
     path_msg_.poses.push_back(pose);
   }
   path_msg_.header.stamp = begin;
-  path_msg_.header.frame_id = "base_link";
+  path_msg_.header.frame_id = "odom";
   path_pub_.publish(path_msg_);
 }
 

@@ -68,7 +68,7 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
   ros::Publisher path_pub; ///< Publisher of nav_mags::Path on topic nominalPath.
   ros::Publisher ips_pub; ///< Publisher of nav_mags::Path on topic importance sampler.
 
-  path_pub = mppi_node.advertise<nav_msgs::Path>("nominal_path_debug", 1);
+  path_pub = mppi_node.advertise<nav_msgs::Path>("nominalPath", 1);
   ips_pub = mppi_node.advertise<nav_msgs::Path>("importance_sampler", 1);
 
   //Start the control loop.
