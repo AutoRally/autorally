@@ -337,7 +337,7 @@ inline __host__ __device__ float MPPICosts::getCrashCost(float* s, int* crash, i
 {
   float crash_cost = 0;
   if (crash[0] > 0) {
-      crash_cost = params_d_->crash_coeff;
+      crash_cost = (params_d_->crash_coeff)*crash[0];
   }
   return crash_cost;
 }
@@ -373,8 +373,8 @@ inline __host__ __device__ void MPPICosts::coorTransform(float x, float y, float
   double vprime = focal_*cam_y + 60; // 60 for offset
   // uprime = uprime/params_d_->trs.x; // scaling
   // vprime = vprime/params_d_->trs.y;
-  v[0] = params_d_->trs.x*0.5 - 0.25*uprime; //0.25: 2 max-pools
-  u[0] = params_d_->trs.y - 0.25*vprime - 2.0; // 2.0 for recoverring the image padding
+  u[0] = params_d_->trs.x*0.5 - 0.25*vprime + 1.0 + 1.0; //0.25: 2 max-pools. 1.0 for using a left camera
+  v[0] = params_d_->trs.y - 0.25*uprime - 2.0; // 1.0 and 2.0 for recoverring the removed image padding
   w[0] = 1.0;
 }
 
@@ -393,10 +393,11 @@ inline void MPPICosts::coorTransformHost(float x, float y, float* u, float* v, f
 
   double uprime = focal_*cam_x;
   double vprime = focal_*cam_y + 60; // 60 for offset
+
   // uprime = uprime/params_.trs.x; // scaling
   // vprime = vprime/params_.trs.y;
-  v[0] = params_.trs.x*0.5 - 0.25*uprime; //0.25: 2 max-pools
-  u[0] = params_.trs.y - 0.25*vprime - 2.0;// 2.0 for recoverring the image padding
+  u[0] = params_.trs.x*0.5 - 0.25*vprime + 1.0 + 1.0; //0.25: 2 max-pools. 1.0 for using a left camera
+  v[0] = params_.trs.y - 0.25*uprime - 2.0; // 1.0 and 2.0 for recoverring the removed image padding
   w[0] = 1.0;
 }
 
@@ -415,11 +416,19 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
   //Cost of front of the car
   coorTransform(x_front, y_front, &u, &v, &w);
   // printf("%f, %f, %f, %f \n", x_front, y_front, u, v);
-  float track_cost_front = tex2D<float>(costmap_tex_, u, v);
+  float track_cost_front = tex2D<float>(costmap_tex_, u/38.0, v/18.0);
+  if ((u > 38.0) || (u < 0) || (v < 0)) { // crash in front
+    crash[0] = 1;
+  } else if (v > 18.0) { // going backward
+    crash[0] = 1;
+  }
 
   //Cost for back of the car
   coorTransform(x_back, y_back, &u, &v, &w);
-  float track_cost_back = tex2D<float>(costmap_tex_, u, v);
+  float track_cost_back = tex2D<float>(costmap_tex_, u/38.0, v/18.0);
+  if ((u > 38.0) || (u < 0) || (v < 0)) {
+    crash[0] = 1;
+  }
 
   track_cost = (fabs(track_cost_front) + fabs(track_cost_back) )/2.0;
   // printf("%f    ", track_cost);
