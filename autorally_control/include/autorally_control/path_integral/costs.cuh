@@ -41,7 +41,7 @@
 
 #include <cuda_runtime.h>
 #include <vector>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -50,8 +50,8 @@ namespace autorally_control {
 /**
 * @class MPPICosts mppi_costs.h
 * @brief Maintaints cost parameters for the model predictive path integral
-* control algorithm. 
-*  
+* control algorithm.
+*
 * Maintains a collection of variables and functions which are needed for
 * computing costs in the mppi framework. These include host side functions
 * which initialize/update variables, and host side functions which handle the
@@ -59,12 +59,12 @@ namespace autorally_control {
 * device functions which are required by the main parallel loop of the mppi
 * algorithm for computing the instantaneous state costs. Note that this type
 * of C++/CUDA code design requires SM version >= sm_20 and CUDA >= 5.0.
-*  
+*
 */
 class MPPICosts: public Managed
 {
 public:
- 
+
   //Struct for holding various cost parameters.
   typedef struct
   {
@@ -89,7 +89,7 @@ public:
   CostParams params_; ///< Struct for cost parameters.
 
   /**
-  * @brief Simple constructor for MppiCost. 
+  * @brief Simple constructor for MppiCost.
   * @param width The width (# elements across one row) of the costmap.
   * @param height The height (# elements across one column) of the costmap.
   */
@@ -98,7 +98,7 @@ public:
   /**
   * @brief Constructor for when loading cost grid and transform from a file.
   * @param map_path C-string to costmap data file.
-  * @param mppi_node Node handle to the controller ROS node. 
+  * @param mppi_node Node handle to the controller ROS node.
   */
   MPPICosts(ros::NodeHandle mppi_node);
 
@@ -114,15 +114,15 @@ public:
 
   /**
   * @brief Takes a pointer to CPU memory and binds it to a CUDA texture.
-  * @param costmap Pointer to and array of floats of size width*height. 
+  * @param costmap Pointer to and array of floats of size width*height.
   */
   void costmapToTexture(float* costmap);
-  
+
   void update(Eigen::MatrixXf state);
 
   /*
   * @brief Updates cost parameters by reading from the rosparam server
-  * @params mppi_node Node handle to the controller ROS node. 
+  * @params mppi_node Node handle to the controller ROS node.
   */
   void updateParams(ros::NodeHandle mppi_node);
 
@@ -131,7 +131,7 @@ public:
   /*
   * @brief Updates the current costmap coordinate transform.
   * @param h Matrix representing a transform from world to (offset) costmap coordinates.
-  * @param trs Array representing the offset. 
+  * @param trs Array representing the offset.
   */
   void updateTransform(Eigen::MatrixXf h, Eigen::ArrayXf trs);
 
@@ -177,7 +177,7 @@ public:
   /*
   * @brief Display the debug view centered around x and y.
   * @param x float representing the current x-coordinate
-  * @param y float representing the current y-coordinate 
+  * @param y float representing the current y-coordinate
   */
   void debugDisplay(float x, float y);
 
@@ -243,7 +243,7 @@ protected:
   cudaArray *costmapArray_d_; ///< Cuda array for texture binding.
   cudaChannelFormatDesc channelDesc_; ///< Cuda texture channel description.
   cudaTextureObject_t costmap_tex_; ///< Cuda texture object.
-  
+
   //Debugging variables
   float* debug_data_; ///< Host array for holding debug info.
   float* debug_data_d_; ///< Device array for holding debug info.

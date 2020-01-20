@@ -32,9 +32,9 @@
  ***********************************************/
 
 #ifndef MPPI_CONTROLLER_CUH_
-#define MPPI_CONTROLLER_CUH_ 
+#define MPPI_CONTROLLER_CUH_
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <cuda_runtime.h>
 #include <curand.h>
 
@@ -60,7 +60,7 @@ public:
   int hz_;
   double total_iter_time_;
 
-  DYNAMICS_T *model_; ///< Model of the autorally system dynamics. 
+  DYNAMICS_T *model_; ///< Model of the autorally system dynamics.
   COSTS_T *costs_; ///< Autorally system costs.
   float* traj_costs_; ///< Array of the trajectory costs.
   float* importance_sampler_; ///< Host array for keeping track of the nomimal trajectory.
@@ -83,7 +83,7 @@ public:
 
   /**
   * @brief Allocates cuda memory for all of the controller's device array fields.
-  */ 
+  */
   void allocateCudaMem();
 
   /**

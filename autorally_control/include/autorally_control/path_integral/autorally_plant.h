@@ -48,14 +48,14 @@
 #include <autorally_msgs/runstop.h>
 #include <autorally_msgs/pathIntegralStatus.h>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 namespace autorally_control {
 
 /**
 * @class AutorallyPlant autorally_plant.h
 * @brief Publishers and subscribers for the autorally control system.
-* 
+*
 * This class is treated as the plant for the MPPI controller. When the MPPI
 * controller has a control it sends to a function in this class to get
 * send to the actuators. Likewise it calls functions in this class to receive
@@ -63,13 +63,13 @@ namespace autorally_control {
 * and status information for both the controller and the OCS.
 */
 
-class AutorallyPlant //: public Diagnostics  
+class AutorallyPlant //: public Diagnostics
 {
 public:
   static const int AUTORALLY_STATE_DIM = 7;
   //Struct for holding the autorally pose.
   typedef struct
-  { 
+  {
     //X-Y-Z position
     float x_pos;
     float y_pos;
@@ -105,7 +105,7 @@ public:
   * @param mppi_node A ros node handle.
   */
 	AutorallyPlant(ros::NodeHandle mppi_node, bool debug_mode, int hz);
-	
+
   /**
   * @brief Destructor for AutorallyPlant.
   */
@@ -133,7 +133,7 @@ public:
 	void pubPath(float* nominal_traj, ros::Publisher path_pub, int num_timesteps, int hz);
 
   /**
-  * @brief Publishes a control input. 
+  * @brief Publishes a control input.
   * @param steering The steering command to publish.
   * @param throttle The throttle command to publish.
   */
@@ -173,7 +173,7 @@ public:
   std::vector<float> getModelParams();
 
 private:
-  const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale. 
+  const double TIMEOUT = 0.5; ///< Time before declaring pose/controls stale.
 
   FullState full_state_; ///< Full state of the autorally vehicle.
 

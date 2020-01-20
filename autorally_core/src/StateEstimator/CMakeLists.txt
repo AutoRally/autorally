@@ -1,7 +1,8 @@
 find_package(Boost REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${Eigen_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${Eigen3_INCLUDE_DIRS})
 
 find_package(GTSAM)
 if(GTSAM_FOUND)

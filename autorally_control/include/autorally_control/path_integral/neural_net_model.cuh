@@ -40,7 +40,7 @@
 #include "gpu_err_chk.h"
 #include "cnpy.h"
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 
 namespace autorally_control {
@@ -55,7 +55,7 @@ public:
   static const int CONTROL_DIM = C_DIM;
   static const int DYNAMICS_DIM = STATE_DIM - K_DIM;
   static const int NUM_LAYERS = layer_counter(layer_args...); ///< Total number of layers (including in/out layer)
-  static const int PRIME_PADDING = 1; ///< Extra padding to largest layer to avoid shared mem bank conflicts  
+  static const int PRIME_PADDING = 1; ///< Extra padding to largest layer to avoid shared mem bank conflicts
   static const int LARGEST_LAYER = neuron_counter(layer_args...) + PRIME_PADDING; ///< Number of neurons in the largest layer(including in/out neurons)
   static const int NUM_PARAMS = param_counter(layer_args...); ///< Total number of model parameters;
   static const int SHARED_MEM_REQUEST_GRD = 0; ///< Amount of shared memory we need per BLOCK.
@@ -78,7 +78,7 @@ public:
 
   void loadParams(std::string model_path);
 
-  void setParams(Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* weights, 
+  void setParams(Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* weights,
                  Eigen::Matrix<float, -1, -1, Eigen::RowMajor>* biases);
 
   void paramsToDevice();
@@ -124,7 +124,7 @@ private:
 
   Eigen::MatrixXf* weighted_in_;
 
-  float* net_params_; 
+  float* net_params_;
 };
 
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
@@ -137,7 +137,7 @@ template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::DYNAMICS_DIM;
 
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
-const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NUM_LAYERS; 
+const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::NUM_LAYERS;
 
 template<int S_DIM, int C_DIM, int K_DIM, int... layer_args>
 const int NeuralNetModel<S_DIM, C_DIM, K_DIM, layer_args...>::LARGEST_LAYER;
