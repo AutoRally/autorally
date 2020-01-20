@@ -73,10 +73,6 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
 
   //Start the control loop.
   while (ros::ok()) {
-    if (params.debug_mode){ //Display the debug window.
-     controller.costs_->debugDisplay(state(0), state(1));
-    }
-    
     if (last_pose_update != robot.getLastPoseTime()){ //If we've received a new state estimate
       last_pose_update = robot.getLastPoseTime();
       fs = robot.getState(); //Get the new state.
@@ -91,7 +87,10 @@ void runControlLoop(CONTROLLER_T controller, SystemParams params, ros::NodeHandl
     robot.pubControl(u(0), u(1)); //Publish steering u(0) and throttle u(1)
     robot.pubPath(controller.nominal_traj_, path_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
     robot.pubPath(controller.importance_sampler_, ips_pub, controller.num_timesteps_, params.hz); //Publish the planned path.
-
+    if (params.debug_mode){ //Display the debug window.
+      controller.costs_->debugMapping(controller.nominal_traj_);
+    }
+ 
     //Check system status: 0 -> good, 1-> not active, 2-> bad
     if (!params.debug_mode){ //In simulation/debug mode everything is always ok.
       last_status = robot_status;

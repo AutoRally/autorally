@@ -83,6 +83,8 @@ public:
     int grid_res;
     float3 r_c1;
     float3 r_c2;
+    float3 r_c3;
+    float3 r_c4;
     float3 trs;
   } CostParams;
 
@@ -181,6 +183,9 @@ public:
   */
   void debugDisplay(float x, float y);
 
+  virtual void debugMapping(float* nominal_traj);
+
+  void coorTransformHost(float x, float y, float* u, float* v, float* w);
   /*
   * @brief Free cuda variables/memory.
   */

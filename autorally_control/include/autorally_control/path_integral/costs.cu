@@ -167,9 +167,19 @@ inline void MPPICosts::updateTransform(Eigen::MatrixXf m, Eigen::ArrayXf trs){
   params_.r_c1.x = m(0,0);
   params_.r_c1.y = m(1,0);
   params_.r_c1.z = m(2,0);
+
   params_.r_c2.x = m(0,1);
   params_.r_c2.y = m(1,1);
   params_.r_c2.z = m(2,1);
+
+  params_.r_c3.x = m(0,2);
+  params_.r_c3.y = m(1,2);
+  params_.r_c3.z = m(2,2);
+
+  params_.r_c4.x = m(0,3);
+  params_.r_c4.y = m(1,3);
+  params_.r_c4.z = m(2,3);
+
   params_.trs.x = trs(0);
   params_.trs.y = trs(1);
   params_.trs.z = trs(2);
@@ -271,6 +281,8 @@ inline void MPPICosts::debugDisplay(float x, float y)
   cv::waitKey(1);
 }
 
+void MPPICosts::debugMapping(float* nominal_traj){};
+
 inline void MPPICosts::freeCudaMem()
 {
   HANDLE_ERROR(cudaDestroyTextureObject(costmap_tex_));
@@ -347,9 +359,45 @@ inline __host__ __device__ float MPPICosts::getStabilizingCost(float* s)
 inline __host__ __device__ void MPPICosts::coorTransform(float x, float y, float* u, float* v, float* w)
 {
   //Compute a projective transform of (x, y, 0, 1)
-  u[0] = params_d_->r_c1.x*x + params_d_->r_c2.x*y + params_d_->trs.x;
-  v[0] = params_d_->r_c1.y*x + params_d_->r_c2.y*y + params_d_->trs.y;
-  w[0] = params_d_->r_c1.z*x + params_d_->r_c2.z*y + params_d_->trs.z;
+  double cam_x = params_d_->r_c1.x*x + params_d_->r_c2.x*y + params_d_->r_c4.x;
+  double cam_y = params_d_->r_c1.y*x + params_d_->r_c2.y*y + params_d_->r_c4.y;
+  double cam_z = params_d_->r_c1.z*x + params_d_->r_c2.z*y + params_d_->r_c4.z;
+  double depth = cam_z;
+
+  cam_x = cam_x / depth;
+  cam_y = cam_y / depth;
+
+  double focal_ = 80;
+
+  double uprime = focal_*cam_x;
+  double vprime = focal_*cam_y + 60; // 60 for offset
+  // uprime = uprime/params_d_->trs.x; // scaling
+  // vprime = vprime/params_d_->trs.y;
+  v[0] = params_d_->trs.x*0.5 - 0.25*uprime; //0.25: 2 max-pools
+  u[0] = params_d_->trs.y - 0.25*vprime - 2.0; // 2.0 for recoverring the image padding
+  w[0] = 1.0;
+}
+
+inline void MPPICosts::coorTransformHost(float x, float y, float* u, float* v, float* w)
+{
+  //Compute a projective transform of (x, y, 0, 1)
+  double cam_x = params_.r_c1.x*x + params_.r_c2.x*y + params_.r_c4.x;
+  double cam_y = params_.r_c1.y*x + params_.r_c2.y*y + params_.r_c4.y;
+  double cam_z = params_.r_c1.z*x + params_.r_c2.z*y + params_.r_c4.z;
+  double depth = cam_z;
+
+  cam_x = cam_x / depth;
+  cam_y = cam_y / depth;
+
+  double focal_ = 80;
+
+  double uprime = focal_*cam_x;
+  double vprime = focal_*cam_y + 60; // 60 for offset
+  // uprime = uprime/params_.trs.x; // scaling
+  // vprime = vprime/params_.trs.y;
+  v[0] = params_.trs.x*0.5 - 0.25*uprime; //0.25: 2 max-pools
+  u[0] = params_.trs.y - 0.25*vprime - 2.0;// 2.0 for recoverring the image padding
+  w[0] = 1.0;
 }
 
 inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
@@ -366,13 +414,15 @@ inline __device__ float MPPICosts::getTrackCost(float* s, int* crash)
 
   //Cost of front of the car
   coorTransform(x_front, y_front, &u, &v, &w);
-  float track_cost_front = tex2D<float>(costmap_tex_, u/w, v/w); 
+  // printf("%f, %f, %f, %f \n", x_front, y_front, u, v);
+  float track_cost_front = tex2D<float>(costmap_tex_, u, v);
 
   //Cost for back of the car
   coorTransform(x_back, y_back, &u, &v, &w);
-  float track_cost_back = tex2D<float>(costmap_tex_, u/w, v/w);
+  float track_cost_back = tex2D<float>(costmap_tex_, u, v);
 
   track_cost = (fabs(track_cost_front) + fabs(track_cost_back) )/2.0;
+  // printf("%f    ", track_cost);
   if (fabs(track_cost) < params_d_->track_slop) {
     track_cost = 0;
   }
