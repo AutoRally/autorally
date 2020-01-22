@@ -240,6 +240,7 @@ protected:
   //Constant variables
   const float FRONT_D = 0.5; ///< Distance from GPS receiver to front of car.
   const float BACK_D = -0.5; ///< Distance from GPS receiver to back of car.
+  const float HALF_W = 1.0; ///< Distance from GPS receiver to left and right side of a car. with some safety margin
   const float DISCOUNT = 0.9; ///< Discount on the crashing cost coefficient
 
   //Primary variables
@@ -265,3 +266,4 @@ protected:
 #include "costs.cu"
 
 #endif /*MPPI_COST_CUH*/
+
