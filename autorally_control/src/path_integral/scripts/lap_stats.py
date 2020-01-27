@@ -142,7 +142,7 @@ if __name__ == "__main__":
 	while (param_dict is None):
 		curr = rospy.get_rostime()
 		if (curr.to_sec() - start.to_sec() > 30.0):
-			print curr.to_sec() - start.to_sec()
+			print(curr.to_sec() - start.to_sec())
 			break
 		try:
 			param_dict = get_launch_params(prefix)
