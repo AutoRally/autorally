@@ -48,7 +48,7 @@ cuda_add_executable(path_integral_bf
 target_compile_definitions(path_integral_bf PRIVATE PRIVATE USE_BASIS_FUNC_MODEL__)
 add_dependencies(path_integral_bf autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(path_integral_bf /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(path_integral_bf /home/klee698/.local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ###################################################################################
 #Executable for the neural network model
@@ -62,7 +62,7 @@ target_compile_definitions(mppi_nodelet PRIVATE
 		USE_NEURAL_NETWORK_MODEL__;
 		MPPI_NNET_USING_CONSTANT_MEM__)
 add_dependencies(mppi_nodelet autorally_msgs_gencpp ${PROJECT_NAME}_gencfg)
-target_link_libraries(mppi_nodelet /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(mppi_nodelet /home/klee698/.local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 cuda_add_executable(path_integral_nn
                    	path_integral_main.cu
@@ -74,7 +74,7 @@ target_compile_definitions(path_integral_nn PRIVATE
 		MPPI_NNET_USING_CONSTANT_MEM__)
 add_dependencies(path_integral_nn autorally_msgs_gencpp autorally_core ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(path_integral_nn /usr/local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(path_integral_nn /home/klee698/.local/lib/libcnpy.so ${CUDA_curand_LIBRARY} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ####################################################################################
 #Executable for monitoring the status of mppi
