@@ -3,10 +3,11 @@
   <model name="track">
     <static>true</static>
     <link name="link">
+    <!--
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://urdf/cad/RSS_CCRF_2020Map.dae</uri>
+            <uri>model://urdf/cad/RSS_CCRF_2020Mapv2.1.dae</uri>
             <scale>1.0 1.0 1.0</scale>
           </mesh>
         </geometry>
@@ -19,12 +20,13 @@
           </friction>
         </surface>
       </collision>
+      -->
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>model://urdf/cad/RSS_CCRF_2020Map.dae</uri>
-            <scale>1.0 1.0 1.0</scale>
+            <uri>model://urdf/cad/RSS_CCRF_2020Mapv2.1.dae</uri>
+            <scale>0.001 0.001 0.001</scale>
           </mesh>
         </geometry>
         <material>
