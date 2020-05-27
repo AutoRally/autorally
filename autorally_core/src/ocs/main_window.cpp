@@ -55,13 +55,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
 	ui.diagMsgsTreeView->setModel(qnode.diagnosticModel());
-	ui.diagMsgsTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
+	ui.diagMsgsTreeView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
 	ui.runstopTreeView->setModel(qnode.runstopModel());
-  ui.runstopTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
+  ui.runstopTreeView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
   ui.imageMaskTreeView->setModel(qnode.imageMaskModel());
-  ui.imageMaskTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
+  ui.imageMaskTreeView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
 
   QObject::connect(ui.motionControlButton, SIGNAL(clicked(bool)),
