@@ -44,10 +44,10 @@ def get_launch_params(prefix):
     param_dict["throttle_var"] = rospy.get_param(prefix + "/throttle_std")
     param_dict["max_throttle"] = rospy.get_param(prefix + "/max_throttle")
     param_dict["desired_speed"] = rospy.get_param(prefix + "/desired_speed")
-    param_dict["speed_coefficient"] = rospy.get_param(prefix + "/speed_coefficient")
-    param_dict["track_coefficient"] = rospy.get_param(prefix + "/track_coefficient")
+    param_dict["speed_coefficient"] = rospy.get_param(prefix + "/speed_coeff")
+    param_dict["track_coefficient"] = rospy.get_param(prefix + "/track_coeff")
     param_dict["max_slip_angle"] = rospy.get_param(prefix + "/max_slip_angle")
-    param_dict["slip_penalty"] = rospy.get_param(prefix + "/slip_penalty")
+    param_dict["slip_penalty"] = rospy.get_param(prefix + "/slip_coeff")
     param_dict["track_slop"] = rospy.get_param(prefix + "/track_slop")
     param_dict["crash_coeff"] = rospy.get_param(prefix + "/crash_coeff")
     param_dict["map_path"] = rospy.get_param(prefix + "/map_path")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         try:
             param_dict = get_launch_params(prefix)
         except KeyError:
-            print("key error in lap stats")
+            print("key error in lap stats!")
             pass
     line = None
     if ("gazebo" in param_dict["map_path"]):
@@ -163,4 +163,3 @@ if __name__ == "__main__":
         rospy.signal_shutdown("No start line for the given map.")
     current_lap = Lap(line, param_dict, prefix)
     rospy.spin()
-
