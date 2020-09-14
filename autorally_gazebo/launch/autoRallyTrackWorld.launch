@@ -14,7 +14,7 @@
   <arg name="headless" default="false"/>
   <arg name="debug" default="false"/>
   <arg name="physics" default="dart"/>
-  <arg name="verbose" default="false"/>
+  <arg name="verbose" default="true"/>
   <arg name="world_name" default="model://urdf/worlds/populated_marietta.world"/>
   <arg name="cmd_timeout" default="0.5"/>
   <!-- set use_sim_time flag -->

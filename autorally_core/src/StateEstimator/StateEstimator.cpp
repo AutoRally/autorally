@@ -180,14 +180,14 @@ namespace autorally_core
     {
       while (!ip)
       {
-        ROS_WARN("Waiting for valid initial pose");
+        ROS_WARN("Waiting for valid initial orientation");
         ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("filter", nh_, ros::Duration(15));
       }
       initialPose_ = *ip;
     }
     else
     {
-      ROS_WARN("Using fixed initial pose");
+      ROS_WARN("Using fixed initial orientation");
       Rot3 initialRotation = Rot3::Ypr(initialYaw, intialPitch, initialRoll);
       initialPose_.orientation.w = initialRotation.quaternion()[0];
       initialPose_.orientation.x = initialRotation.quaternion()[1];
@@ -304,7 +304,9 @@ namespace autorally_core
       {
         sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
         startTime = TIME(fix);
-        lastOdom_ = odomOptQ_.popBlocking();
+        if(usingOdom_) {
+          lastOdom_ = odomOptQ_.popBlocking();
+        }
 
         NonlinearFactorGraph newFactors;
         Values newVariables;
@@ -363,7 +365,6 @@ namespace autorally_core
           lastImuTgps_ = TIME(lastIMU_);
           lastIMU_ = imuOptQ_.popBlocking();
         }
-
         loop_rate.sleep();
       }
       else

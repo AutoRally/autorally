@@ -238,7 +238,7 @@ QBrush DiagnosticsEntry::highestPriorityColor(QStandardItem* item)
   QBrush toReturn(Qt::white);
   if(item->data().isValid())
   {
-    toReturn = colorFromLevel(item->data().toChar().toAscii());
+    toReturn = colorFromLevel(item->data().toChar().toLatin1());
   }
   else if(!item->hasChildren())
   {

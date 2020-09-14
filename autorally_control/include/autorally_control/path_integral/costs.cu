@@ -399,8 +399,8 @@ inline __device__ float MPPICosts::computeCost(float* s, float* u, float* du,
   float control_cost = getControlCost(u, du, vars);
   float track_cost = getTrackCost(s, crash);
   float speed_cost = getSpeedCost(s, crash);
-  float crash_cost = (1.0 - params_.discount)*getCrashCost(s, crash, timestep);
-  float stabilizing_cost = getStabilizingCost(s);            
+  float crash_cost = powf(params_.discount, timestep)*getCrashCost(s, crash, timestep);
+  float stabilizing_cost = getStabilizingCost(s);
   float cost = control_cost + speed_cost + crash_cost + track_cost + stabilizing_cost;
   if (cost > 1e12 || isnan(cost)) {
     cost = 1e12;
