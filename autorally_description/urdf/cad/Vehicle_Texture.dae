@@ -103,7 +103,7 @@
   </library_lights>
   <library_images>
     <image id="Car_Texture_jpg" name="Car_Texture_jpg">
-      <init_from>../textures/Car_Texture.jpg</init_from>
+      <init_from>Car_Texture.jpg</init_from>
     </image>
   </library_images>
   <library_effects>

@@ -1,13 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.6">
   <world name="default">
-    <gui>
-      <camera name="user_camera">
-        <pose frame=''>3.72197 14.5887 17.3139 0 0.564 -2.184</pose>
-        <view_controller>orbit</view_controller>
-        <projection_type>perspective</projection_type>
-      </camera>
-    </gui>
     <scene>
       <sky>
         <clouds>
