@@ -8,7 +8,7 @@
     output = "screen">
     
     <!--Pose topic configuration parameters -->
-    <param name="pose_estimate" value="/pose_estimate" />
+    <param name="pose_estimate" value="/ground_truth/state" />
     <param name="path_topic" value="/mppi_controller/nominal_path" />
 
     <!--Debug/Sim mode parameter -->
