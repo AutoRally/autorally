@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import rospy
 import numpy as np
 
@@ -142,7 +143,7 @@ if __name__ == "__main__":
 	while (param_dict is None):
 		curr = rospy.get_rostime()
 		if (curr.to_sec() - start.to_sec() > 30.0):
-			print curr.to_sec() - start.to_sec()
+			print(curr.to_sec() - start.to_sec())
 			break
 		try:
 			param_dict = get_launch_params(prefix)
@@ -160,6 +161,6 @@ if __name__ == "__main__":
 		line = ccrf_line
 	else:
 		rospy.signal_shutdown("No start line for the given map.")
-	current_lap = Lap(line, param_dict, prefix)	
+	current_lap = Lap(line, param_dict, prefix)
 	rospy.spin()
 

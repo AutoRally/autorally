@@ -84,6 +84,11 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
    Once install is complete, make sure linux can see the shared library:
 
    ```sudo ldconfig```
+   
+6. __Update to latest version of gazebo 9.XX__
+    
+    You will want to be on the latest version of gazebo 9.
+       
 
 ### 2. Clone or Fork Repositories
 

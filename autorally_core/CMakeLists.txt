@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.10)
 project(autorally_core)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -38,7 +38,7 @@ catkin_package(
 set(BUILD_FLAGS "-std=c++11 -Wuninitialized -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BUILD_FLAGS}")
 
-include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
 include_directories(include)
 
 #add_subdirectory(src/arduino)

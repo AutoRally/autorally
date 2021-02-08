@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(autorally_control)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-find_package(Boost 1.49.0 REQUIRED)
+find_package(Boost 1.55.0 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 set(BUILD_FLAGS "-std=c++11 -Wuninitialized")
@@ -29,10 +29,10 @@ catkin_package(
   CATKIN_DEPENDS roscpp std_msgs geometry_msgs nav_msgs nodelet dynamic_reconfigure autorally_core autorally_msgs
   INCLUDE_DIRS include
   LIBRARIES autorally_plant param_getter
-
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${Eigen3_INCLUDE_DIRS})
+include_directories(include)
+include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
 
 add_subdirectory(src/ConstantSpeedController)
 add_subdirectory(src/joystick)

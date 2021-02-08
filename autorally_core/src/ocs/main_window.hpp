@@ -39,7 +39,7 @@
 #ifndef MAIN_WINDOW_H
 #define MAIN_WINDOW_H
 
-#include <QtGui/QMainWindow>
+#include <QtWidgets/QMainWindow>
 #include <QtCore/QTimer>
 #include "ui_main_window.h"
 #include "qnode.hpp"

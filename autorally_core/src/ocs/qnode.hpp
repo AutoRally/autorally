@@ -45,8 +45,8 @@
 #include <QStringListModel>
 #include <QtGui/QStandardItemModel>
 #include <QtGui/QStandardItem>
-#include <QtGui/QPushButton>
-#include <QtGui/QTableWidgetItem>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QTableWidgetItem>
 #include <QtGui/QPixmap>
 
 #ifndef Q_MOC_RUN
