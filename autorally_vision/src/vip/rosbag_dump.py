@@ -25,7 +25,7 @@ bag = rosbag.Bag(fpath + casename + ".bag")
 topics = bag.get_type_and_topic_info()[1].keys()
 
 # %% Coord transform between chassis and camera frame
-numsg = 1;
+numsg = 1
 for topic, msg, t in bag.read_messages(topics=['/tf_static']):
     numsg -= 1
     if numsg < 1:
