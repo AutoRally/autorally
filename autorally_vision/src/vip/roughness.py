@@ -49,26 +49,26 @@ def get_labels(bagfile, timestep):
     #     roughness_data = np.append(roughness_data, 0.0)
     return time_ros, roughness_data, disturbance_data
 
+if __name__ == '__main__':
+    # bagfile directory
+    fpath = '/home/todd/autorally/'
 
-# bagfile directory
-fpath = '/home/todd/autorally/'
+    # bagfile
+    fname = fpath + 'alpha_autorally0_2020-07-23-16-27-57_0.bag'  # from track not sim
 
-# bagfile
-fname = fpath + 'alpha_autorally0_2020-07-23-16-27-57_0.bag'  # from track not sim
+    bag = rosbag.Bag(fname)
 
-bag = rosbag.Bag(fname)
+    topics = bag.get_type_and_topic_info()[1].keys()
 
-topics = bag.get_type_and_topic_info()[1].keys()
-
-times, roughness, disturbance = get_labels(bag, 1)
-# make pretty graphs
-fig, ax = plt.subplots()
-ax.set_xlabel('time')
-ax.set_ylabel('z-axis disturbance and metric')
-ax.set_title('IMU-based roughness metric with timestep of 1s')
-disturbance, = ax.plot(times, disturbance, label="Disturbance")
-metric, = ax.plot(times, roughness, label="Roughness Metric")
-# ax.plot(time, disturbance_data, time, roughness_data)
-ax.legend()
-plt.show()
-bag.close()
+    times, roughness, disturbance = get_labels(bag, 1)
+    # make pretty graphs
+    fig, ax = plt.subplots()
+    ax.set_xlabel('time')
+    ax.set_ylabel('z-axis disturbance and metric')
+    ax.set_title('IMU-based roughness metric with timestep of 1s')
+    disturbance, = ax.plot(times, disturbance, label="Disturbance")
+    metric, = ax.plot(times, roughness, label="Roughness Metric")
+    # ax.plot(time, disturbance_data, time, roughness_data)
+    ax.legend()
+    plt.show()
+    bag.close()

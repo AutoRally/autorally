@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
 # import quat_utils
-import transforms3d as quat_utils
 
 import cv2 as cv
 
@@ -50,7 +49,7 @@ def back_projection(pose, cam_info, t_des):
     q_I_t2 = car_pos[:, (tix + 1):]
 
     # Get vector from t1 to t2 in body frame
-    R_B_I = quat_utils.quat2mat(quat_utils.qinv(t1_quat))  # get quaternion to t1
+    R_B_I = quat2mat(qinv(t1_quat))  # get quaternion to t1
     p_I_t2 = np.transpose(q_I_t2.T - q_I_t1.T)  # pos vec in I frame
     p_B_t2 = np.dot(R_B_I, p_I_t2)  # rotate to B frame
 
@@ -78,6 +77,17 @@ def back_projection(pose, cam_info, t_des):
     cx = uv_ix[0, :]
 
     return rx, cx
+
+
+def quat2mat(q):
+    qx, qy, qz, qw = q[0], q[1], q[2], q[3]
+    return [[qw ** 2 + qx ** 2 - qy ** 2 - qz ** 2, 2 * qx * qy - 2 * qw * qz, 2 * qx * qz + 2 * qw * qy],
+            [2 * qx * qy + 2 * qw * qz, qw ** 2 - qx ** 2 + qy ** 2 - qz ** 2, 2 * qy * qz - 2 * qw * qx],
+            [2 * qx * qz - 2 * qw * qy, 2 * qy * qz + 2 * qw * qx, qw ** 2 - qx ** 2 - qy ** 2 + qz ** 2]]
+
+
+def qinv(q):
+    return np.hstack((-q[0:3], q[3]))
 
 # %%  Example
 # cam_info = {"K":K,"qC":qC,"height":1024,"width":1280}
