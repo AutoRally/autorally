@@ -8,7 +8,10 @@ import rosbag
 import rospy
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
-import quat_utils
+
+# import quat_utils
+import transforms3d as quat_utils
+
 import cv2 as cv
 
 # fpath = '/Users/thomas.king/Downloads/'

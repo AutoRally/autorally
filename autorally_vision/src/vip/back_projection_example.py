@@ -9,13 +9,17 @@ import cv2 as cv
 import back_projection as bp
 
 
-fpath = '/home/thomas/Downloads/'
-casename = '2020-10-15-11-16-39'
+# fpath = '/home/thomas/Downloads/'
+# casename = '2020-10-15-11-16-39'
 
-outpath = "/home/thomas/Documents/Traversability/" + casename + "/"
+# outpath = "/home/thomas/Documents/Traversability/" + casename + "/"
+# posefile = outpath + "pose.npz"
+# camfile = outpath + "cam_info.npz"
+
+outpath = '/home/todd/autorally/labeled_images/'
+outpath = outpath + "2020-10-15-11-16-39.bag" + '/'
 posefile = outpath + "pose.npz"
 camfile = outpath + "cam_info.npz"
-
 
 # Select projection time
 t1 = 23.174

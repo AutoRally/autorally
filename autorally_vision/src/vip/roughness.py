@@ -7,22 +7,14 @@ import rosbag
 import rospy
 import matplotlib.pyplot as plt
 
-# bagfile directory
-fpath = '/home/todd/autorally/'
-
-# bagfile
-fname = fpath + 'alpha_autorally0_2020-07-23-16-27-57_0.bag'  # from track not sim
-
-bag = rosbag.Bag(fname)
-
-topics = bag.get_type_and_topic_info()[1].keys()
-
 """
 
 Returns (np.array, np.array, np.array) 
     = (timeStamp, metric at timeStamp, raw measurement at timeStamp)
 """
-def get_labels(rosbag, timestep):
+
+
+def get_labels(bagfile, timestep):
     disturbance_data = np.array([])
     roughness_data = np.array([])
     time_relative = np.array([])
@@ -31,7 +23,7 @@ def get_labels(rosbag, timestep):
     dt = timestep  # timestep analysed, to be tied into back projection time stamp
     running_squared_data = np.array([])  # measurements used in calculation of metric
     first_entry = True
-    for topic, msg, t in bag.read_messages(topics=['/imu/imu']):
+    for topic, msg, t in bagfile.read_messages(topics=['/imu/imu']):
         if first_entry:
             t0 = msg.header.stamp.to_time()
             first_entry = False
@@ -41,6 +33,8 @@ def get_labels(rosbag, timestep):
         running_squared_data = np.append(running_squared_data, vertical_acceleration * vertical_acceleration)
         disturbance_data = np.append(disturbance_data, vertical_acceleration)
         time_relative = np.append(time_relative, current_time)
+        time_ros = np.append(time_ros, msg.header.stamp.to_time())
+        # if dt time has not passed yet we do not have enough data
         if current_time > dt:
             # calculate metric
             roughness_metric = (np.average(running_squared_data, returned=True))[0]
@@ -53,8 +47,18 @@ def get_labels(rosbag, timestep):
     # Extend roughness data to be able to plot it
     # while len(disturbance_data) > len(roughness_data):
     #     roughness_data = np.append(roughness_data, 0.0)
-    return time_relative, roughness_data, disturbance_data
+    return time_ros, roughness_data, disturbance_data
 
+
+# bagfile directory
+fpath = '/home/todd/autorally/'
+
+# bagfile
+fname = fpath + 'alpha_autorally0_2020-07-23-16-27-57_0.bag'  # from track not sim
+
+bag = rosbag.Bag(fname)
+
+topics = bag.get_type_and_topic_info()[1].keys()
 
 times, roughness, disturbance = get_labels(bag, 1)
 # make pretty graphs
