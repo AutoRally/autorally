@@ -5,7 +5,11 @@
 #include <opencv2/aruco.hpp>
 #include <sensor_msgs/Image.h>
 
-#include <autorally_estimation/ArucoDetections.h>
+// #include <../../include/ArucoDetector/ArucoDetections.h>
+// #include <ArucoDetector/ArucoDetections.h>
+#include <autorally_msgs/ArucoDetections.h>
+#include <autorally_msgs/ArucoDetection.h>
+
 
 ros::Publisher debug_img_pub;
 ros::Publisher aruco_marker_pub_;
@@ -23,12 +27,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
 
   // if we have markers to publish
   if(markerIds.size() > 0) {
-    autorally_estimation::ArucoDetections aruco_msg;
+    autorally_msgs::ArucoDetections aruco_msg;
     aruco_msg.header = msg->header;
     aruco_msg.header.frame_id = msg->header.frame_id;
 
     for(unsigned int i = 0; i < markerCorners.size(); i++) {
-      autorally_estimation::ArucoDetection aruco_marker;
+      autorally_msgs::ArucoDetection aruco_marker;
       aruco_marker.size = 0.5;
       aruco_marker.id = markerIds[i];
 
@@ -67,7 +71,7 @@ int main(int argc, char** argv) {
   std::cout << "subscribing to topic: " << image_topic << std::endl;
 
   debug_img_pub = nh.advertise<sensor_msgs::Image>(image_topic+"/aruco_debug", 1);
-  aruco_marker_pub_ = nh.advertise<autorally_estimation::ArucoDetections>(image_topic+"/aruco_detections", 1);
+  aruco_marker_pub_ = nh.advertise<autorally_msgs::ArucoDetections>(image_topic+"/aruco_detections", 1);
 
   ros::spin();
 
