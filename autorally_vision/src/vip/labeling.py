@@ -35,12 +35,18 @@ def main(isTrack, dt):
     posefile = outpath + "pose.npz"
     camfile = outpath + "cam_info.npz"
 
+    max_num_images = 600
+    start_num_image = 1300
+    num_images_norm = 0
+    num_images_processed = 0
+
+
+
     # First pass: gather metric labels for time slots
     labels = Counter()
     times, metrics, disturbance = roughness.get_labels(bag, dt)
     for i in range(len(times)):
         labels[times[i]] = metrics[i]
-
     # Second pass: generate posefile and camfile, from rosbag_dump.py
     # TODO: Functionize this setup
 
@@ -49,8 +55,8 @@ def main(isTrack, dt):
         # %% Coord transform between chassis and camera frame
 
         # Print out topics if needed
-        print(str(bag.get_type_and_topic_info()[1].keys()))
-        if isTrack:
+        # print(str(bag.get_type_and_topic_info()[1].keys()))
+        if not isTrack:
             for topic, msg, t in bag.read_messages(topics=['/tf_static']):
                 qC = np.array([[msg.transforms[1].transform.translation.x,
                                 msg.transforms[1].transform.translation.y,
@@ -62,7 +68,7 @@ def main(isTrack, dt):
 
         # %% Pose Information and Images
         state_topics = ["/ground_truth/state"]
-        image_topics = ["/left_camera/image_raw"]
+        image_topics = ["/left_camera/image_color/compressed"]
 
         # iterate through bag to get poses
         x = y = z = t1 = t2 = np.array([])
@@ -80,15 +86,26 @@ def main(isTrack, dt):
                                      [msg.pose.pose.orientation.z],
                                      [msg.pose.pose.orientation.w]])
                 quat = np.hstack((quat, new_quat))
+                quat = np.hstack((quat, new_quat))
 
             elif topic in image_topics:
-                img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height,
-                                                                     msg.width,
-                                                                     3)
+                np_arr = np.fromstring(msg.data, np.uint8)
+                img = cv.imdecode(np_arr, cv.IMREAD_COLOR)
+
+                # img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height,
+                #                                                      msg.width,
+                #                                                      3)
                 tstr = str(msg.header.stamp.to_time())
                 outfile = outpath + "images/" + tstr + ".png"
-                #        cv.imwrite(outfile,cv.cvtColor(img, cv.COLOR_RGB2BGR))
-                cv.imwrite(outfile, img)
+                #cv.imwrite(outfile,cv.cvtColor(img, cv.COLOR_RGB2BGR))
+                num_images_norm = num_images_norm + 1
+                if num_images_norm < start_num_image:
+                    continue
+                else:
+                    cv.imwrite(outfile, img)
+
+                if num_images_norm - start_num_image > max_num_images:
+                    break
 
         quat = np.delete(quat, 0, 1)
         pos = np.vstack((x, y, z))
@@ -96,13 +113,34 @@ def main(isTrack, dt):
         np.savez(posefile, pos=pos, quat=quat, tt=t2)
         # np.savez(camfile, K=K, qC=qC, height=height, width=width)
         # TODO: reimplement cam_info and camfile properly
-        cam_info = {"K": K, "qC": qC, "height": 1024, "width": 1280}
+        # cam_info = {"K": K, "qC": qC, "height": 1024, "width": 1280}
 
     # Third pass: get back prop
     pose = np.load(posefile)
     # cam_info = np.load(camfile)
     for t_des in times:
-        x, y = backProp.back_projection(pose, None, t_des, False)
+        image_name = (outpath + "images/" + str(t_des))[:95] + ".png"
+        num_images_processed = num_images_processed + 1
+        if num_images_processed < start_num_image:
+            continue
+        else:
+            img = cv.imread(image_name)
+            if img is None:
+                raise Exception("Cannot find image name : \n" + image_name)
+        if num_images_processed - start_num_image > max_num_images:
+            break
+        # get all visible poses and their labels
+        x, y = backProp.back_projection(pose, None, t_des, False, labels)
+
+        # making pretty pictures
+        for i in range(len(x)):
+            lw = 3  # width of line
+            img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw), :] = np.array(
+                [255, 0, 0])
+            cv.imwrite(image_name, img)
+            print("edited image " + image_name)
+
+
 
 
 if __name__ == '__main__':

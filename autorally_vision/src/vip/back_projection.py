@@ -22,7 +22,7 @@ fname = '2020-10-15-11-16-39.bag'
 # %% Open bag and extract pose and images
 
 
-def back_projection(pose, cam_info, t_des, use_cam_info):
+def back_projection(pose, cam_info, t_des, use_cam_info, metrics):
     # TODO: add metric to npz
     tt, car_pos, car_quat = pose["tt"], pose["pos"], pose["quat"]
     if use_cam_info:
