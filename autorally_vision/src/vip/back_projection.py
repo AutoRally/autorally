@@ -22,18 +22,21 @@ fname = '2020-10-15-11-16-39.bag'
 # %% Open bag and extract pose and images
 
 
-def back_projection(pose, cam_info, t_des):
+def back_projection(pose, cam_info, t_des, use_cam_info):
+    # TODO: add metric to npz
     tt, car_pos, car_quat = pose["tt"], pose["pos"], pose["quat"]
-    K, qC, height, width = cam_info["K"], cam_info["qC"], cam_info["height"], cam_info["width"]
+    if use_cam_info:
+        K, qC, height, width = cam_info["K"], cam_info["qC"], cam_info[
+            "height"], cam_info["width"]
+    else:
+        # Override camera values
+        K = np.array([[762.72493376, 0., 640.5],
+                      [0., 762.72493376, 512.5],
+                      [0., 0., 1.]])
 
-    # Override camera values for now:
-    K = np.array([[762.72493376, 0., 640.5],
-                  [0., 762.72493376, 512.5],
-                  [0., 0., 1.]])
-
-    qC = np.array([[0.127, 0., 0.2159]])
-    height = 1024
-    width = 1280
+        qC = np.array([[0.127, 0., 0.2159]])
+        height = 1024
+        width = 1280
     # Frame Definitions:
     #   I: inertial, world frame
     #   B: body, car frame
@@ -47,6 +50,7 @@ def back_projection(pose, cam_info, t_des):
 
     # Get vehicle pose at future times, t2 > t1
     q_I_t2 = car_pos[:, (tix + 1):]
+    # TODO: labeling goes here
 
     # Get vector from t1 to t2 in body frame
     R_B_I = quat2mat(qinv(t1_quat))  # get quaternion to t1
@@ -61,7 +65,8 @@ def back_projection(pose, cam_info, t_des):
 
     # Find image coordinates from camera frame
     lam_uv = np.dot(K, p_C_t2)  # get raw projection
-    uv = lam_uv / lam_uv[2, :]  # divide by 3rd term to account for distance param
+    uv = lam_uv / lam_uv[2,
+                  :]  # divide by 3rd term to account for distance param
 
     # filter out points outside of FOV
     inside_h = (uv[0, :] < height) & (uv[0, :] > 0)  # inside height
@@ -81,9 +86,12 @@ def back_projection(pose, cam_info, t_des):
 
 def quat2mat(q):
     qx, qy, qz, qw = q[0], q[1], q[2], q[3]
-    return [[qw ** 2 + qx ** 2 - qy ** 2 - qz ** 2, 2 * qx * qy - 2 * qw * qz, 2 * qx * qz + 2 * qw * qy],
-            [2 * qx * qy + 2 * qw * qz, qw ** 2 - qx ** 2 + qy ** 2 - qz ** 2, 2 * qy * qz - 2 * qw * qx],
-            [2 * qx * qz - 2 * qw * qy, 2 * qy * qz + 2 * qw * qx, qw ** 2 - qx ** 2 - qy ** 2 + qz ** 2]]
+    return [[qw ** 2 + qx ** 2 - qy ** 2 - qz ** 2, 2 * qx * qy - 2 * qw * qz,
+             2 * qx * qz + 2 * qw * qy],
+            [2 * qx * qy + 2 * qw * qz, qw ** 2 - qx ** 2 + qy ** 2 - qz ** 2,
+             2 * qy * qz - 2 * qw * qx],
+            [2 * qx * qz - 2 * qw * qy, 2 * qy * qz + 2 * qw * qx,
+             qw ** 2 - qx ** 2 - qy ** 2 + qz ** 2]]
 
 
 def qinv(q):

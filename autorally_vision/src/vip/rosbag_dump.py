@@ -62,7 +62,7 @@ for topic, msg, t in bag.read_messages(start_time=rospy.Time(t0),
                                        end_time=rospy.Time(tf),
                                        topics=state_topics + image_topics):
     if topic in state_topics:
-        t2 = np.append(t2, rospy.Time.to_sec(t)) #change to header timestamp
+        t2 = np.append(t2, rospy.Time.to_sec(t))
         x = np.append(x, msg.pose.pose.position.x)
         y = np.append(y, msg.pose.pose.position.y)
         z = np.append(z, msg.pose.pose.position.z)
@@ -73,7 +73,8 @@ for topic, msg, t in bag.read_messages(start_time=rospy.Time(t0),
         quat = np.hstack((quat, new_quat))
 
     elif topic in image_topics:
-        img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height, msg.width, 3)
+        img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height,
+                                                             msg.width, 3)
         tstr = str(rospy.Time.to_sec(t))
         outfile = outpath + "images/" + tstr + ".png"
         #        cv.imwrite(outfile,cv.cvtColor(img, cv.COLOR_RGB2BGR))

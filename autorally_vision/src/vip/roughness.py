@@ -20,8 +20,8 @@ def get_labels(bagfile, timestep):
     time_relative = np.array([])
     time_ros = np.array([])
     t0 = 0
-    dt = timestep  # timestep analysed, to be tied into back projection time stamp
-    running_squared_data = np.array([])  # measurements used in calculation of metric
+    dt = timestep
+    running_squared_data = np.array([])  # used in calculation of metric
     first_entry = True
     for topic, msg, t in bagfile.read_messages(topics=['/imu/imu']):
         if first_entry:
@@ -30,14 +30,17 @@ def get_labels(bagfile, timestep):
         imu_data = msg
         current_time = msg.header.stamp.to_time() - t0
         vertical_acceleration = imu_data.linear_acceleration.z + 9.81
-        running_squared_data = np.append(running_squared_data, vertical_acceleration * vertical_acceleration)
+        running_squared_data = \
+            np.append(running_squared_data,
+                      vertical_acceleration * vertical_acceleration)
         disturbance_data = np.append(disturbance_data, vertical_acceleration)
         time_relative = np.append(time_relative, current_time)
         time_ros = np.append(time_ros, msg.header.stamp.to_time())
         # if dt time has not passed yet we do not have enough data
         if current_time > dt:
             # calculate metric
-            roughness_metric = (np.average(running_squared_data, returned=True))[0]
+            roughness_metric = \
+                (np.average(running_squared_data, returned=True))[0]
             # print("roughness_metric: " + str(roughness_metric))
             roughness_data = np.append(roughness_data, roughness_metric)
             # take off LRU
@@ -49,12 +52,13 @@ def get_labels(bagfile, timestep):
     #     roughness_data = np.append(roughness_data, 0.0)
     return time_ros, roughness_data, disturbance_data
 
+
 if __name__ == '__main__':
     # bagfile directory
     fpath = '/home/todd/autorally/'
 
     # bagfile
-    fname = fpath + 'alpha_autorally0_2020-07-23-16-27-57_0.bag'  # from track not sim
+    fname = fpath + 'alpha_autorally0_2020-07-23-16-27-57_0.bag'  # trackbag
 
     bag = rosbag.Bag(fname)
 

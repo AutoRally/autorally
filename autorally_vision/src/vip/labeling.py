@@ -13,6 +13,7 @@ import cv2 as cv
 
 npz_exists = False
 
+
 def main(isTrack, dt):
     # get bagfile
 
@@ -39,7 +40,8 @@ def main(isTrack, dt):
     times, metrics, disturbance = roughness.get_labels(bag, dt)
     for i in range(len(times)):
         labels[times[i]] = metrics[i]
-    # Second pass: generate posefile and camfile
+
+    # Second pass: generate posefile and camfile, from rosbag_dump.py
     # TODO: Functionize this setup
 
     if not npz_exists:
@@ -48,39 +50,28 @@ def main(isTrack, dt):
 
         # Print out topics if needed
         print(str(bag.get_type_and_topic_info()[1].keys()))
-        for topic, msg, t in bag.read_messages(topics=['/tf_static']):
+        if isTrack:
+            for topic, msg, t in bag.read_messages(topics=['/tf_static']):
+                qC = np.array([[msg.transforms[1].transform.translation.x,
+                                msg.transforms[1].transform.translation.y,
+                                msg.transforms[1].transform.translation.z]])
 
-            qC = np.array([[msg.transforms[1].transform.translation.x,
-                            msg.transforms[1].transform.translation.y,
-                            msg.transforms[1].transform.translation.z]])
-
-            # %% Camera Intrinsic Matrix
-            numsg = 1
-            for topic, msg, t in bag.read_messages(topics=['/left_camera/camera_info']):
-                numsg -= 1
-                if numsg < 1:
-                    break
-            K = np.reshape(msg.K, (3, 3))
-            height = msg.height
-            width = msg.width
+                K = np.reshape(msg.K, (3, 3))
+                height = msg.height
+                width = msg.width
 
         # %% Pose Information and Images
         state_topics = ["/ground_truth/state"]
         image_topics = ["/left_camera/image_raw"]
 
-        # TODO: Fix assignments of time here to align with everywhere else
-        t0 = bag.get_start_time()
-        tf = bag.get_end_time()
-
         # iterate through bag to get poses
         x = y = z = t1 = t2 = np.array([])
         quat = np.empty((4, 1))
 
-        for topic, msg, t in bag.read_messages(start_time=rospy.Time(t0),
-                                               end_time=rospy.Time(tf),
-                                               topics=state_topics + image_topics):
+        for topic, msg, t in bag.read_messages(
+                topics=state_topics + image_topics):
             if topic in state_topics:
-                t2 = np.append(t2, rospy.Time.to_sec(t))
+                t2 = np.append(t2, msg.header.stamp.to_time())
                 x = np.append(x, msg.pose.pose.position.x)
                 y = np.append(y, msg.pose.pose.position.y)
                 z = np.append(z, msg.pose.pose.position.z)
@@ -91,8 +82,10 @@ def main(isTrack, dt):
                 quat = np.hstack((quat, new_quat))
 
             elif topic in image_topics:
-                img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height, msg.width, 3)
-                tstr = str(rospy.Time.to_sec(t))
+                img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height,
+                                                                     msg.width,
+                                                                     3)
+                tstr = str(msg.header.stamp.to_time())
                 outfile = outpath + "images/" + tstr + ".png"
                 #        cv.imwrite(outfile,cv.cvtColor(img, cv.COLOR_RGB2BGR))
                 cv.imwrite(outfile, img)
@@ -101,16 +94,16 @@ def main(isTrack, dt):
         pos = np.vstack((x, y, z))
         # Save output
         np.savez(posefile, pos=pos, quat=quat, tt=t2)
-        np.savez(camfile, K=K, qC=qC, height=height, width=width)
+        # np.savez(camfile, K=K, qC=qC, height=height, width=width)
+        # TODO: reimplement cam_info and camfile properly
         cam_info = {"K": K, "qC": qC, "height": 1024, "width": 1280}
 
     # Third pass: get back prop
     pose = np.load(posefile)
-    cam_info = np.load(camfile)
-
-
-
+    # cam_info = np.load(camfile)
+    for t_des in times:
+        x, y = backProp.back_projection(pose, None, t_des, False)
 
 
 if __name__ == '__main__':
-    main(False, 1)
+    main(True, 1)
