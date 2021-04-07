@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find autorally_vision)/launch/aruco_detector.launch" ns="left_camera">
+    </include>
+
+    <include file="$(find autorally_vision)/launch/aruco_detector.launch" ns="right_camera">
+    </include>
+</launch>

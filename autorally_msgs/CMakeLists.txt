@@ -14,6 +14,8 @@ find_package(Boost REQUIRED thread)
 add_message_files(
   DIRECTORY msg
   FILES
+  ArucoDetection.msg
+  ArucoDetections.msg
   chassisCommand.msg
   chassisState.msg
   wheelSpeeds.msg
