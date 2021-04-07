@@ -4,25 +4,20 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/aruco.hpp>
 #include <sensor_msgs/Image.h>
-
-// #include <../../include/ArucoDetector/ArucoDetections.h>
-// #include <ArucoDetector/ArucoDetections.h>
 #include <autorally_msgs/ArucoDetections.h>
 #include <autorally_msgs/ArucoDetection.h>
 
-
 ros::Publisher debug_img_pub;
 ros::Publisher aruco_marker_pub_;
+cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
+int aruco_dictionary_enum;
+float marker_size;
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
   cv::Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
-
   std::vector<int> markerIds;
-  std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
-  cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
-  parameters->adaptiveThreshWinSizeMax = 40;
-  parameters->adaptiveThreshWinSizeStep = 4;
-  cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+  std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;  
+  cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(aruco_dictionary_enum);
   cv::aruco::detectMarkers(image, dictionary, markerCorners, markerIds, parameters, rejectedCandidates);
 
   // if we have markers to publish
@@ -33,7 +28,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
 
     for(unsigned int i = 0; i < markerCorners.size(); i++) {
       autorally_msgs::ArucoDetection aruco_marker;
-      aruco_marker.size = 0.5;
+      aruco_marker.size = marker_size;
       aruco_marker.id = markerIds[i];
 
       // order of markers is clockwise
@@ -66,9 +61,21 @@ int main(int argc, char** argv) {
 
   std::string image_topic;
   pNh.param<std::string>("image_topic", image_topic, "/left_camera/image_raw");
+  pNh.param<int>("aruco_dictionary", aruco_dictionary_enum, 0);
+  pNh.param<float>("marker_size", marker_size, 0.5);
+  pNh.param<double>("adaptiveThreshConstant", parameters->adaptiveThreshConstant, parameters->adaptiveThreshConstant);
+  pNh.param<int>("adaptiveThreshWinSizeMax", parameters->adaptiveThreshWinSizeMax, parameters->adaptiveThreshWinSizeMax);
+  pNh.param<int>("adaptiveThreshWinSizeMin", parameters->adaptiveThreshWinSizeMin, parameters->adaptiveThreshWinSizeMin);
+  pNh.param<int>("adaptiveThreshWinSizeStep", parameters->adaptiveThreshWinSizeStep, parameters->adaptiveThreshWinSizeStep);
+  pNh.param<int>("cornerRefinementMaxIterations", parameters->cornerRefinementMaxIterations, parameters->cornerRefinementMaxIterations);
+  pNh.param<double>("cornerRefinementMinAccuracy", parameters->cornerRefinementMinAccuracy, parameters->cornerRefinementMinAccuracy);
 
   ros::Subscriber img_sub = nh.subscribe(image_topic, 1, imageCallback);
   std::cout << "subscribing to topic: " << image_topic << std::endl;
+  std::cout<<"hi";
+
+  cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+  std::cout<<"dict is of type: "<<typeid(dictionary).name()<<std::endl; 
 
   debug_img_pub = nh.advertise<sensor_msgs::Image>(image_topic+"/aruco_debug", 1);
   aruco_marker_pub_ = nh.advertise<autorally_msgs::ArucoDetections>(image_topic+"/aruco_detections", 1);
