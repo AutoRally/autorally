@@ -4,6 +4,7 @@
 Project points onto focal plane
 """
 import numpy as np
+import data_extractor as toolbox
 import rosbag
 import rospy
 import matplotlib.pyplot as plt
@@ -22,9 +23,10 @@ fname = '2020-10-15-11-16-39.bag'
 # %% Open bag and extract pose and images
 
 
-def back_projection(pose, cam_info, t_des, use_cam_info, metrics):
+def back_projection(pose, cam_info, t_des, use_cam_info, times, metrics):
     # TODO: add metric to npz
     tt, car_pos, car_quat = pose["tt"], pose["pos"], pose["quat"]
+    tt = times
     if use_cam_info:
         K, qC, height, width = cam_info["K"], cam_info["qC"], cam_info[
             "height"], cam_info["width"]
@@ -43,6 +45,7 @@ def back_projection(pose, cam_info, t_des, use_cam_info, metrics):
     #   C: camera frame (3D coord, not image plane)
 
     tix = np.argmin(np.abs(tt - t_des))
+    print("Quaternion: " + str(car_quat))
     t1_quat = car_quat[:, tix]
 
     # Get vehicle pose at t1
@@ -50,7 +53,6 @@ def back_projection(pose, cam_info, t_des, use_cam_info, metrics):
 
     # Get vehicle pose at future times, t2 > t1
     q_I_t2 = car_pos[:, (tix + 1):]
-    # TODO: labeling goes here
 
     # Get vector from t1 to t2 in body frame
     R_B_I = quat2mat(qinv(t1_quat))  # get quaternion to t1
@@ -80,8 +82,9 @@ def back_projection(pose, cam_info, t_des, use_cam_info, metrics):
 
     rx = uv_ix[1, :]
     cx = uv_ix[0, :]
-
-    return rx, cx
+    # TODO: return an array that corresponds to labels at the x,ys
+    label = toolbox.interpolate_varying_distances_single(times, metrics, t_des)
+    return rx, cx, label
 
 
 def quat2mat(q):
