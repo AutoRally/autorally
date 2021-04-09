@@ -34,7 +34,7 @@ def back_projection(pose, cam_info, t_des, use_cam_info, metrics):
                       [0., 762.72493376, 512.5],
                       [0., 0., 1.]])
 
-        qC = np.array([[0.127, 0., 0.2159]])
+        qC = np.array([[0.127, 0.07, 0.2159]])
         height = 1024
         width = 1280
     # Frame Definitions:

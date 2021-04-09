@@ -10,6 +10,7 @@ import rosbag
 import rospy
 import numpy as np
 import cv2 as cv
+import data_extractor as toolbox
 
 npz_exists = False
 
