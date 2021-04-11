@@ -100,16 +100,3 @@ def quat2mat(q):
 def qinv(q):
     return np.hstack((-q[0:3], q[3]))
 
-# %%  Example
-# cam_info = {"K":K,"qC":qC,"height":1024,"width":1280}
-# rx,cx = back_projection(t2,t2_pose, t2_quat, cam_info, t1)
-#
-# img_copy = img.copy()   # np.fromBuffer points img to memory buffer of original
-#                        # data, which is immutable, so need to make copy
-## Color pixels
-# for i in range(len(rx)):
-#    lw = 3 # width of line
-#    img_copy[(rx[i]-lw):(rx[i]+lw),(cx[i]-lw):(cx[i]+lw),:] = np.array([255,0,0])
-# fig = plt.figure()
-# plt.imshow(img_copy)
-# plt.title("Right Camera POV at t = " + str(t0))

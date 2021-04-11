@@ -123,6 +123,7 @@ def main(isTrack, dt):
                     # making pretty pictures
                     for i in range(len(x)):
                         lw = 3  # width of line
+                        # TODO: change color based on label
                         img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw),
                         :] = np.array(
                             [255, 0, 0])
@@ -132,42 +133,7 @@ def main(isTrack, dt):
                 if num_images_norm - start_num_image > max_num_images:
                     break
 
-        # quat = np.delete(quat, 0, 1)
-        # pos = np.vstack((x, y, z))
-        # # Save output
-        # np.savez(posefile, pos=pos, quat=quat, tt=t2)
-        # np.savez(camfile, K=K, qC=qC, height=height, width=width)
-        # TODO: reimplement cam_info and camfile properly
-        # cam_info = {"K": K, "qC": qC, "height": 1024, "width": 1280}
 
-    """
-    Given times finds images, not what we want
-    """
-    # Third pass: get back prop
-    # pose = np.load(posefile)
-    # cam_info = np.load(camfile)
-
-    # for t_des in times:
-    #     image_name = (outpath + "images/" + str(t_des))[:95] + ".png"
-    #     num_images_processed = num_images_processed + 1
-    #     if num_images_processed < start_num_image:
-    #         continue
-    #     else:
-    #         img = cv.imread(image_name)
-    #         if img is None:
-    #             raise Exception("Cannot find image name : \n" + image_name)
-    #     if num_images_processed - start_num_image > max_num_images:
-    #         break
-    #     # get all visible poses and their labels
-    #     x, y = backProp.back_projection(pose, None, t_des, False, labels)
-    #
-    #     # making pretty pictures
-    #     for i in range(len(x)):
-    #         lw = 3  # width of line
-    #         img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw), :] = np.array(
-    #             [255, 0, 0])
-    #         cv.imwrite(image_name, img)
-    #         print("edited image " + image_name)
 
 
 if __name__ == '__main__':
