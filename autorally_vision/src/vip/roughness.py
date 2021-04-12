@@ -5,7 +5,7 @@ Calculates roughness metric based on IMU Z axis disturbance
 import numpy as np
 import rosbag
 import rospy
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 """
 

@@ -12,7 +12,6 @@ import numpy as np
 import cv2 as cv
 import statistics
 
-
 npz_exists = False
 
 
@@ -116,24 +115,31 @@ def main(isTrack, dt):
                     # cv.imwrite(outfile, img)
                     # get prop and draw
                     x, y, label = backProp.back_projection(pose, None,
-                                                    msg.header.stamp.to_time(),
-                                                    False,
-                                                    times, metrics)
+                                                           msg.header.stamp.to_time(),
+                                                           False,
+                                                           times, metrics)
                     print("projected into: " + str(x) + ", " + str(y))
                     # making pretty pictures
                     for i in range(len(x)):
                         lw = 3  # width of line
                         # TODO: change color based on label
+                        color = np.array([0,0,0])
+                        if label[i] < stdDevMetric + minMetric:
+                            # low disturbance, blue
+                            color = np.array([255,0,0])
+                        elif label[i] < maxMetric - stdDevMetric:
+                            # mid, green
+                            color = np.array([0,255,0])
+                        else:
+                            # high, red
+                            color = np.array([0,0, 255])
                         img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw),
-                        :] = np.array(
-                            [255, 0, 0])
+                        :] = color
                     cv.imwrite((outfile), img)
                     print("edited image " + outfile)
 
                 if num_images_norm - start_num_image > max_num_images:
                     break
-
-
 
 
 if __name__ == '__main__':

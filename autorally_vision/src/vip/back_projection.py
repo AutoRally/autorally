@@ -3,12 +3,13 @@
 """
 Project points onto focal plane
 """
+import numpy
 import numpy as np
 import data_extractor as toolbox
 import rosbag
 import rospy
-import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
+# import matplotlib.pyplot as plt
+# from mpl_toolkits import mplot3d
 
 # import quat_utils
 
@@ -45,7 +46,6 @@ def back_projection(pose, cam_info, t_des, use_cam_info, times, metrics):
     #   C: camera frame (3D coord, not image plane)
 
     tix = np.argmin(np.abs(tt - t_des))
-    print("Quaternion: " + str(car_quat))
     t1_quat = car_quat[:, tix]
 
     # Get vehicle pose at t1
@@ -53,6 +53,9 @@ def back_projection(pose, cam_info, t_des, use_cam_info, times, metrics):
 
     # Get vehicle pose at future times, t2 > t1
     q_I_t2 = car_pos[:, (tix + 1):]
+    labels_t2 = metrics[(tix + 1):]
+    # tt[tix+1] gives respective timestamps to pass into linear interpolation
+
 
     # Get vector from t1 to t2 in body frame
     R_B_I = quat2mat(qinv(t1_quat))  # get quaternion to t1
@@ -69,22 +72,21 @@ def back_projection(pose, cam_info, t_des, use_cam_info, times, metrics):
     lam_uv = np.dot(K, p_C_t2)  # get raw projection
     uv = lam_uv / lam_uv[2,
                   :]  # divide by 3rd term to account for distance param
-
+    uv = numpy.insert(uv, 3, numpy.ndarray.flatten(labels_t2), axis=0)
     # filter out points outside of FOV
     inside_h = (uv[0, :] < height) & (uv[0, :] > 0)  # inside height
     inside_w = (uv[1, :] < width) & (uv[1, :] > 0)  # inside width
     infront = p_C_t2[2, :] > 0  # in front of camera
     keep_ix = inside_h & inside_w & infront
-    uv_fov = uv[:2, keep_ix]  # don't need 3rd param anymore, should be all 1's
+    uv_fov = uv[:4, keep_ix]  # don't need 3rd param anymore, should be all 1's
 
     # round and cast to integer indices
     uv_ix = np.round(uv_fov).astype(int)
 
     rx = uv_ix[1, :]
     cx = uv_ix[0, :]
-    # TODO: return an array that corresponds to labels at the x,ys
-    label = toolbox.interpolate_varying_distances_single(times, metrics, t_des)
-    return rx, cx, label
+    labels = uv_fov[3, :]
+    return rx, cx, labels
 
 
 def quat2mat(q):
@@ -99,4 +101,3 @@ def quat2mat(q):
 
 def qinv(q):
     return np.hstack((-q[0:3], q[3]))
-
