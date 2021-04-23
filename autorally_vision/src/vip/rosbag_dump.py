@@ -10,11 +10,11 @@ import numpy as np
 import cv2 as cv
 
 # fpath = '/Users/thomas.king/Downloads/'
-fpath = '/home/thomas/Downloads/'
+fpath = '/home/todd/autorally/'
 casename = '2020-10-15-11-16-39'
 
 # set up folders before running - casename folder and images subfolder
-outpath = "/home/thomas/Documents/Traversability/" + casename + "/"
+outpath = "/home/thomas/autorally/labeled_images/" + casename + "/"
 posefile = outpath + "pose.npz"
 camfile = outpath + "cam_info.npz"
 
@@ -23,7 +23,7 @@ bag = rosbag.Bag(fpath + casename + ".bag")
 
 # Print out topics if needed
 topics = bag.get_type_and_topic_info()[1].keys()
-
+print(topics)
 # %% Coord transform between chassis and camera frame
 numsg = 1
 # for tf_static, need to hardcode for live

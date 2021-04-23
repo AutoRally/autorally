@@ -36,8 +36,8 @@ def main(isTrack, dt):
     posefile = outpath + "pose.npz"
     camfile = outpath + "cam_info.npz"
 
-    max_num_images = 600
-    start_num_image = 1300
+    max_num_images = 6000
+    start_num_image = 0
     num_images_norm = 0
     num_images_processed = 0
 
@@ -51,28 +51,40 @@ def main(isTrack, dt):
     maxMetric = max(metrics)
     minMetric = min(metrics)
     stdDevMetric = statistics.stdev(metrics)
+    avgMetric = statistics.mean(metrics)
     # Second pass: generate posefile and camfile, from rosbag_dump.py
     # TODO: Functionize this setup
-
+    numsg = 3
+    if not isTrack:
+        for topic, msg, t in bag.read_messages(topics=['/tf_static']):
+            numsg -= 1
+            if numsg < 1:
+                break
+            qC = np.array([[msg.transforms[1].transform.translation.x,
+                            msg.transforms[1].transform.translation.y,
+                            msg.transforms[1].transform.translation.z]])
+            numsg = 2
+            for topic, msg, t in bag.read_messages(
+                    topics=['/left_camera/camera_info']):
+                numsg -= 1
+                if numsg < 1:
+                    break
+                K = np.reshape(msg.K, (3, 3))
+                height = msg.height
+                width = msg.width
+                np.savez(camfile, K=K, qC=qC, height=height, width=width)
     if not npz_exists:
         # only do once
         # %% Coord transform between chassis and camera frame
 
         # Print out topics if needed
         # print(str(bag.get_type_and_topic_info()[1].keys()))
-        if not isTrack:
-            for topic, msg, t in bag.read_messages(topics=['/tf_static']):
-                qC = np.array([[msg.transforms[1].transform.translation.x,
-                                msg.transforms[1].transform.translation.y,
-                                msg.transforms[1].transform.translation.z]])
-
-                K = np.reshape(msg.K, (3, 3))
-                height = msg.height
-                width = msg.width
 
         # %% Pose Information and Images
-        state_topics = ["/ground_truth/state", "/particle_filter/pose_estimate"]
-        image_topics = ["/left_camera/image_color/compressed"]
+        state_topics = ["/ground_truth/state",
+                        "/particle_filter/pose_estimate"]
+        image_topics = ["/left_camera/image_color/compressed",
+                        "/left_camera/image_raw/compressed"]
 
         # iterate through bag to get poses
         x = y = z = t1 = t2 = np.array([])
@@ -116,23 +128,23 @@ def main(isTrack, dt):
                     # get prop and draw
                     x, y, label = backProp.back_projection(pose, None,
                                                            msg.header.stamp.to_time(),
-                                                           False,
+                                                           isTrack,
                                                            times, metrics)
-                    print("projected into: " + str(x) + ", " + str(y))
+                    # print("projected into: " + str(x) + ", " + str(y))
                     # making pretty pictures
                     for i in range(len(x)):
                         lw = 3  # width of line
                         # TODO: change color based on label
-                        color = np.array([0,0,0])
-                        if label[i] < stdDevMetric + minMetric:
+                        color = np.array([0, 0, 0])
+                        if label[i] < avgMetric - stdDevMetric:
                             # low disturbance, blue
-                            color = np.array([255,0,0])
-                        elif label[i] < maxMetric - stdDevMetric:
+                            color = np.array([255, 0, 0])
+                        elif label[i] < avgMetric + stdDevMetric:
                             # mid, green
-                            color = np.array([0,255,0])
+                            color = np.array([0, 255, 0])
                         else:
                             # high, red
-                            color = np.array([0,0, 255])
+                            color = np.array([0, 0, 255])
                         img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw),
                         :] = color
                     cv.imwrite((outfile), img)
@@ -143,4 +155,4 @@ def main(isTrack, dt):
 
 
 if __name__ == '__main__':
-    main(True, 1)
+    main(False, 1)
