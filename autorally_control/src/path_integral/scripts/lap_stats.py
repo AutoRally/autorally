@@ -35,7 +35,13 @@ def get_launch_params(prefix):
 	param_dict["hz"] = rospy.get_param(prefix + "/hz")
 	param_dict["num_timesteps"] = rospy.get_param(prefix + "/num_timesteps")
 	param_dict["tag"] = rospy.get_param("/stat_tracker/tag")
-	param_dict["gamma"] = rospy.get_param(prefix + "/gamma")
+        if rospy.has_param(prefix + "/gamma"):
+            param_dict["gamma"] = rospy.get_param(prefix + "/gamma")
+        elif rospy.has_param(prefix + "/lambda"):
+            param_dict["gamma"] = 1 / rospy.get_param(prefix + "/lambda")
+        else:
+            print("No lambda or gamma value in launch file!! Exiting...")
+            exit(1)
 	param_dict["num_iters"] = rospy.get_param(prefix + "/num_iters")
 	param_dict["init_steering"] = rospy.get_param(prefix + "/init_steering")
 	param_dict["init_throttle"] = rospy.get_param(prefix + "/init_throttle")
@@ -43,10 +49,17 @@ def get_launch_params(prefix):
 	param_dict["throttle_var"] = rospy.get_param(prefix + "/throttle_std")
 	param_dict["max_throttle"] = rospy.get_param(prefix + "/max_throttle")
 	param_dict["desired_speed"] = rospy.get_param(prefix + "/desired_speed")
-	param_dict["speed_coefficient"] = rospy.get_param(prefix + "/speed_coefficient")
-	param_dict["track_coefficient"] = rospy.get_param(prefix + "/track_coefficient")
+        if rospy.has_param(prefix + "/speed_coeff"):
+            param_dict["speed_coefficient"] = rospy.get_param(prefix + "/speed_coeff")
+            param_dict["track_coefficient"] = rospy.get_param(prefix + "/track_coeff")
+        else:
+            param_dict["speed_coefficient"] = rospy.get_param(prefix + "/speed_coefficient")
+            param_dict["track_coefficient"] = rospy.get_param(prefix + "/track_coefficient")
 	param_dict["max_slip_angle"] = rospy.get_param(prefix + "/max_slip_angle")
-	param_dict["slip_penalty"] = rospy.get_param(prefix + "/slip_penalty")
+        if rospy.has_param(prefix + "/slip_coeff"):
+            param_dict["slip_penalty"] = rospy.get_param(prefix + "/slip_coeff")
+        else:
+	    param_dict["slip_penalty"] = rospy.get_param(prefix + "/slip_penalty")
 	param_dict["track_slop"] = rospy.get_param(prefix + "/track_slop")
 	param_dict["crash_coeff"] = rospy.get_param(prefix + "/crash_coeff")
 	param_dict["map_path"] = rospy.get_param(prefix + "/map_path")
