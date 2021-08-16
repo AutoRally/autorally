@@ -183,7 +183,13 @@ namespace autorally_core
         ROS_WARN("Waiting for valid initial orientation");
         ip = ros::topic::waitForMessage<imu_3dm_gx4::FilterOutput>("filter", nh_, ros::Duration(15));
       }
-      initialPose_ = *ip;
+      initialPose_.orientation.w = ip->orientation.w;
+      initialPose_.orientation.x = ip->orientation.x;
+      initialPose_.orientation.y = ip->orientation.y;
+      initialPose_.orientation.z = ip->orientation.z;
+      initialPose_.bias.x = ip->bias.x;
+      initialPose_.bias.y = ip->bias.y;
+      initialPose_.bias.z = ip->bias.z;
     }
     else
     {
@@ -213,6 +219,7 @@ namespace autorally_core
     biasGyroPub_ = nh_.advertise<geometry_msgs::Point>("bias_gyro", 1);
     timePub_ = nh_.advertise<geometry_msgs::Point>("time_delays", 1);
     statusPub_ = nh_.advertise<autorally_msgs::stateEstimatorStatus>("status", 1);
+    gpsPosPub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps_pos", 1);
 
     ISAM2Params params;
     params.factorization = ISAM2Params::QR;
@@ -304,6 +311,17 @@ namespace autorally_core
       {
         sensor_msgs::NavSatFixConstPtr fix = gpsOptQ_.popBlocking();
         startTime = TIME(fix);
+        if(imuOptQ_.size() <= 0) {
+          ROS_WARN_THROTTLE(1, "no IMU messages before first fix, continuing until there is");
+          continue;
+        }
+        // errors out if the IMU and GPS are not close in timestamps
+        double most_recent_imu_time = imuOptQ_.back()->header.stamp.toSec();
+        if(std::abs(most_recent_imu_time - startTime) > 0.1) {
+          ROS_ERROR_STREAM("There is a very large difference in the GPS and IMU timestamps " << most_recent_imu_time - startTime);
+          exit(-1);
+        }
+
         if(usingOdom_) {
           lastOdom_ = odomOptQ_.popBlocking();
         }
@@ -430,6 +448,15 @@ namespace autorally_core
             double dist = std::sqrt( std::pow(expectedState.x() - E, 2) + std::pow(expectedState.y() - N, 2) );
             if (dist < maxGPSError_ || latestGPSKey < imuKey-2)
             {
+              geometry_msgs::PoseWithCovarianceStamped point;
+              point.header.stamp = ros::Time::now();
+              point.header.frame_id = "odom";
+              point.pose.pose.position.x = E;
+              point.pose.pose.position.y = N;
+              point.pose.covariance[0] = fix->position_covariance[0];
+              point.pose.covariance[7] = fix->position_covariance[4];
+              gpsPosPub_.publish(point);
+
               SharedDiagonal gpsNoise = noiseModel::Diagonal::Sigmas(Vector3(gpsSigma_, gpsSigma_, 3.0 * gpsSigma_));
               GPSFactor gpsFactor(G(key), Point3(E, N, U), gpsNoise);
               newFactors.add(gpsFactor);
@@ -447,6 +474,7 @@ namespace autorally_core
             }
           }
         }
+
 
 
         // if only using odom with no GPS, then remove old messages from queue
@@ -625,7 +653,6 @@ namespace autorally_core
 
     posePub_.publish(poseNew);
 
-    //ros::Time after = ros::Time::now();
     geometry_msgs::Point delays;
     delays.x = TIME(imu);
     delays.y = (ros::Time::now() - imu->header.stamp).toSec();
@@ -642,8 +669,9 @@ namespace autorally_core
 
   void StateEstimator::WheelOdomCallback(nav_msgs::OdometryConstPtr odom)
   {
-      if (!odomOptQ_.pushNonBlocking(odom))
-        ROS_WARN("Dropping an wheel odometry measurement due to full queue!!");
+    if (!odomOptQ_.pushNonBlocking(odom) && usingOdom_) {
+      ROS_WARN("Dropping an wheel odometry measurement due to full queue!!");
+    }
   }
 
 

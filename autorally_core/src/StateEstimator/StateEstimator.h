@@ -68,6 +68,7 @@
 #include <imu_3dm_gx4/FilterOutput.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 
 #define PI 3.14159265358979323846264338
@@ -84,6 +85,7 @@ namespace autorally_core
     ros::Publisher  biasAccPub_, biasGyroPub_;
     ros::Publisher  timePub_;
     ros::Publisher statusPub_;
+    ros::Publisher gpsPosPub_;
 
     double lastImuT_, lastImuTgps_;
     unsigned char status_;
