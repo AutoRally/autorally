@@ -7,6 +7,9 @@ doc/
 docs/
 cpp/
 
+*.idea/
+.idea/
+
 #ROS generated custom message header
 */msg_gen/
 */srv_gen/

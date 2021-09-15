@@ -37,7 +37,7 @@ def main(isTrack, dt):
     camfile = outpath + "cam_info.npz"
 
     max_num_images = 6000
-    start_num_image = 0
+    start_num_image = 200
     num_images_norm = 0
     num_images_processed = 0
 
@@ -128,7 +128,7 @@ def main(isTrack, dt):
                     # get prop and draw
                     x, y, label = backProp.back_projection(pose, None,
                                                            msg.header.stamp.to_time(),
-                                                           isTrack,
+                                                           not isTrack,
                                                            times, metrics)
                     # print("projected into: " + str(x) + ", " + str(y))
                     # making pretty pictures
@@ -155,4 +155,4 @@ def main(isTrack, dt):
 
 
 if __name__ == '__main__':
-    main(False, 1)
+    main(True, 1)

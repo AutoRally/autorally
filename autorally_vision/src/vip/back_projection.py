@@ -56,7 +56,6 @@ def back_projection(pose, cam_info, t_des, use_cam_info, times, metrics):
     labels_t2 = metrics[(tix + 1):]
     # tt[tix+1] gives respective timestamps to pass into linear interpolation
 
-
     # Get vector from t1 to t2 in body frame
     R_B_I = quat2mat(qinv(t1_quat))  # get quaternion to t1
     p_I_t2 = np.transpose(q_I_t2.T - q_I_t1.T)  # pos vec in I frame
