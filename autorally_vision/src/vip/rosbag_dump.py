@@ -10,11 +10,11 @@ import numpy as np
 import cv2 as cv
 
 # fpath = '/Users/thomas.king/Downloads/'
-fpath = '/home/todd/autorally/'
-casename = '2020-10-15-11-16-39'
+fpath = './large-files/'
+casename = 'alpha_autorally0_2020-07-23-16-27-57_0'
 
 # set up folders before running - casename folder and images subfolder
-outpath = "/home/thomas/autorally/labeled_images/" + casename + "/"
+outpath = "./large-files/" + casename + "/"
 posefile = outpath + "pose.npz"
 camfile = outpath + "cam_info.npz"
 
@@ -25,7 +25,8 @@ bag = rosbag.Bag(fpath + casename + ".bag")
 topics = bag.get_type_and_topic_info()[1].keys()
 print(topics)
 # %% Coord transform between chassis and camera frame
-numsg = 1
+numsg = 5
+qC = np.array([])
 # for tf_static, need to hardcode for live
 for topic, msg, t in bag.read_messages(topics=['/tf_static']):
     numsg -= 1
@@ -37,14 +38,17 @@ for topic, msg, t in bag.read_messages(topics=['/tf_static']):
                     msg.transforms[1].transform.translation.z]])
 
     # %% Camera Intrinsic Matrix
-    numsg = 1
-    for topic, msg, t in bag.read_messages(topics=['/left_camera/camera_info']):
-        numsg -= 1
-        if numsg < 1:
-            break
+numsg = 5
+for topic, msg, t in bag.read_messages(topics=['/left_camera/camera_info']):
+
     K = np.reshape(msg.K, (3, 3))
     height = msg.height
     width = msg.width
+    print("camera info: \n" + str(K) + "\n" + str(qC) + "\n" + str(
+        height) + "x" + str(width))
+    numsg -= 1
+    if numsg < 1:
+        break
 
 # %% Pose Information and Images
 

@@ -51,7 +51,7 @@ def main(isTrack, dt):
     Path(camfile).touch()
 
     max_num_images = 6000
-    start_num_image = 200
+    start_num_image = 2000
     num_images_norm = 0
     num_images_processed = 0
 
