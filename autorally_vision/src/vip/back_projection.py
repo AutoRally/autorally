@@ -8,16 +8,9 @@ import numpy as np
 import data_extractor as toolbox
 import rosbag
 import rospy
-# import matplotlib.pyplot as plt
-# from mpl_toolkits import mplot3d
 
-# import quat_utils
-
-import cv2 as cv
-
-# fpath = '/Users/thomas.king/Downloads/'
-fpath = '/home/thomas/Downloads/'
-# fname = '2020-09-14-14-35-43_0.bag'
+# sim bag
+fpath = './large-files/'
 fname = '2020-10-15-11-16-39.bag'
 
 

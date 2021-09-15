@@ -11,6 +11,8 @@ import rospy
 import numpy as np
 import cv2 as cv
 import statistics
+import os
+from pathlib import Path
 
 npz_exists = False
 
@@ -27,14 +29,26 @@ def main(isTrack, dt):
         fname = bagpath + sim_bag
     bag = rosbag.Bag(fname)
 
+    state_topics = ["/ground_truth/state",
+                    "/particle_filter/pose_estimate"]
+    image_topics = ["/left_camera/image_color/compressed",
+                    "/left_camera/image_raw/compressed"]
+
     # setup output file
-    outpath = '/large-files'
+    outpath = './large-files/'
     if isTrack:
         outpath = outpath + track_bag[:-4] + '/'
     else:
         outpath = outpath + sim_bag[:-4] + '/'
+    if not os.path.exists(outpath):
+        Path(outpath).mkdir()
+        Path(outpath + "/images/").mkdir()
+
     posefile = outpath + "pose.npz"
     camfile = outpath + "cam_info.npz"
+
+    Path(posefile).touch()
+    Path(camfile).touch()
 
     max_num_images = 6000
     start_num_image = 200
@@ -81,15 +95,11 @@ def main(isTrack, dt):
         # print(str(bag.get_type_and_topic_info()[1].keys()))
 
         # %% Pose Information and Images
-        state_topics = ["/ground_truth/state",
-                        "/particle_filter/pose_estimate"]
-        image_topics = ["/left_camera/image_color/compressed",
-                        "/left_camera/image_raw/compressed"]
 
         # iterate through bag to get poses
         x = y = z = t1 = t2 = np.array([])
         quat = np.empty((4, 1))
-
+        print("parsing poses")
         for topic, msg, t in bag.read_messages(
                 topics=state_topics + image_topics):
             if topic in state_topics:
@@ -106,52 +116,52 @@ def main(isTrack, dt):
         pos = np.vstack((x, y, z))
         # Save output
         np.savez(posefile, pos=pos, quat=quat, tt=t2)
-        # print("posefile saved with quaternion: " + str(quat))
-        pose = np.load(posefile)
-        for topic, msg, t in bag.read_messages(
-                topics=state_topics + image_topics):
-            if topic in image_topics:
-                np_arr = np.fromstring(msg.data, np.uint8)
-                img = cv.imdecode(np_arr, cv.IMREAD_COLOR)
+        print("posefile saved with quaternion: " + str(quat))
+    pose = np.load(posefile)
+    for topic, msg, t in bag.read_messages(
+            topics=state_topics + image_topics):
+        if topic in image_topics:
+            np_arr = np.fromstring(msg.data, np.uint8)
+            img = cv.imdecode(np_arr, cv.IMREAD_COLOR)
 
-                # img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height,
-                #                                                      msg.width,
-                #                                                      3)
-                tstr = str(msg.header.stamp.to_time())
-                outfile = outpath + "images/" + tstr + ".png"
-                num_images_norm = num_images_norm + 1
-                if num_images_norm < start_num_image:
-                    continue
-                else:
-                    # image wizardry time
-                    # cv.imwrite(outfile, img)
-                    # get prop and draw
-                    x, y, label = backProp.back_projection(pose, None,
-                                                           msg.header.stamp.to_time(),
-                                                           not isTrack,
-                                                           times, metrics)
-                    # print("projected into: " + str(x) + ", " + str(y))
-                    # making pretty pictures
-                    for i in range(len(x)):
-                        lw = 3  # width of line
-                        # TODO: change color based on label
-                        color = np.array([0, 0, 0])
-                        if label[i] < avgMetric - stdDevMetric:
-                            # low disturbance, blue
-                            color = np.array([255, 0, 0])
-                        elif label[i] < avgMetric + stdDevMetric:
-                            # mid, green
-                            color = np.array([0, 255, 0])
-                        else:
-                            # high, red
-                            color = np.array([0, 0, 255])
-                        img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw),
-                        :] = color
-                    cv.imwrite((outfile), img)
-                    print("edited image " + outfile)
+            # img = np.frombuffer(msg.data, dtype='uint8').reshape(msg.height,
+            #                                                      msg.width,
+            #                                                      3)
+            tstr = str(msg.header.stamp.to_time())
+            outfile = outpath + "images/" + tstr + ".png"
+            num_images_norm = num_images_norm + 1
+            if num_images_norm < start_num_image:
+                continue
+            else:
+                # image wizardry time
+                # cv.imwrite(outfile, img)
+                # get prop and draw
+                x, y, label = backProp.back_projection(pose, None,
+                                                       msg.header.stamp.to_time(),
+                                                       not isTrack,
+                                                       times, metrics)
+                # print("projected into: " + str(x) + ", " + str(y))
+                # making pretty pictures
+                for i in range(len(x)):
+                    lw = 3  # width of line
+                    # TODO: change color based on label
+                    color = np.array([0, 0, 0])
+                    if label[i] < avgMetric - stdDevMetric:
+                        # low disturbance, blue
+                        color = np.array([255, 0, 0])
+                    elif label[i] < avgMetric + stdDevMetric:
+                        # mid, green
+                        color = np.array([0, 255, 0])
+                    else:
+                        # high, red
+                        color = np.array([0, 0, 255])
+                    img[(x[i] - lw):(x[i] + lw), (y[i] - lw):(y[i] + lw),
+                    :] = color
+                cv.imwrite(outfile, img)
+                print("edited image " + outfile)
 
-                if num_images_norm - start_num_image > max_num_images:
-                    break
+            if num_images_norm - start_num_image > max_num_images:
+                break
 
 
 if __name__ == '__main__':
