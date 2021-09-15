@@ -18,7 +18,7 @@ npz_exists = False
 def main(isTrack, dt):
     # get bagfile
 
-    bagpath = '/home/todd/autorally/'
+    bagpath = './large-files/'
     track_bag = "alpha_autorally0_2020-07-23-16-27-57_0.bag"
     sim_bag = "2020-10-15-11-16-39.bag"
     if isTrack:
@@ -28,7 +28,7 @@ def main(isTrack, dt):
     bag = rosbag.Bag(fname)
 
     # setup output file
-    outpath = '/home/todd/autorally/labeled_images/'
+    outpath = '/large-files'
     if isTrack:
         outpath = outpath + track_bag[:-4] + '/'
     else:
