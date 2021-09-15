@@ -10,6 +10,8 @@ cpp/
 *.idea/
 .idea/
 
+autorally_vision/src/vip/large-files/
+
 #ROS generated custom message header
 */msg_gen/
 */srv_gen/
