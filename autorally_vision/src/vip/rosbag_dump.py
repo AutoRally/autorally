@@ -11,7 +11,7 @@ import cv2 as cv
 
 # fpath = '/Users/thomas.king/Downloads/'
 fpath = './large-files/'
-casename = 'alpha_autorally0_2020-07-23-16-27-57_0'
+casename = 'alpha_autorally3_2021-08-19-11-36-35'
 
 # set up folders before running - casename folder and images subfolder
 outpath = "./large-files/" + casename + "/"
