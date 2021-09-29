@@ -11,7 +11,7 @@ import cv2 as cv
 
 
 fpath = './large-files/'
-casename = 'platformA_2015-08-13-12-02-41_split1'
+casename = 'alpha_autorally0_2020-07-23-16-27-57_0'
 
 # set up folders before running - casename folder and images subfolder
 outpath = "./large-files/" + casename + "/"

@@ -21,9 +21,22 @@ pipenv run python3 labeling.py
 ```
 
 ## bag files tested
+Topics and camera intrinsics were found with `rosbag_dump.py` and updating the casename to each of the corresponding bagfiles.
+
 ### `alpha_autorally0_2020-07-23-16-27-57_0.bag`
 - missing camera intrinsics matrix
 - has weird state estimator issues with z
+- Topic list:
+```
+['/RC/chassisCommand', '/autorally_core_manager/bond', '/camera/attn_image/compressed/parameter_descriptions', '/camera/attn_image/compressed/parameter_updates', '/camera/nn_cost', '/camera_nodelet_manager/bond', '/chassisState', '/diagnostics', '/gpsRoverStatus', '/imu/filter', '/imu/imu', '/imu/magnetic_field', '/imu/pressure', '/inner_boundary', '/lap_stats', '/left_CameraAutoBalance/histogram/compressed/parameter_descriptions', '/left_CameraAutoBalance/histogram/compressed/parameter_updates', '/left_CameraAutoBalance/parameter_descriptions', '/left_CameraAutoBalance/parameter_updates', '/left_CameraAutoBalance/roi/compressed/parameter_descriptions', '/left_CameraAutoBalance/roi/compressed/parameter_updates', '/left_camera/camera_info', '/left_camera/image_color/compressed', '/left_camera/image_color/compressed/parameter_descriptions', '/left_camera/image_color/compressed/parameter_updates', '/left_camera_nodelet/parameter_descriptions', '/left_camera_nodelet/parameter_updates', '/mppi_controller/chassisCommand', '/mppi_controller/feedbackPath', '/mppi_controller/mppiStatistics', '/mppi_controller/mppiStatus', '/mppi_controller/nominalPath', '/mppi_controller/nominalState', '/mppi_controller/parameter_descriptions', '/mppi_controller/parameter_updates', '/mppi_controller/stateDivergence', '/mppi_controller/subscribedPose', '/mppi_controller/timingInfo', '/outer_boundary', '/particle_filter/filter_attitude', '/particle_filter/filter_attitude_error', '/particle_filter/gps_bias', '/particle_filter/pose_estimate', '/rosout', '/rosout_agg', '/runstop', '/runstopBox', '/wheelSpeeds']
+```
+- Camera instrinsics:
+``` 
+[[0. 0. 0.]
+ [0. 0. 0.]
+ [0. 0. 0.]]
+
+```
  
 ### `alpha_autorally3_2021-08-19-11-21-12.bag`
 - still testing
