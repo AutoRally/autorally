@@ -35,6 +35,7 @@ limitations under the License.
   <arg name="namespace" default=""/>
   <arg name="world_name" default="model://urdf/worlds/ccrf_track.world"/>
   <arg name="cmd_timeout" default="0.5"/>
+  <arg name="use_joystick" default="true"/>
 
   <!-- parameter for other programs to use to know if we are in simulation ro real world-->
   <!--<param name="autorally_simulation" value"true"/> -->
@@ -85,5 +86,7 @@ limitations under the License.
   </node>
 
   <include file="$(find autorally_core)/launch/autorally_core_manager.launch" />
-  <include file="$(find autorally_control)/launch/joystickController.launch" />
+  <group if="$(arg use_joystick)">
+    <include file="$(find autorally_control)/launch/joystickController.launch" />
+  </group>
 </launch>
