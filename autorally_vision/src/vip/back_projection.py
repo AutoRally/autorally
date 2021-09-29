@@ -6,8 +6,6 @@ Project points onto focal plane
 import numpy
 import numpy as np
 import data_extractor as toolbox
-import rosbag
-import rospy
 
 # sim bag
 fpath = './large-files/'

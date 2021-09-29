@@ -21,7 +21,7 @@ def main(isTrack, dt):
     # get bagfile
 
     bagpath = './large-files/'
-    track_bag = "beta_autorally4_2021-02-21-18-30-44_0.bag"
+    track_bag = "alpha_autorally0_2020-07-23-16-27-57_0.bag"
     sim_bag = "2020-10-15-11-16-39.bag"
     if isTrack:
         fname = bagpath + track_bag
@@ -50,7 +50,7 @@ def main(isTrack, dt):
     Path(posefile).touch()
     Path(camfile).touch()
 
-    max_num_images = 6000
+    max_num_images = 2000
     start_num_image = 500
     num_images_norm = 0
     num_images_processed = 0
@@ -101,7 +101,7 @@ def main(isTrack, dt):
         quat = np.empty((4, 1))
         print("parsing poses")
         for topic, msg, t in bag.read_messages(
-                topics=state_topics + image_topics):
+                topics=state_topics):
             if topic in state_topics:
                 t2 = np.append(t2, msg.header.stamp.to_time())
                 x = np.append(x, msg.pose.pose.position.x)

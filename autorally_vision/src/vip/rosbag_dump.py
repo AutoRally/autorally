@@ -9,9 +9,9 @@ import rospy
 import numpy as np
 import cv2 as cv
 
-# fpath = '/Users/thomas.king/Downloads/'
+
 fpath = './large-files/'
-casename = 'alpha_autorally3_2021-08-19-11-36-35'
+casename = 'platformA_2015-08-13-12-02-41_split1'
 
 # set up folders before running - casename folder and images subfolder
 outpath = "./large-files/" + casename + "/"
