@@ -30,7 +30,9 @@ def main(isTrack, dt):
     bag = rosbag.Bag(fname)
 
     state_topics = ["/ground_truth/state",
-                    "/particle_filter/pose_estimate"]
+                    "/particle_filter/pose_estimate",
+                    "/pose_estimate"]
+    # need to check if ground truth exists (and use it)
     image_topics = ["/left_camera/image_color/compressed",
                     "/left_camera/image_raw/compressed"]
 
@@ -51,7 +53,7 @@ def main(isTrack, dt):
     Path(camfile).touch()
 
     max_num_images = 2000
-    start_num_image = 500
+    start_num_image = 2000
     num_images_norm = 0
     num_images_processed = 0
 

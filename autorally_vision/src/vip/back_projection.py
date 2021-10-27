@@ -24,9 +24,10 @@ def back_projection(pose, cam_info, t_des, use_cam_info, times, metrics):
             "height"], cam_info["width"]
     else:
         # Override camera values
-        K = np.array([[762.72493376, 0., 640.5],
-                      [0., 762.72493376, 512.5],
-                      [0., 0., 1.]])
+        K = np.array(
+            [[840.187645, 0., 639.5],
+             [0., 840.187645, 511.5],
+             [0., 0., 1.]])
 
         qC = np.array([[0.127, 0.07, 0.2159]])
         height = 1024
