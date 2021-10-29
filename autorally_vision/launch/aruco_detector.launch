@@ -1,0 +1,19 @@
+<launch>
+  <node
+    pkg = "autorally_vision"
+    type = "aruco_detector"
+    name = "aruco_detector_node"
+    output = "screen">
+
+    <param name="image_topic" value="/left_camera/image_raw" />
+    <param name="marker_size" value="0.5" />
+    <param name="aruco_dictionary" value="0" />
+    <param name="adaptiveThreshConstant" value="7" />
+    <param name="adaptiveThreshWinSizeMax" value="23" />
+    <param name="adaptiveThreshWinSizeMin" value="3" />
+    <param name="adaptiveThreshWinSizeStep" value="10" />
+    <param name="cornerRefinementMaxIterations" value="30" />
+    <param name="cornerRefinementMinAccuracy" value="0.1" />
+  </node>
+</launch>
+
