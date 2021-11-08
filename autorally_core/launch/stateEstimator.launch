@@ -76,9 +76,13 @@ Arguments:
       <!-- set the lat/lon/alt origin for GPS UTM to local frame transform -->
       <param name="FixedOrigin" value="false"/>
       <!-- currently using approximate marietta location -->
-      <param name="latOrigin" value="33.7744980893"/>
-      <param name="lonOrigin" value="-84.4050941205"/>
-      <param name="altOrigin" value="277.752"/>
+      <!--<param name="latOrigin" value="33.7744980893"/>-->
+      <!--<param name="lonOrigin" value="-84.4050941205"/>-->
+      <!--<param name="altOrigin" value="277.752"/>-->
+      <!-- currently using approximate ccrf location -->
+      <param name="latOrigin" value="33.9111190465"/>
+      <param name="lonOrigin" value="-84.529998023"/>
+      <param name="altOrigin" value="297.544"/>
 
       <!-- flag for whether to use the wheel odometry messages -->
       <param name="UseOdom" value="false"/>
