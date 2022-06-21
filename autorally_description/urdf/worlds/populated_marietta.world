@@ -22,42 +22,7 @@
     <include>
       <uri>model://urdf/models/sun</uri>
     </include>
-    <include>
-      <static>true</static>
-      <name>aruco_tag_0</name>
-      <uri>model://urdf/models/aruco_tag_0</uri>
-      <pose>0 -8 1 0 1.57 3.93</pose>
-    </include>
-    <include>
-      <static>true</static>
-      <name>aruco_tag_1</name>
-      <uri>model://urdf/models/aruco_tag_1</uri>
-      <pose>8 0 1 0 1.57 3.93</pose>
-    </include>
-    <include>
-      <static>true</static>
-      <name>aruco_tag_2</name>
-      <uri>model://urdf/models/aruco_tag_2</uri>
-      <pose>8.5 8.5 1 0 1.57 5.50</pose>
-    </include>
-    <include>
-      <static>true</static>
-      <name>aruco_tag_3</name>
-      <uri>model://urdf/models/aruco_tag_3</uri>
-      <pose>0 8 1 0 1.57 .785</pose>
-    </include>
-    <include>
-      <static>true</static>
-      <name>aruco_tag_4</name>
-      <uri>model://urdf/models/aruco_tag_4</uri>
-      <pose>-8 0 1 0 1.57 .785</pose>
-    </include>
-    <include>
-      <static>true</static>
-      <name>aruco_tag_5</name>
-      <uri>model://urdf/models/aruco_tag_5</uri>
-      <pose>-8.5 -8.5 1 0 1.57 2.35</pose>
-    </include>
+    
     <include>
       <name>track</name>
       <uri>model://urdf/models/track</uri>
