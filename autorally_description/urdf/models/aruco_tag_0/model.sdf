@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.0">
+  <model name="aruco_tag_0">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <plane>
+            <normal>0 1 0</normal>
+            <size>.25 .25</size>
+          </plane>
+        </geometry>
+        <material>
+          <script>
+                <uri>model://urdf/models/aruco_tag_0/materials/scripts</uri>
+                <uri>model://urdf/models/aruco_tag_0/materials/textures</uri>
+                <name>aruco/tag0</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

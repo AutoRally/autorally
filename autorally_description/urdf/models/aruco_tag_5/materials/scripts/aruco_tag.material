@@ -1,0 +1,15 @@
+material aruco/tag5
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture tag5.jpg
+      }
+    }
+  }
+}
+
