@@ -53,6 +53,7 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
    Python packages for this package include  
    * defusedxml
    * rospkg
+
    ```
    pip install defusedxml rospkg
    ```
@@ -124,15 +125,17 @@ Then, to compile and install, run `catkin_make` from the catkin workspace folder
 
 In the event of any CUDA problems during catkin_make, you may need to set your CUDACXX PATH environment variable. To do this, run
 
-'''
+```
 cd /etc
 sudo gedit environment
-'''
+```
 
 Copy and paste the following line into your file underneath the PATH variable on a new line.
-'''
+
+```
 CUDACXX="/usr/local/cuda/bin/nvcc"
-'''
+```
+
 Then, save the file.
 
 Return back to your autorally workspace by
