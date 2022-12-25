@@ -46,13 +46,15 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
 
    ```sudo apt install git doxygen openssh-server libusb-dev texinfo```
 
-   ROS Melodic only supports Python 2.7. Before installing Python packages, you need to ensure that `python` points to Python 2.7, e.g., by setting up a Python 2.7 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands):
-
+   ROS Melodic only supports Python 2.7. Before installing Python packages, you need to ensure that `python` points to Python 2.7, e.g., by setting up a Python 2.7 environment. Check your python version using
    ```
-   conda create -n my_ros_env python=2.7
-   source activate my_ros_env
-   conda install defusedxml
-   conda install -c jdh88 rospkg
+   python --version
+   ```
+   Python packages for this package include  
+   * defusedxml
+   * rospkg
+   ```
+   pip install defusedxml rospkg
    ```
 
    The following tools are recommended, but not required for this project.
@@ -92,9 +94,9 @@ Please submit pull requests to the [melodic-devel branch](https://github.com/Aut
 
 ### 2. Clone or Fork Repositories
 
-Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work. We suggest forking over cloning if you will be working with the code.
+Get the autorally repository in a [catkin workspace](http://wiki.ros.org/catkin/workspaces). The suggested location is `~/catkin_ws/src/`, but any valid catkin worskspace source folder will work.
 
-Also clone the IMU code and Pointgrey camera drivers into the same catkin workspace:
+Also clone the IMU code and Pointgrey camera drivers into the same catkin workspace (the IMU and Pointgrey folders should be at the same level as your Autorally repo folder):
 
     git clone https://github.com/AutoRally/imu_3dm_gx4.git
     git clone https://github.com/ros-drivers/pointgrey_camera_driver.git
@@ -114,11 +116,34 @@ Within the catkin workspace folder, run this command to install the packages thi
 
 ### 5. Compilation & Running
 
-First, check your Eigen version with `pkg-config --modversion eigen3`. If you don't have at least version 3.3.5, [upgrade Eigen](https://github.com/eigenteam/eigen-git-mirror) by following "Method 2" within the included `INSTALL` file.
+First, check your Eigen version with `pkg-config --modversion eigen3`. If you don't have at least version 3.3.5, [upgrade Eigen 3.3](https://gitlab.com/libeigen/eigen/-/releases/3.3.9). Download the .zip source code, extract, and following "Method 2" within the included `INSTALL` file. Do not upgrade past 3.3, as this will conflict with packages used within the autorally project.
 
 Then, to compile and install, run `catkin_make` from the catkin workspace folder. If your version of CUDA does not support `gcc-7`, you may need to use
 
 `catkin_make -DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6`
+
+In the event of any CUDA problems during catkin_make, you may need to set your CUDACXX PATH environment variable. To do this, run
+
+'''
+cd /etc
+sudo gedit environment
+'''
+
+Copy and paste the following line into your file underneath the PATH variable on a new line.
+'''
+CUDACXX="/usr/local/cuda/bin/nvcc"
+'''
+Then, save the file.
+
+Return back to your autorally workspace by
+
+'''
+cd /home
+ls -a
+'''
+
+and cd into your profile's directory.
+
 
 Due to the additional requirement of ROS's distributed launch system, you must run
 
