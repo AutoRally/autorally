@@ -108,6 +108,7 @@ Since there are no pre-built drivers for Melodic, follow [these instructions](ht
 
 - The SDK can be downloaded [here](https://flir.app.boxcn.net/v/Flycapture2SDK/folder/72274730742). The file to download is `flycapture2-2.13.3.31-amd64-pkg_Ubuntu18.04.tgz`.
 - You may need to run `sudo apt --fix-broken install` after installing the suggested packages and before running `sudo sh install_flycapture.sh`.
+- Pay special attention to setting up USB-FS and modifying the memory limit.
 
 ### 4. Install AutoRally ROS Dependencies
 
@@ -140,10 +141,11 @@ Then, save the file.
 
 Return back to your autorally workspace by
 
-'''
+```
 cd /home
 ls -a
-'''
+```
+
 
 and cd into your profile's directory.
 
