@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+	<arg name="markerSize" default="0.05"/> <!-- in meter -->
+	<arg name="eye" default="left"/>
+	<arg name="marker_frame" default="marker_frame"/>
+	<arg name="ref_frame" default=""/> <!-- leave empty and the pose will be published wrt param parent_name -->
+	<arg name="corner_refinement" default="LINES" /> <!-- NONE, HARRIS, LINES, SUBPIX -->
+
+
+	<node pkg="nodelet" type="single" name="ArucoDetector" args="load autorally_core/ArucoDetector camera_nodelet_manager" output="screen" machine="autorally-master">
+	<remap from="/left_camera_info" to="/left_camera/camera_info" />
+	<remap from="/left_image" to="/left_camera/image_raw" />
+	<remap from="/right_camera_info" to="/right_camera/camera_info" />
+	<remap from="/right_image" to="/right_camera/image_raw" />
+	<param name="image_is_rectified" value="True"/>
+	<param name="marker_size" value="$(arg markerSize)"/>
+	<param name="reference_frame" value="$(arg ref_frame)"/> <!-- frame in which the marker pose will be refered -->
+	<param name="camera_frame" value="base_link"/>
+	<param name="marker_frame" value="$(arg marker_frame)" />
+	<param name="corner_refinement" value="$(arg corner_refinement)" />
+	</node>
+</launch>
