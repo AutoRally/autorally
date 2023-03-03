@@ -100,7 +100,7 @@ namespace autorally_control
 
           aruco_detection_msg.points.push_back(point_msg);
         }
-
+s
         debug_pub_.publish(aruco_detection_msg);
         tag_array_msg.tags.push_back(aruco_detection_msg);
       }
