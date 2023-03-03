@@ -1,2 +1,2 @@
 int32 id
-geometry_msgs/Pose pose
+autorally_msgs/point2D[] points

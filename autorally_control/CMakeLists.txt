@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf
+  image_transport
+  autorally_msgs
 )
 
 find_package(Boost 1.55.0 REQUIRED)
@@ -38,6 +40,7 @@ add_subdirectory(src/ConstantSpeedController)
 add_subdirectory(src/joystick)
 add_subdirectory(src/gpsWaypoint)
 add_subdirectory(src/path_integral)
+add_subdirectory(src/ArucoDetector)
 
 install(DIRECTORY launch/
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch

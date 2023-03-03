@@ -33,46 +33,44 @@
  * @details Definitiion of ArUco tag detection with 3D depth sensing 
  ***********************************************/
 
+#ifndef ARUCO_DETECTOR_H_
+#define ARUCO_DETECTOR_H_
 
-PLUGINLIB_EXPORT_CLASS( autorally_core::ArucoDetector,  nodelet::Nodelet)
+
 
 #include <ros/ros.h>
-#include <ros/time.h>
 #include <nodelet/nodelet.h>
 
-#include <map>
-#include <vector>
-#include <algorithm>
-
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 
 #include <image_transport/image_transport.h>
-#include <eigen3/Eigen/Dense>
-#include <vector>
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_components/register_node_macro.hpp>
-#include <image_transport/image_transport.hpp>
+
 #include <opencv2/aruco.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include "autorally_msgs/arucoDetection.h"
+#include "autorally_msgs/arucoDetectionArray.h"
+#include "autorally_msgs/point2D.h"
+#include <std_msgs/Int32.h>
 
-namespace autorally_core
+namespace autorally_control
 {
 
-class ArucoDetector: public nodelet:Nodelet
+class ArucoDetector 
 {
   public:
-
-  ~ArucoDetector();
+  ArucoDetector();
   
 
   private:
-  image_transport::SubscriberFilter  leftCamSub_;
-  image_transport::SubscriberFilter rightCamSub_;
-  message_filters::Subscriber left_info_sub_;
-  message_filters::Subscriber right_info_sub_;
 
-  ros::Publisher  detectionPub_;
-  void videoCallback( const left_img_msg, const right_img_msg);
-}
-}
+  ros::NodeHandle nh;
+  ros::NodeHandle nhPvt;
+  image_transport::ImageTransport it_;
+  image_transport::CameraSubscriber cam_sub_;
+  ros::Publisher  detection_pub_;
+  ros::Publisher  debug_pub_;
+  void videoCallback( const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& info_msg);
+
+};
+};
+
+#endif 

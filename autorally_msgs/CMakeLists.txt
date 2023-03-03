@@ -15,6 +15,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   arucoDetection.msg
+  arucoDetectionArray.msg
   chassisCommand.msg
   chassisState.msg
   wheelSpeeds.msg

@@ -1,3 +1,3 @@
 Header header
 
-arucoDetection tags
+autorally_msgs/arucoDetection[] tags

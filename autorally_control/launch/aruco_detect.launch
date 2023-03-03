@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+	<include file="$(find autorally_core)/launch/hardware.machine" />
+
+	<node name="arucoDetector_left" pkg="autorally_control" type="ArucoDetector" args="load autorally_core/ArucoDetector camera_nodelet_manager" output="screen" machine="autorally-master">
+	
+	</node>
+</launch>
